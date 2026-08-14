@@ -1,8 +1,20 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import AppSidebar from './AppSidebar'
 import AppHeader from './AppHeader'
 import MobileSidebar from './MobileSidebar'
+
+/** Shown while a lazily-loaded page chunk arrives — the shell stays put. */
+function PageFallback() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-live="polite">
+      <span className="flex items-center gap-3 text-slate-500">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600" />
+        <span className="text-sm">Loading…</span>
+      </span>
+    </div>
+  )
+}
 
 export default function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -32,8 +44,12 @@ export default function AppLayout() {
       <div className="lg:pl-[16.5rem]">
         <AppHeader onOpenSidebar={() => setDrawerOpen(true)} />
         <main id="app-main" className="px-4 py-6 sm:px-6 sm:py-8">
+          {/* Scoped to the content area so a page chunk loading never tears down
+              the sidebar, header or an in-flight drawer animation. */}
           <div className="mx-auto w-full max-w-[86rem]">
-            <Outlet />
+            <Suspense fallback={<PageFallback />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

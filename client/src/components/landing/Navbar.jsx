@@ -43,6 +43,7 @@ export default function Navbar() {
             type="button"
             tabIndex={-1}
             aria-hidden="true"
+            key="nav-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -119,6 +120,7 @@ export default function Navbar() {
           {open && (
             <motion.div
               id="mobile-nav"
+              key="mobile-nav"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}

@@ -31,15 +31,20 @@ export default function Modal({ open, onClose, title, description, size = 'md', 
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-6">
-          <motion.button
+        // Keyed motion wrapper — a plain <div> here would never be removed by
+        // AnimatePresence and would leave an invisible overlay swallowing clicks.
+        <motion.div
+          key="modal"
+          className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+        >
+          <button
             type="button"
             tabIndex={-1}
             aria-hidden="true"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
             onClick={onClose}
             className="absolute inset-0 h-full w-full cursor-default bg-ink-950/50 backdrop-blur-sm"
           />
@@ -80,7 +85,7 @@ export default function Modal({ open, onClose, title, description, size = 'md', 
               </div>
             )}
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>,
     document.body,

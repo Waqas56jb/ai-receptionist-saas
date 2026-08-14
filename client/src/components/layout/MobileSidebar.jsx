@@ -21,15 +21,20 @@ export default function MobileSidebar({ open, onClose }) {
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[70] lg:hidden">
-          <motion.button
+        // Must be a keyed motion element: AnimatePresence only unmounts children
+        // it can track, and a plain <div> would be left behind covering the page.
+        <motion.div
+          key="mobile-drawer"
+          className="fixed inset-0 z-[70] lg:hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <button
             type="button"
             tabIndex={-1}
             aria-hidden="true"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
             onClick={onClose}
             className="absolute inset-0 h-full w-full cursor-default bg-ink-950/50 backdrop-blur-sm"
           />
@@ -52,7 +57,7 @@ export default function MobileSidebar({ open, onClose }) {
             </button>
             <AppSidebar onNavigate={onClose} />
           </motion.aside>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   )
