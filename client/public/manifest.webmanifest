@@ -1,0 +1,31 @@
+{
+  "name": "DEVMARK SOLUTION — AI Receptionist",
+  "short_name": "DEVMARK",
+  "description": "An AI receptionist that answers calls and customer messages 24/7, trained on your own business information.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0A1128",
+  "theme_color": "#0A1128",
+  "icons": [
+    {
+      "src": "/logo-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

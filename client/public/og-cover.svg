@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0A1128"/>
+      <stop offset="100%" stop-color="#16244C"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="980" cy="120" r="260" fill="#4569F0" opacity="0.16"/>
+  <g transform="translate(90 140)">
+    <path d="M0 44 L86 8 L34 52 L58 74 Z" fill="#F58220"/>
+    <path d="M86 8 L44 84 L34 52 Z" fill="#EF7622"/>
+    <text x="112" y="46" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="34" font-weight="800" fill="#2D7DFF">DEV<tspan fill="#F58220">MARK</tspan></text>
+    <text x="112" y="74" font-family="Inter, sans-serif" font-size="17" fill="#9AB4FF">Du Concept &#224; la R&#233;alit&#233;</text>
+    <text x="0" y="176" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="66" font-weight="800" fill="#ffffff">Your AI receptionist,</text>
+    <text x="0" y="252" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="66" font-weight="800" fill="#9AB4FF">available 24/7.</text>
+    <text x="0" y="318" font-family="Inter, sans-serif" font-size="26" fill="#C2D3FF">Phone &#183; WhatsApp &#183; Instagram &#183; Web</text>
+  </g>
+</svg>
