@@ -1,14 +1,20 @@
-# Client — AI Receptionist SaaS (Landing Page)
+# Client — AI Receptionist SaaS
 
-Public marketing site for the AI receptionist platform. **Milestone 1 scope: landing page only** —
-no backend, auth, dashboard, Stripe, Twilio or AI integration lives here yet.
+Two applications in one Vite build:
+
+1. **Public marketing site** at `/`
+2. **Business user portal** at `/app/*` — 30 screens, mock data, no backend yet
+
+The Super Admin portal (`/admin/*`) is a later milestone and is **not** in this codebase.
 
 ## Stack
 
 - React 18 + Vite (JavaScript, no TypeScript)
+- React Router 6
 - Tailwind CSS 3
-- Framer Motion (scroll reveals, hero animation)
-- Lucide React (all icons)
+- Framer Motion (reveals, drawers, modals, toasts)
+- Recharts (dashboard and analytics charts)
+- Lucide React (every icon)
 
 ## Commands
 
@@ -18,6 +24,55 @@ npm run dev      # http://localhost:5173
 npm run build    # production build → dist/
 npm run preview  # serve the production build
 ```
+
+## Signing in
+
+Authentication is mocked. `/login` is pre-filled and **any** credentials sign you in —
+no password is checked and no token is stored, only a session flag in `localStorage`.
+`/signup` creates an account and sends you through the five-step onboarding flow.
+
+## Portal architecture
+
+```
+src/
+  pages/            one file per screen (auth/, onboarding/, app/)
+  components/
+    landing/        marketing sections
+    layout/         AppLayout, AppSidebar, AppHeader, MobileSidebar, PageHeader, AuthLayout
+    ui/             Button, Card, Field, Select, Toggle, Tabs, Modal, Dropdown, DataTable,
+                    Badge, Skeleton, EmptyState/ErrorState, ProgressBar, StatCard,
+                    SecureCredentialInput, Avatar, PasswordStrength
+    ai/             AIStatusCard, SourceSelector, ConfigModeDiagram, ChannelConfigCard,
+                    MessagingAgentPage, AITestChat
+    business/       BusinessHoursEditor, CrudList
+    charts/         themed Recharts wrappers
+    comms/          TranscriptViewer
+  services/         API-ready layer — every screen calls these, never mock data directly
+  data/mock/        the demo dataset (business, ai, communication, crm, insights, platform)
+  context/          AuthContext, ToastContext
+  hooks/            useAsync (loading/error/retry), useDebounced, useMediaQuery, useOnClickOutside
+  config/           brand.js, navigation.js
+```
+
+### Swapping in the real backend
+
+Every screen talks to `src/services/*`. Those services call `request()` in
+[`src/services/mockClient.js`](src/services/mockClient.js), which simply resolves mock data after a
+short delay. Replace that one file with a `fetch`/`axios` wrapper and point each service method at
+its endpoint — **no page component needs to change**.
+
+### Security note on credentials
+
+Twilio and Meta secrets are never stored in this app. `SecureCredentialInput` sends the raw value
+to the service call and immediately drops it from component state; afterwards only the masked
+preview returned by the API is displayed (`sk_••••••••••8F21`). Nothing is written to
+`localStorage`, environment variables or the bundle. The portal also surfaces Twilio's own advice
+to prefer scoped API keys over the Account SID + Auth Token in production.
+
+### Performance
+
+The portal is lazy-loaded route by route, so a visitor on the marketing page never downloads the
+dashboard, Recharts or the mock dataset.
 
 ## Brand
 
