@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom'
 import { Check } from 'lucide-react'
+import { brand } from '../../config/brand'
 import SectionHeading from '../ui/SectionHeading'
 import Reveal from '../ui/Reveal'
 import Button from '../ui/Button'
@@ -79,15 +81,27 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                <Button
-                  as="a"
-                  href="#get-started"
-                  size="lg"
-                  variant={plan.featured ? 'onDark' : 'secondary'}
-                  className="mt-8 w-full"
-                >
-                  {plan.cta}
-                </Button>
+                {plan.cta === 'Talk to Sales' ? (
+                  <Button
+                    as="a"
+                    href={`mailto:${brand.contactEmail}?subject=Enterprise%20plan%20enquiry`}
+                    size="lg"
+                    variant={plan.featured ? 'onDark' : 'secondary'}
+                    className="mt-8 w-full"
+                  >
+                    {plan.cta}
+                  </Button>
+                ) : (
+                  <Button
+                    as={Link}
+                    to="/signup"
+                    size="lg"
+                    variant={plan.featured ? 'onDark' : 'secondary'}
+                    className="mt-8 w-full"
+                  >
+                    {plan.cta}
+                  </Button>
+                )}
               </article>
             </Reveal>
           ))}
@@ -96,7 +110,10 @@ export default function Pricing() {
         <Reveal delay={0.16}>
           <p className="mt-10 text-center text-sm text-slate-500">
             Not sure which plan fits?{' '}
-            <a href="#get-started" className="font-semibold text-brand-600 underline-offset-4 hover:underline">
+            <a
+              href={`mailto:${brand.contactEmail}?subject=Plan%20advice`}
+              className="font-semibold text-brand-600 underline-offset-4 hover:underline"
+            >
               Talk to Sales
             </a>{' '}
             and we'll help you choose.

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Bot, FileText, Phone, PlayCircle, Search, UserCheck } from 'lucide-react'
 import PageHeader from '../../../components/layout/PageHeader'
 import DataTable from '../../../components/ui/DataTable'
@@ -161,7 +162,7 @@ export default function Calls() {
                 ? 'Try widening your search or clearing a filter.'
                 : 'Connect your phone number and the AI will start answering calls.'
             }
-            action={!rows.length ? <Button as="a" href="/app/voice-agent" size="sm">Configure Voice</Button> : undefined}
+            action={!rows.length ? <Button as={Link} to="/app/voice-agent" size="sm">Configure Voice</Button> : undefined}
           />
         }
         footer={`${filtered.length} of ${rows.length} calls`}

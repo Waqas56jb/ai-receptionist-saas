@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Linkedin, Instagram } from 'lucide-react'
 import Logo from '../ui/Logo'
 import { footerColumns } from '../../data/landing'
@@ -49,16 +50,23 @@ export default function Footer() {
                   {column.title}
                 </h3>
                 <ul className="mt-4 space-y-2.5">
-                  {column.links.map((link) => (
-                    <li key={link.label}>
-                      <a
-                        href={link.href}
-                        className="text-[0.9rem] text-slate-400 transition-colors hover:text-white"
-                      >
-                        {link.label}
-                      </a>
-                    </li>
-                  ))}
+                  {column.links.map((link) => {
+                    const className = 'text-[0.9rem] text-slate-400 transition-colors hover:text-white'
+                    // Internal routes go through the router; anchors and mailto stay plain links.
+                    return (
+                      <li key={`${column.title}-${link.label}`}>
+                        {link.href.startsWith('/') ? (
+                          <Link to={link.href} className={className}>
+                            {link.label}
+                          </Link>
+                        ) : (
+                          <a href={link.href} className={className}>
+                            {link.label}
+                          </a>
+                        )}
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
             ))}

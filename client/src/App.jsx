@@ -52,6 +52,7 @@ const Security = lazy(() => import('./pages/app/account/Security'))
 const Help = lazy(() => import('./pages/app/account/Help'))
 const NotificationCentre = lazy(() => import('./pages/app/Notifications'))
 
+const Legal = lazy(() => import('./pages/Legal'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function RouteFallback() {
@@ -71,6 +72,24 @@ export default function App() {
       <Routes>
         {/* Public site */}
         <Route path="/" element={<Landing />} />
+        <Route
+          path="/privacy"
+          element={
+            <Legal
+              title="Privacy Policy"
+              summary="How we collect, use and protect the information you and your customers share with the platform."
+            />
+          }
+        />
+        <Route
+          path="/terms"
+          element={
+            <Legal
+              title="Terms of Service"
+              summary="The terms that apply when you use the AI receptionist platform and its channels."
+            />
+          }
+        />
 
         {/* Authentication */}
         <Route path="/login" element={<Login />} />

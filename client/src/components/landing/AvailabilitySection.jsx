@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { PhoneCall, MessageSquare, Globe, MoonStar, Sunrise } from 'lucide-react'
 import Reveal from '../ui/Reveal'
@@ -71,7 +72,7 @@ export default function AvailabilitySection() {
 
             <Reveal delay={0.24}>
               <div className="mt-8">
-                <Button as="a" href="#get-started" variant="primary" size="lg">
+                <Button as={Link} to="/signup" variant="primary" size="lg">
                   Get Started
                 </Button>
               </div>

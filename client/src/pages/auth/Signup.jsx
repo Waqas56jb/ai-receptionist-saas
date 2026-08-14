@@ -124,7 +124,15 @@ export default function Signup() {
         </Button>
 
         <p className="text-center text-[0.75rem] leading-relaxed text-slate-500">
-          By creating an account you agree to the Terms of Service and Privacy Policy.
+          By creating an account you agree to the{' '}
+          <Link to="/terms" className="font-semibold text-brand-600 underline-offset-4 hover:underline">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link to="/privacy" className="font-semibold text-brand-600 underline-offset-4 hover:underline">
+            Privacy Policy
+          </Link>
+          .
         </p>
       </form>
     </AuthLayout>

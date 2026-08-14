@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Menu, X, ArrowRight } from 'lucide-react'
 import Logo from '../ui/Logo'
@@ -92,10 +93,10 @@ export default function Navbar() {
             </ul>
 
             <div className="hidden items-center gap-2 lg:flex">
-              <Button as="a" href="#" variant="ghost" size="md">
+              <Button as={Link} to="/login" variant="ghost" size="md">
                 Sign In
               </Button>
-              <Button as="a" href="#get-started" variant="primary" size="md">
+              <Button as={Link} to="/signup" variant="primary" size="md">
                 Get Started
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Button>
@@ -140,16 +141,10 @@ export default function Navbar() {
                 </ul>
 
                 <div className="mt-4 flex flex-col gap-2.5 border-t border-slate-200/70 pt-5">
-                  <Button as="a" href="#" variant="secondary" size="lg" onClick={() => setOpen(false)}>
+                  <Button as={Link} to="/login" variant="secondary" size="lg" onClick={() => setOpen(false)}>
                     Sign In
                   </Button>
-                  <Button
-                    as="a"
-                    href="#get-started"
-                    variant="primary"
-                    size="lg"
-                    onClick={() => setOpen(false)}
-                  >
+                  <Button as={Link} to="/signup" variant="primary" size="lg" onClick={() => setOpen(false)}>
                     Get Started
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </Button>

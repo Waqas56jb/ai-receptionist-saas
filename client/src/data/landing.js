@@ -304,10 +304,10 @@ export const footerColumns = [
   {
     title: 'Company',
     links: [
-      { label: 'About', href: '#' },
-      { label: 'Contact', href: '#' },
-      { label: 'Privacy', href: '#' },
-      { label: 'Terms', href: '#' },
+      { label: 'About', href: '#product' },
+      { label: 'Contact', href: 'mailto:hello@example.com' },
+      { label: 'Privacy', href: '/privacy' },
+      { label: 'Terms', href: '/terms' },
     ],
   },
 ]

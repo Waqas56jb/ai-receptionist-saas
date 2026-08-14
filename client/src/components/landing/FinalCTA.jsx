@@ -1,6 +1,8 @@
+import { Link } from 'react-router-dom'
 import { ArrowRight, CalendarDays } from 'lucide-react'
 import Reveal from '../ui/Reveal'
 import Button from '../ui/Button'
+import { brand } from '../../config/brand'
 
 export default function FinalCTA() {
   return (
@@ -41,11 +43,16 @@ export default function FinalCTA() {
 
           <Reveal delay={0.18}>
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button as="a" href="#" variant="onDark" size="lg">
+              <Button as={Link} to="/signup" variant="onDark" size="lg">
                 Get Started
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Button>
-              <Button as="a" href="#" variant="outlineDark" size="lg">
+              <Button
+                as="a"
+                href={`mailto:${brand.contactEmail}?subject=Demo%20request`}
+                variant="outlineDark"
+                size="lg"
+              >
                 <CalendarDays className="h-[1.1rem] w-[1.1rem]" aria-hidden="true" />
                 Book a Demo
               </Button>

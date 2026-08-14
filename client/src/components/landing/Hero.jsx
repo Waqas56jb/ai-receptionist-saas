@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowRight, PlayCircle, PhoneCall, MessageSquare, Instagram, Globe } from 'lucide-react'
 import Button from '../ui/Button'
@@ -64,7 +65,7 @@ export default function Hero() {
             </motion.p>
 
             <motion.div {...rise(0.24)} className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button as="a" href="#get-started" variant="primary" size="lg">
+              <Button as={Link} to="/signup" variant="primary" size="lg">
                 Get Started
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Button>

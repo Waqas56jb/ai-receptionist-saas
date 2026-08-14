@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Bot,
@@ -156,7 +156,7 @@ export default function Conversations() {
               title="No conversations yet"
               description="Connect a channel and your customers' calls and messages will land here."
               action={
-                <Button as="a" href="/app/channels" size="sm">
+                <Button as={Link} to="/app/channels" size="sm">
                   Connect Channel
                 </Button>
               }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Instagram, MessageSquare, Radio, Search, Send } from 'lucide-react'
 import PageHeader from '../../../components/layout/PageHeader'
 import DataTable from '../../../components/ui/DataTable'
@@ -113,7 +114,7 @@ export default function Messages() {
                 ? 'Try another channel or clear your search.'
                 : 'Connect WhatsApp to start receiving messages.'
             }
-            action={!rows.length ? <Button as="a" href="/app/whatsapp-agent" size="sm">Connect WhatsApp</Button> : undefined}
+            action={!rows.length ? <Button as={Link} to="/app/whatsapp-agent" size="sm">Connect WhatsApp</Button> : undefined}
           />
         }
         footer={`${filtered.length} of ${rows.length} messages`}

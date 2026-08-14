@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { FileText, Phone, Search } from 'lucide-react'
 import cn from '../../../lib/cn'
 import PageHeader from '../../../components/layout/PageHeader'
@@ -55,7 +56,7 @@ export default function Transcripts() {
             title="No transcripts yet"
             description="Transcripts appear automatically once your AI starts handling calls."
             action={
-              <Button as="a" href="/app/voice-agent" size="sm">
+              <Button as={Link} to="/app/voice-agent" size="sm">
                 Configure Voice
               </Button>
             }

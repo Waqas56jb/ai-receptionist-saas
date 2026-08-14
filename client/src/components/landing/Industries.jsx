@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import SectionHeading from '../ui/SectionHeading'
 import Reveal from '../ui/Reveal'
 import Img from '../ui/Img'
@@ -49,12 +50,9 @@ export default function Industries() {
         <Reveal delay={0.12}>
           <p className="mt-10 text-center text-sm text-slate-500">
             Running a different kind of business?{' '}
-            <a
-              href="#get-started"
-              className="font-semibold text-brand-600 underline-offset-4 hover:underline"
-            >
+            <Link to="/signup" className="font-semibold text-brand-600 underline-offset-4 hover:underline">
               The AI adapts to your information too.
-            </a>
+            </Link>
           </p>
         </Reveal>
       </div>
