@@ -94,3 +94,8 @@ export function exportCsv(filename, rows, columns) {
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
+
+/** Display names for channel ids — avoids "Whatsapp" from CSS capitalisation. */
+const CHANNEL_LABELS = { voice: 'Voice', whatsapp: 'WhatsApp', instagram: 'Instagram', web: 'Website' }
+export const channelLabel = (id) => CHANNEL_LABELS[id] || id
+export const channelLabels = (ids = []) => ids.map(channelLabel).join(', ')
