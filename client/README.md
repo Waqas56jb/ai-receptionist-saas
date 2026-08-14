@@ -19,14 +19,28 @@ npm run build    # production build → dist/
 npm run preview  # serve the production build
 ```
 
-## Changing the brand
+## Brand
+
+Company: **DEVMARK SOLUTION** — *Du Concept à la Réalité*.
 
 Everything brand-related lives in one file: [`src/config/brand.js`](src/config/brand.js) —
-company name, social links, contact email and the copyright year. The placeholder name is
-**Recepta**; replace it once the client provides the final name.
+name, tagline, logo paths, social links, contact email and the copyright year.
 
-The logo mark is inline SVG in [`src/components/ui/Logo.jsx`](src/components/ui/Logo.jsx).
-Swap that SVG (and `public/favicon.svg`) for the client's logo.
+### Logo files in `public/`
+
+| File | What it is | Used by |
+|---|---|---|
+| `logo.png` | **Original supplied artwork**, untouched (wordmark on a black plate) | reference only |
+| `logo-mark.png` | Same wordmark with the black plate keyed out to transparency and the strapline removed | navbar, footer |
+| `logo-icon.png` | 512×512 tile — the paper-plane symbol on brand black | favicon, app icon |
+| `logo-icon-192.png` | 192×192 version of the same tile | PWA manifest |
+| `logo-plane.png` | Transparent paper-plane symbol on its own | spare, for future use |
+
+The derived files were generated from `logo.png` by keying out the pure-black backdrop
+(alpha = brightest channel, then un-premultiplied so edges stay clean). The strapline is
+dropped from `logo-mark.png` because it is white text and would vanish on light backgrounds —
+it is rendered as live text in the footer instead. If the client supplies a vector/transparent
+logo later, replace `logo-mark.png` and `logo-icon.png` and nothing else needs to change.
 
 ## Where the content lives
 

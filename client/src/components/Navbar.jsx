@@ -75,7 +75,7 @@ export default function Navbar() {
             }`}
           >
             <a href="#top" className="rounded-lg" aria-label={`${brand.name} home`}>
-              <Logo />
+              <Logo size="lg" />
             </a>
 
             <ul className="hidden items-center gap-1 lg:flex">

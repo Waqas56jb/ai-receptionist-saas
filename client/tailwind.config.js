@@ -13,6 +13,14 @@ export default {
           600: '#1F3160',
           500: '#2C4278',
         },
+        // Secondary accent taken from the DEVMARK logo — used sparingly
+        ember: {
+          50: '#FFF4EC',
+          100: '#FFE4D1',
+          400: '#FB9A4B',
+          500: '#F58220',
+          600: '#DC6F13',
+        },
         // Elegant blue / indigo accent
         brand: {
           50: '#EEF3FF',
