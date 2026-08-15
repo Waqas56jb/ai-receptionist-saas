@@ -19,33 +19,36 @@ customer-facing site, served under `/admin`.
 
 ```bash
 npm install
-npm run dev      # http://localhost:5174/admin/
-npm run build    # production build for hosting under /admin/  → dist/
-npm run preview  # serve that build at http://localhost:4173/admin/
+npm run dev      # http://localhost:5174
+npm run build    # production build → dist/
+npm run preview  # serve that build at http://localhost:4173
 ```
 
-### Where the build is hosted matters
+## Deployment
 
-The default build hard-codes `/admin/` into every asset URL, so it **must** be served from a
-`/admin/` path prefix. Serving `dist/` at the root of a server (or opening `dist/index.html`
-directly) gives 404s for `assets/*.css`, `assets/*.js` and `logo-icon.png`.
+The default build targets **its own host root** — a Vercel project domain, `admin.example.com`, or
+any server where this app is the site. [`vercel.json`](vercel.json) sets the build command, the SPA
+rewrite that keeps deep links working on refresh, and `X-Robots-Tag: noindex` so the console never
+gets indexed.
 
-Pick whichever matches your hosting:
+On Vercel, create a separate project with **Root Directory = `admin`**; the config here does the
+rest.
 
-| Hosting | Build | Preview locally |
-|---|---|---|
-| Under a path — `example.com/admin/` | `npm run build` | `npm run preview` |
-| Own domain or root — `admin.example.com/` | `npm run build:root` | `npm run preview:root` |
+### Hosting it under a path instead
 
-The router's basename follows `import.meta.env.BASE_URL`, so routes are `/admin/dashboard` in the
-first case and `/dashboard` in the second — the same source builds both, nothing to edit.
+If the console has to live at `example.com/admin/` rather than its own domain:
 
-Either way the host needs an SPA fallback so deep links survive a refresh:
-
+```bash
+npm run build:subpath     # sets base=/admin/
+npm run preview:subpath   # preview it the same way
 ```
-/admin/*  →  /admin/index.html     (path-hosted build)
-/*        →  /index.html           (root-hosted build)
-```
+
+The router basename follows `import.meta.env.BASE_URL`, so routes become `/admin/dashboard`
+automatically — the same source builds both, nothing to edit. That host then needs
+`/admin/* → /admin/index.html` as its fallback.
+
+**Asset URLs are baked in at build time**, so the build and the hosting path have to agree. A
+subpath build served at a root (or the reverse) 404s on `assets/*.css`, `assets/*.js` and the logo.
 
 ## Signing in
 
