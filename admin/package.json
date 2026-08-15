@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:root": "vite build --base=/",
+    "build:subpath": "vite build --base=/admin/",
     "preview": "vite preview",
-    "preview:root": "vite preview --base=/"
+    "preview:subpath": "vite preview --base=/admin/"
   },
   "dependencies": {
     "framer-motion": "^11.11.17",
