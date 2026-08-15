@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:root": "vite build --base=/",
+    "preview": "vite preview",
+    "preview:root": "vite preview --base=/"
   },
   "dependencies": {
     "framer-motion": "^11.11.17",

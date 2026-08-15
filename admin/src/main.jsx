@@ -8,8 +8,9 @@ import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* Served under /admin/ so the router shares that basename */}
-    <BrowserRouter basename="/admin">
+    {/* Basename follows the build's base, so the same bundle works whether it
+        is hosted under /admin/ or at the root of its own domain. */}
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AuthProvider>
         <ToastProvider>
           <App />

@@ -20,8 +20,31 @@ customer-facing site, served under `/admin`.
 ```bash
 npm install
 npm run dev      # http://localhost:5174/admin/
-npm run build    # production build → dist/
-npm run preview  # serve the production build
+npm run build    # production build for hosting under /admin/  → dist/
+npm run preview  # serve that build at http://localhost:4173/admin/
+```
+
+### Where the build is hosted matters
+
+The default build hard-codes `/admin/` into every asset URL, so it **must** be served from a
+`/admin/` path prefix. Serving `dist/` at the root of a server (or opening `dist/index.html`
+directly) gives 404s for `assets/*.css`, `assets/*.js` and `logo-icon.png`.
+
+Pick whichever matches your hosting:
+
+| Hosting | Build | Preview locally |
+|---|---|---|
+| Under a path — `example.com/admin/` | `npm run build` | `npm run preview` |
+| Own domain or root — `admin.example.com/` | `npm run build:root` | `npm run preview:root` |
+
+The router's basename follows `import.meta.env.BASE_URL`, so routes are `/admin/dashboard` in the
+first case and `/dashboard` in the second — the same source builds both, nothing to edit.
+
+Either way the host needs an SPA fallback so deep links survive a refresh:
+
+```
+/admin/*  →  /admin/index.html     (path-hosted build)
+/*        →  /index.html           (root-hosted build)
 ```
 
 ## Signing in
@@ -98,12 +121,8 @@ stacked-card layout below `md` so nothing overflows on a phone.
 - **Every mutating service call writes an audit entry** (`writeAudit` in `services/store.js`), which
   is what the Audit Logs screen reads.
 
-## Deployment note
+## Assets
 
-The app is built with `base: '/admin/'`. Hosting needs an SPA rewrite for deep links:
-
-```
-/admin/*  →  /admin/index.html
-```
-
-Without it only `/admin/` will load and `/admin/businesses` will 404 on refresh.
+Logos are imported from `src/assets/` rather than referenced by absolute path, so Vite rewrites
+their URLs to match whichever base the app was built with. Do not reintroduce hard-coded
+`/admin/...` image paths — they break the root-hosted build.

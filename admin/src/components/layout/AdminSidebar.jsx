@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils'
 import navigation from '../../config/navigation'
 import { useAuth } from '../../context/AuthContext'
 import Logo from '../ui/Logo'
+import logoIcon from '../../assets/logo-icon.png'
 
 export default function AdminSidebar({ onNavigate, collapsed = false, onToggleCollapse, className = '' }) {
   const [closedGroups, setClosedGroups] = useState({})
@@ -27,7 +28,7 @@ export default function AdminSidebar({ onNavigate, collapsed = false, onToggleCo
     <div className={cn('flex h-full flex-col bg-white', className)}>
       <div className={cn('flex h-[4.25rem] shrink-0 items-center border-b border-slate-200/80', collapsed ? 'justify-center px-2' : 'justify-between px-4')}>
         {collapsed ? (
-          <img src="/admin/logo-icon.png" alt="DEVMARK admin" className="h-8 w-8 rounded-lg" />
+          <img src={logoIcon} alt="DEVMARK admin" className="h-8 w-8 rounded-lg" />
         ) : (
           <NavLink to="/dashboard" onClick={onNavigate} className="rounded-lg" aria-label="Go to dashboard">
             <Logo size="sm" />
