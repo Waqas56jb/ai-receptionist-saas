@@ -87,7 +87,7 @@ export default function Transcripts() {
                       onClick={() => setSelectedId(t.id)}
                       className={cn(
                         'flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors',
-                        selected?.id === t.id ? 'bg-brand-50/70' : 'hover:bg-slate-50',
+                        selected?.id === t.id ? 'bg-primary-500/10' : 'hover:bg-slate-50',
                       )}
                     >
                       <Avatar name={t.customer} size="sm" />

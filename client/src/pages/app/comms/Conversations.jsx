@@ -174,7 +174,7 @@ export default function Conversations() {
                     onClick={() => select(c.id)}
                     className={cn(
                       'flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors',
-                      active ? 'bg-brand-50/70' : 'hover:bg-slate-50',
+                      active ? 'bg-primary-500/10' : 'hover:bg-slate-50',
                     )}
                   >
                     <Avatar name={c.customer} size="sm" />
@@ -293,7 +293,7 @@ export default function Conversations() {
                         <span
                           className={cn(
                             'mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full',
-                            m.from === 'ai' ? 'bg-brand-50 text-brand-600' : 'bg-ink-900 text-white',
+                            m.from === 'ai' ? 'bg-primary-500/15 text-primary-400' : 'bg-ink-900 text-white',
                           )}
                         >
                           {m.from === 'ai' ? <Bot className="h-3.5 w-3.5" aria-hidden="true" /> : <UserRound className="h-3.5 w-3.5" aria-hidden="true" />}

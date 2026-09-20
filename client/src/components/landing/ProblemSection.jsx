@@ -16,8 +16,8 @@ export default function ProblemSection() {
         <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {problems.map((problem, i) => (
             <Reveal key={problem.title} delay={i * 0.08}>
-              <article className="group card-surface h-full p-6 hover:-translate-y-1 hover:border-brand-200 hover:shadow-card">
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600 transition-colors duration-300 group-hover:bg-brand-600 group-hover:text-white">
+              <article className="group card-surface h-full p-6 hover:-translate-y-1 hover:border-primary-400/30 hover:shadow-card">
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary-500/15 text-primary-400 transition-colors duration-300 group-hover:bg-brand-600 group-hover:text-white">
                   <problem.icon className="h-[1.3rem] w-[1.3rem]" aria-hidden="true" />
                 </span>
                 <h3 className="mt-5 text-lg font-semibold text-ink-900">{problem.title}</h3>

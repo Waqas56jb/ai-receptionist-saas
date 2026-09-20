@@ -32,7 +32,7 @@ export function Tabs({ tabs, value, onChange, className = '', size = 'md' }) {
               {Icon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
               {label}
               {count !== undefined && (
-                <span className={cn('rounded-full px-1.5 py-0.5 text-[0.62rem] font-bold', active ? 'bg-brand-50 text-brand-700' : 'bg-slate-200/70 text-slate-500')}>
+                <span className={cn('rounded-full px-1.5 py-0.5 text-[0.62rem] font-bold', active ? 'bg-primary-500/15 text-primary-400' : 'bg-surface-2 text-slate-500')}>
                   {count}
                 </span>
               )}
@@ -169,7 +169,7 @@ export function StatCard({ label, value, delta, deltaTone = 'up', icon: Icon, hi
       <div className="flex items-start justify-between gap-3">
         <p className="text-[0.7rem] font-bold uppercase tracking-wider text-slate-500">{label}</p>
         {Icon && (
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-500/15 text-primary-400">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         )}

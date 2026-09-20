@@ -33,7 +33,7 @@ export default function Tabs({ tabs, value, onChange, className = '', size = 'md
                 <span
                   className={cn(
                     'rounded-full px-1.5 py-0.5 text-[0.65rem] font-bold',
-                    active ? 'bg-brand-50 text-brand-700' : 'bg-slate-200/70 text-slate-500',
+                    active ? 'bg-primary-500/15 text-primary-400' : 'bg-surface-2 text-slate-500',
                   )}
                 >
                   {count}
@@ -65,7 +65,7 @@ export function FilterPills({ options, value, onChange, className = '' }) {
             className={cn(
               'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[0.78rem] font-semibold transition-colors',
               active
-                ? 'border-brand-300 bg-brand-50 text-brand-700'
+                ? 'border-primary-400/40 bg-primary-500/15 text-primary-400'
                 : 'border-line bg-surface text-slate-600 hover:border-line-strong hover:text-ink',
             )}
           >

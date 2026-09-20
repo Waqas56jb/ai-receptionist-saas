@@ -145,7 +145,7 @@ export default function Dashboard() {
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
           <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-5 py-4">
             <h2 className="font-display text-[0.95rem] font-semibold text-ink-900">Recent activity</h2>
-            <Link to="/app/conversations" className="text-[0.78rem] font-semibold text-brand-600 underline-offset-4 hover:underline">
+            <Link to="/app/conversations" className="text-[0.78rem] font-semibold text-primary-400 underline-offset-4 hover:underline">
               View all
             </Link>
           </div>
@@ -200,7 +200,7 @@ export default function Dashboard() {
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
           <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-5 py-4">
             <h2 className="font-display text-[0.95rem] font-semibold text-ink-900">Recent leads</h2>
-            <Link to="/app/leads" className="text-[0.78rem] font-semibold text-brand-600 underline-offset-4 hover:underline">
+            <Link to="/app/leads" className="text-[0.78rem] font-semibold text-primary-400 underline-offset-4 hover:underline">
               View all
             </Link>
           </div>
@@ -238,9 +238,9 @@ export default function Dashboard() {
             <Link
               key={action.label}
               to={action.to}
-              className="group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card"
+              className="group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-primary-400/30 hover:shadow-card"
             >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-500/15 text-primary-400 transition-colors group-hover:bg-brand-600 group-hover:text-white">
                 <action.icon className="h-4 w-4" aria-hidden="true" />
               </span>
               <span className="min-w-0">

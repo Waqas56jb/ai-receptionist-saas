@@ -212,9 +212,9 @@ export function Integrations() {
         breadcrumbs={[{ label: 'System' }, { label: 'Integrations' }]}
       />
 
-      <div className="mb-4 flex items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50/70 p-4">
-        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
-        <p className="text-[0.84rem] leading-relaxed text-brand-900">
+      <div className="mb-4 flex items-start gap-3 rounded-2xl border border-primary-400/30 bg-primary-500/10 p-4">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary-400" aria-hidden="true" />
+        <p className="text-[0.84rem] leading-relaxed text-primary-300">
           Credentials are held by the backend. This console only ever shows a masked preview, and
           nothing is written into the frontend bundle or browser storage.
         </p>
@@ -344,7 +344,7 @@ export function FeatureFlags() {
                             aria-pressed={on}
                             className={cn(
                               'rounded-lg border px-2.5 py-1 text-[0.74rem] font-semibold transition-colors disabled:opacity-50',
-                              on ? 'border-brand-300 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
+                              on ? 'border-primary-400/40 bg-primary-500/15 text-primary-400' : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
                             )}
                           >
                             {plan}

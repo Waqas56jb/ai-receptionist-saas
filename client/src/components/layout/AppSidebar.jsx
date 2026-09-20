@@ -77,20 +77,20 @@ export default function AppSidebar({ onNavigate, className = '' }) {
       </nav>
 
       <div className="shrink-0 border-t border-line p-3">
-        <div className="rounded-xl border border-brand-200/70 bg-brand-50/70 p-3.5">
+        <div className="rounded-xl border border-primary-400/25 bg-primary-500/10 p-3.5">
           <div className="flex items-center gap-2">
             <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary-400 text-primary-950">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
             <p className="text-[0.78rem] font-semibold text-ink">Professional plan</p>
           </div>
-          <p className="mt-2 text-[0.72rem] leading-relaxed text-slate-600">
+          <p className="mt-2 text-[0.72rem] leading-relaxed text-muted">
             342 of 500 calls used this month.
           </p>
           <NavLink
             to="/app/usage"
             onClick={onNavigate}
-            className="mt-3 inline-flex text-[0.75rem] font-semibold text-brand-700 underline-offset-4 hover:underline"
+            className="mt-3 inline-flex text-[0.75rem] font-semibold text-primary-400 underline-offset-4 hover:text-primary-300 hover:underline"
           >
             View usage
           </NavLink>

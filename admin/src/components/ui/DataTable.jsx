@@ -42,8 +42,8 @@ export default function DataTable({
   return (
     <div className={cn('overflow-hidden rounded-2xl border border-line bg-surface', className)}>
       {selectable && table.selected.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-200 bg-brand-50/70 px-5 py-3">
-          <p className="text-[0.82rem] font-semibold text-brand-900">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-primary-400/30 bg-primary-500/10 px-5 py-3">
+          <p className="text-[0.82rem] font-semibold text-primary-300">
             {table.selected.length} selected
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -71,7 +71,7 @@ export default function DataTable({
                     checked={allSelected}
                     onChange={table.toggleAll}
                     aria-label="Select all rows on this page"
-                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500/40"
+                    className="h-4 w-4 rounded border-slate-300 text-primary-400 focus:ring-brand-500/40"
                   />
                 </th>
               )}
@@ -119,7 +119,7 @@ export default function DataTable({
                       checked={table.selected.includes(row.id)}
                       onChange={() => table.toggleRow(row.id)}
                       aria-label={`Select row ${row.id}`}
-                      className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500/40"
+                      className="h-4 w-4 rounded border-slate-300 text-primary-400 focus:ring-brand-500/40"
                     />
                   </td>
                 )}
@@ -157,7 +157,7 @@ export default function DataTable({
                       onChange={() => table.toggleRow(row.id)}
                       onClick={(e) => e.stopPropagation()}
                       aria-label={`Select row ${row.id}`}
-                      className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500/40"
+                      className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-primary-400 focus:ring-brand-500/40"
                     />
                   )}
                   <div className="min-w-0 flex-1">

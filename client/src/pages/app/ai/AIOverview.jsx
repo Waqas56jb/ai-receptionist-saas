@@ -134,7 +134,7 @@ export default function AIOverview() {
 
                   <div>
                     <p className="mb-2 flex items-center gap-2 text-[0.8rem] font-semibold text-ink-900">
-                      <Languages className="h-3.5 w-3.5 text-brand-600" aria-hidden="true" />
+                      <Languages className="h-3.5 w-3.5 text-primary-400" aria-hidden="true" />
                       Supported languages
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -148,7 +148,7 @@ export default function AIOverview() {
                             aria-pressed={active}
                             className={
                               active
-                                ? 'rounded-lg border border-brand-300 bg-brand-50 px-3 py-1.5 text-[0.78rem] font-semibold text-brand-700'
+                                ? 'rounded-lg border border-primary-400/40 bg-primary-500/15 px-3 py-1.5 text-[0.78rem] font-semibold text-primary-400'
                                 : 'rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[0.78rem] font-medium text-slate-600 transition-colors hover:border-slate-300 hover:text-ink-900'
                             }
                           >

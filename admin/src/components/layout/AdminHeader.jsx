@@ -140,7 +140,7 @@ function NotificationsMenu() {
           <button
             type="button"
             onClick={async () => setItems(await notificationService.markAllRead())}
-            className="text-[0.7rem] font-semibold text-brand-600 hover:underline"
+            className="text-[0.7rem] font-semibold text-primary-400 hover:underline"
           >
             Mark all read
           </button>
@@ -155,7 +155,7 @@ function NotificationsMenu() {
             onClick={async () => {
               if (!n.read) setItems(await notificationService.markRead(n.id))
             }}
-            className={cn('flex gap-2.5 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-100', !n.read && 'bg-brand-50/60')}
+            className={cn('flex gap-2.5 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-100', !n.read && 'bg-primary-500/10')}
           >
             <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-slate-300' : 'bg-brand-500')} aria-hidden="true" />
             <span className="min-w-0">

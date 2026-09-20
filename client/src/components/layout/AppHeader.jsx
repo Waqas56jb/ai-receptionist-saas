@@ -150,7 +150,7 @@ function NotificationsMenu() {
       <div className="flex items-center justify-between px-3 py-2">
         <p className="text-[0.8rem] font-bold text-ink-900">Notifications</p>
         {unread > 0 && (
-          <button type="button" onClick={markAll} className="text-[0.72rem] font-semibold text-brand-600 hover:underline">
+          <button type="button" onClick={markAll} className="text-[0.72rem] font-semibold text-primary-400 hover:underline">
             Mark all read
           </button>
         )}
@@ -162,7 +162,7 @@ function NotificationsMenu() {
             key={n.id}
             to={n.href}
             onClick={() => markOne(n.id)}
-            className={cn('flex gap-2.5 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-100', !n.read && 'bg-brand-50/60')}
+            className={cn('flex gap-2.5 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-100', !n.read && 'bg-primary-500/10')}
           >
             <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-slate-300' : 'bg-brand-500')} aria-hidden="true" />
             <span className="min-w-0">

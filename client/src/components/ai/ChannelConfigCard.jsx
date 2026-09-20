@@ -16,7 +16,7 @@ export default function ChannelConfigCard({ channel, onToggle, className = '' })
         <span
           className={cn(
             'grid h-11 w-11 place-items-center rounded-xl',
-            channel.connected ? 'bg-brand-50 text-brand-600' : 'bg-slate-100 text-slate-400',
+            channel.connected ? 'bg-primary-500/15 text-primary-400' : 'bg-slate-100 text-slate-400',
           )}
         >
           <Icon className="h-[1.2rem] w-[1.2rem]" aria-hidden="true" />
@@ -66,7 +66,7 @@ export default function ChannelConfigCard({ channel, onToggle, className = '' })
         )}
         <Link
           to={channel.route}
-          className="inline-flex shrink-0 items-center gap-1.5 text-[0.8rem] font-semibold text-brand-600 underline-offset-4 hover:underline"
+          className="inline-flex shrink-0 items-center gap-1.5 text-[0.8rem] font-semibold text-primary-400 underline-offset-4 hover:underline"
         >
           Configure
           <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />

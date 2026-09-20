@@ -132,7 +132,7 @@ export default function Subscription() {
                       key={plan.id}
                       className={cn(
                         'flex flex-col rounded-xl border p-5',
-                        current ? 'border-brand-400 bg-brand-50/50 ring-1 ring-brand-400/40' : 'border-slate-200 bg-white',
+                        current ? 'border-primary-400 bg-primary-500/10 ring-1 ring-primary-400/40' : 'border-line bg-surface',
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">

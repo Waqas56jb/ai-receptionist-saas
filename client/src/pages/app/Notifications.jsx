@@ -23,9 +23,9 @@ import notificationService from '../../services/notificationService'
 import { timeAgo } from '../../lib/format'
 
 const typeMeta = {
-  lead: { icon: Target, tone: 'bg-brand-50 text-brand-600' },
+  lead: { icon: Target, tone: 'bg-primary-500/15 text-primary-400' },
   booking: { icon: CalendarDays, tone: 'bg-emerald-50 text-emerald-600' },
-  ai: { icon: Sparkles, tone: 'bg-brand-50 text-brand-600' },
+  ai: { icon: Sparkles, tone: 'bg-primary-500/15 text-primary-400' },
   usage: { icon: Gauge, tone: 'bg-amber-50 text-amber-600' },
   channel: { icon: Radio, tone: 'bg-sky-50 text-sky-600' },
   escalation: { icon: UserCheck, tone: 'bg-amber-50 text-amber-600' },
@@ -96,7 +96,7 @@ export default function Notifications() {
                     onClick={async () => {
                       if (!n.read) notifications.setData(await notificationService.markRead(n.id))
                     }}
-                    className={cn('flex items-start gap-3.5 px-5 py-4 transition-colors hover:bg-slate-50', !n.read && 'bg-brand-50/40')}
+                    className={cn('flex items-start gap-3.5 px-5 py-4 transition-colors hover:bg-slate-50', !n.read && 'bg-primary-500/10')}
                   >
                     <span className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-xl', meta.tone)}>
                       <Icon className="h-4 w-4" aria-hidden="true" />

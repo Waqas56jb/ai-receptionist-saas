@@ -5,7 +5,7 @@ import { formatClock, formatDateTime, formatDuration } from '../../lib/format'
 import { channelLabel } from '../../lib/channels'
 
 const speaker = {
-  ai: { label: 'AI receptionist', icon: Bot, className: 'bg-brand-50 text-brand-700' },
+  ai: { label: 'AI receptionist', icon: Bot, className: 'bg-primary-500/15 text-primary-400' },
   customer: { label: 'Customer', icon: UserRound, className: 'bg-slate-100 text-slate-600' },
   human: { label: 'Team', icon: UserCheck, className: 'bg-ink-900 text-white' },
 }

@@ -29,7 +29,7 @@ export default function SourceSelector({
   return (
     <div className={className}>
       <div className="mb-3 flex items-center gap-2">
-        <Icon className="h-4 w-4 text-brand-600" aria-hidden="true" />
+        <Icon className="h-4 w-4 text-primary-400" aria-hidden="true" />
         <h3 className="text-[0.88rem] font-semibold text-ink-900">
           {isKnowledge ? 'Knowledge source' : 'Prompt configuration'}
         </h3>
@@ -63,7 +63,7 @@ export default function SourceSelector({
       </div>
 
       {value === 'shared' ? (
-        <p className="mt-3 rounded-xl border border-brand-200 bg-brand-50/70 p-3.5 text-[0.8rem] leading-relaxed text-brand-900">
+        <p className="mt-3 rounded-xl border border-primary-400/30 bg-primary-500/10 p-3.5 text-[0.8rem] leading-relaxed text-primary-300">
           {isKnowledge
             ? 'All channels use the main business knowledge base.'
             : 'All channels use the same system instructions from Prompt Configuration.'}
@@ -97,7 +97,7 @@ export default function SourceSelector({
                 </span>
                 <span className="flex items-center gap-2">
                   {isKnowledge && !stats?.items && <Badge tone="warning" size="sm">Needs setup</Badge>}
-                  <Link to={meta.route} className="text-[0.76rem] font-semibold text-brand-600 underline-offset-4 hover:underline">
+                  <Link to={meta.route} className="text-[0.76rem] font-semibold text-primary-400 underline-offset-4 hover:underline">
                     Configure
                   </Link>
                 </span>

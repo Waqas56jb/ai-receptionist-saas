@@ -209,7 +209,7 @@ export default function PromptConfiguration() {
               {versions.map((v) => (
                 <div
                   key={v.id}
-                  className={`rounded-xl border p-3.5 ${v.current ? 'border-brand-300 bg-brand-50/60' : 'border-slate-200 bg-white'}`}
+                  className={`rounded-xl border p-3.5 ${v.current ? 'border-primary-400/40 bg-primary-500/10' : 'border-slate-200 bg-white'}`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[0.83rem] font-semibold text-ink-900">{v.label}</span>
@@ -219,7 +219,7 @@ export default function PromptConfiguration() {
                       <button
                         type="button"
                         onClick={() => restore(v.id)}
-                        className="inline-flex items-center gap-1 text-[0.72rem] font-semibold text-brand-600 hover:underline"
+                        className="inline-flex items-center gap-1 text-[0.72rem] font-semibold text-primary-400 hover:underline"
                       >
                         <RotateCcw className="h-3 w-3" aria-hidden="true" />
                         Restore

@@ -90,7 +90,7 @@ export default function AdminCreate() {
                       key={role.id}
                       className={cn(
                         'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all duration-200',
-                        active ? 'border-brand-400 bg-brand-50/60 ring-1 ring-brand-400/40' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50',
+                        active ? 'border-primary-400 bg-primary-500/10 ring-1 ring-primary-400/40' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50',
                       )}
                     >
                       <input
@@ -99,7 +99,7 @@ export default function AdminCreate() {
                         value={role.id}
                         checked={active}
                         onChange={() => pickRole(role.id)}
-                        className="mt-0.5 h-4 w-4 shrink-0 border-slate-300 text-brand-600 focus:ring-brand-500/40"
+                        className="mt-0.5 h-4 w-4 shrink-0 border-slate-300 text-primary-400 focus:ring-brand-500/40"
                       />
                       <span className="min-w-0">
                         <span className="flex flex-wrap items-center gap-2">

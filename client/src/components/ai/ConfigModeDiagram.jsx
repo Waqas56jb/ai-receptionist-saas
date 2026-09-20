@@ -9,7 +9,7 @@ function Channel({ icon: Icon, label, tone = 'brand' }) {
       className={cn(
         node,
         'flex items-center justify-center gap-2',
-        tone === 'brand' ? 'border-brand-200 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-600',
+        tone === 'brand' ? 'border-primary-400/30 bg-primary-500/15 text-primary-400' : 'border-slate-200 bg-white text-slate-600',
       )}
     >
       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -26,7 +26,7 @@ export default function ConfigModeDiagram({ mode = 'shared', className = '' }) {
         <p className="text-center text-[0.7rem] font-bold uppercase tracking-wider text-slate-500">Shared configuration</p>
         <div className="mx-auto mt-5 max-w-sm space-y-2">
           <div className={cn(node, 'flex items-center justify-center gap-2 border-slate-200 bg-white text-ink-900')}>
-            <Database className="h-3.5 w-3.5 text-brand-600" aria-hidden="true" />
+            <Database className="h-3.5 w-3.5 text-primary-400" aria-hidden="true" />
             Knowledge base
           </div>
           <ArrowDown className="mx-auto h-4 w-4 text-slate-400" aria-hidden="true" />
@@ -61,7 +61,7 @@ export default function ConfigModeDiagram({ mode = 'shared', className = '' }) {
         {lanes.map((lane) => (
           <div key={lane.label} className="space-y-2">
             <div className={cn(node, 'flex items-center justify-center gap-2 border-slate-200 bg-white text-ink-900')}>
-              <Database className="h-3.5 w-3.5 text-brand-600" aria-hidden="true" />
+              <Database className="h-3.5 w-3.5 text-primary-400" aria-hidden="true" />
               {lane.label} knowledge
             </div>
             <ArrowDown className="mx-auto h-4 w-4 text-slate-400" aria-hidden="true" />

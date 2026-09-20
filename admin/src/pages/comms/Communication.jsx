@@ -36,7 +36,7 @@ export function Conversations() {
       sortable: true,
       primary: true,
       render: (row) => (
-        <Link to={`/businesses/${row.businessId}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-ink-900 hover:text-brand-600">
+        <Link to={`/businesses/${row.businessId}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-ink-900 hover:text-primary-400">
           {row.business}
         </Link>
       ),
@@ -119,7 +119,7 @@ export function Calls() {
       sortable: true,
       primary: true,
       render: (row) => (
-        <Link to={`/businesses/${row.businessId}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-ink-900 hover:text-brand-600">
+        <Link to={`/businesses/${row.businessId}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-ink-900 hover:text-primary-400">
           {row.business}
         </Link>
       ),
@@ -222,7 +222,7 @@ export function Messages() {
       sortable: true,
       primary: true,
       render: (row) => (
-        <Link to={`/businesses/${row.businessId}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-ink-900 hover:text-brand-600">
+        <Link to={`/businesses/${row.businessId}`} onClick={(e) => e.stopPropagation()} className="font-semibold text-ink-900 hover:text-primary-400">
           {row.business}
         </Link>
       ),
@@ -273,7 +273,7 @@ export function Messages() {
 
 function TranscriptBody({ transcript }) {
   const speaker = {
-    ai: { label: 'AI receptionist', className: 'bg-brand-50 text-brand-700' },
+    ai: { label: 'AI receptionist', className: 'bg-primary-500/15 text-primary-400' },
     customer: { label: 'Customer', className: 'bg-slate-100 text-slate-600' },
     human: { label: 'Team', className: 'bg-ink-900 text-white' },
   }
@@ -362,7 +362,7 @@ export function Transcripts() {
                     <button
                       type="button"
                       onClick={() => setSelectedId(t.id)}
-                      className={cn('flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors', selected?.id === t.id ? 'bg-brand-50/70' : 'hover:bg-slate-50')}
+                      className={cn('flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors', selected?.id === t.id ? 'bg-primary-500/10' : 'hover:bg-slate-50')}
                     >
                       <Avatar name={t.customer} size="sm" tone="muted" />
                       <span className="min-w-0 flex-1">
@@ -385,7 +385,7 @@ export function Transcripts() {
                     <Avatar name={selected.customer} size="md" />
                     <div className="min-w-0">
                       <h2 className="truncate font-display text-[1.02rem] font-semibold text-ink-900">{selected.customer}</h2>
-                      <Link to={`/businesses/${selected.businessId}`} className="text-[0.78rem] text-brand-600 hover:underline">
+                      <Link to={`/businesses/${selected.businessId}`} className="text-[0.78rem] text-primary-400 hover:underline">
                         {selected.business}
                       </Link>
                     </div>

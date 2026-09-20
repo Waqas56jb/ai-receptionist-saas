@@ -2,7 +2,7 @@ import cn from '../../lib/cn'
 
 const tones = {
   neutral: 'border-line bg-surface-2 text-muted',
-  brand: 'border-brand-200 bg-brand-50 text-brand-700',
+  brand: 'border-primary-400/30 bg-primary-500/15 text-primary-400',
   success: 'border-emerald-400/25 bg-emerald-400/10 text-emerald-400',
   warning: 'border-amber-400/25 bg-amber-400/10 text-amber-300',
   danger: 'border-rose-400/25 bg-rose-400/10 text-rose-400',

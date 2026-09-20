@@ -73,7 +73,7 @@ export default function AITestChat({ channel = 'voice', className = '' }) {
           return (
             <div key={m.id} className={cn('flex gap-2.5', isAi ? '' : 'justify-end')}>
               {isAi && (
-                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600">
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-500/15 text-primary-400">
                   <Bot className="h-3.5 w-3.5" aria-hidden="true" />
                 </span>
               )}
@@ -101,7 +101,7 @@ export default function AITestChat({ channel = 'voice', className = '' }) {
 
         {thinking && (
           <div className="flex gap-2.5">
-            <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600">
+            <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-500/15 text-primary-400">
               <Bot className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
             <span className="inline-flex items-center gap-1 rounded-2xl rounded-tl-sm bg-slate-100 px-3.5 py-3">
@@ -124,7 +124,7 @@ export default function AITestChat({ channel = 'voice', className = '' }) {
               key={s}
               type="button"
               onClick={() => send(s)}
-              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[0.72rem] font-medium text-slate-600 transition-colors hover:border-brand-200 hover:text-brand-700"
+              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[0.72rem] font-medium text-slate-600 transition-colors hover:border-primary-400/30 hover:text-primary-400"
             >
               {s}
             </button>

@@ -236,15 +236,15 @@ export default function Bookings() {
                   key={day.date}
                   className={cn(
                     'min-h-[4.5rem] rounded-lg border p-1.5 text-left',
-                    day.date === TODAY ? 'border-brand-400 bg-brand-50/60' : 'border-slate-200 bg-white',
+                    day.date === TODAY ? 'border-primary-400 bg-primary-500/10' : 'border-slate-200 bg-white',
                   )}
                 >
-                  <p className={cn('text-[0.7rem] font-bold', day.date === TODAY ? 'text-brand-700' : 'text-slate-400')}>{day.day}</p>
+                  <p className={cn('text-[0.7rem] font-bold', day.date === TODAY ? 'text-primary-400' : 'text-slate-400')}>{day.day}</p>
                   <ul className="mt-1 space-y-1">
                     {day.items.slice(0, 2).map((item) => (
                       <li
                         key={item.id}
-                        className="truncate rounded bg-brand-600/10 px-1 py-0.5 text-[0.62rem] font-semibold text-brand-800"
+                        className="truncate rounded bg-brand-600/10 px-1 py-0.5 text-[0.62rem] font-semibold text-primary-300"
                         title={`${item.customer} · ${item.service}`}
                       >
                         {item.customer.split(' ')[0]}

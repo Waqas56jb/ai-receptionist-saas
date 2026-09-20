@@ -160,7 +160,7 @@ export function Checkbox({ label, description, className = '', id, ...props }) {
       <input
         id={boxId}
         type="checkbox"
-        className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500/40"
+        className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-primary-400 focus:ring-brand-500/40"
         {...props}
       />
       <div className="min-w-0">
@@ -180,7 +180,7 @@ export function RadioCard({ checked, onChange, title, description, icon: Icon, n
       className={cn(
         'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all duration-200',
         checked
-          ? 'border-brand-400 bg-brand-50/60 ring-1 ring-brand-400/40'
+          ? 'border-primary-400 bg-primary-500/10 ring-1 ring-primary-400/40'
           : 'border-line bg-surface hover:border-line-strong hover:bg-surface-2',
         className,
       )}
@@ -191,11 +191,11 @@ export function RadioCard({ checked, onChange, title, description, icon: Icon, n
         value={value}
         checked={checked}
         onChange={onChange}
-        className="mt-0.5 h-4 w-4 shrink-0 border-slate-300 text-brand-600 focus:ring-brand-500/40"
+        className="mt-0.5 h-4 w-4 shrink-0 border-slate-300 text-primary-400 focus:ring-brand-500/40"
       />
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          {Icon && <Icon className={cn('h-4 w-4', checked ? 'text-brand-600' : 'text-slate-400')} aria-hidden="true" />}
+          {Icon && <Icon className={cn('h-4 w-4', checked ? 'text-primary-400' : 'text-slate-400')} aria-hidden="true" />}
           <span className="text-[0.875rem] font-semibold text-ink-900">{title}</span>
         </div>
         {description && <p className="mt-1 text-[0.8rem] leading-relaxed text-slate-500">{description}</p>}

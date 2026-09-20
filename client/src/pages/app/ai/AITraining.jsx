@@ -260,7 +260,7 @@ export default function AITraining() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 px-6 py-8 text-center transition-colors hover:border-brand-300 hover:bg-brand-50/40"
+              className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 px-6 py-8 text-center transition-colors hover:border-primary-400/40 hover:bg-primary-500/10"
             >
               <UploadCloud className="h-6 w-6 text-brand-500" aria-hidden="true" />
               <span className="mt-3 text-[0.88rem] font-semibold text-ink-900">Drop files here or click to upload</span>

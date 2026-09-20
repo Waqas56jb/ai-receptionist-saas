@@ -91,8 +91,8 @@ export default function Dashboard() {
                   { label: 'Instagram', value: s.channels.instagram, icon: Instagram, to: '/instagram' },
                   { label: 'Website', value: s.channels.web, icon: Globe, to: '/conversations' },
                 ].map((c) => (
-                  <Link key={c.label} to={c.to} className="group rounded-xl border border-slate-200 p-4 transition-all hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card">
-                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">
+                  <Link key={c.label} to={c.to} className="group rounded-xl border border-slate-200 p-4 transition-all hover:-translate-y-0.5 hover:border-primary-400/30 hover:shadow-card">
+                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary-500/15 text-primary-400 transition-colors group-hover:bg-brand-600 group-hover:text-white">
                       <c.icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <p className="mt-3 font-display text-xl font-bold text-ink-900">{c.value}</p>
@@ -184,7 +184,7 @@ export default function Dashboard() {
             title="Recent platform activity"
             description="What changed across the platform, and who changed it."
             action={
-              <Link to="/audit-logs" className="text-[0.78rem] font-semibold text-brand-600 underline-offset-4 hover:underline">
+              <Link to="/audit-logs" className="text-[0.78rem] font-semibold text-primary-400 underline-offset-4 hover:underline">
                 Audit logs
               </Link>
             }
@@ -197,7 +197,7 @@ export default function Dashboard() {
                 const danger = a.type.includes('suspended') || a.type.includes('cancelled')
                 return (
                   <li key={a.id} className="flex items-start gap-3 px-5 py-3">
-                    <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-lg', danger ? 'bg-rose-50 text-rose-600' : 'bg-brand-50 text-brand-600')}>
+                    <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-lg', danger ? 'bg-rose-50 text-rose-600' : 'bg-primary-500/15 text-primary-400')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <div className="min-w-0 flex-1">

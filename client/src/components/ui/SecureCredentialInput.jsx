@@ -155,9 +155,9 @@ export default function SecureCredentialInput({
 
 export function SecretsNotice({ className = '' }) {
   return (
-    <div className={cn('flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50/70 p-4', className)}>
-      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
-      <p className="text-[0.8rem] leading-relaxed text-brand-900">
+    <div className={cn('flex items-start gap-3 rounded-xl border border-primary-400/30 bg-primary-500/10 p-4', className)}>
+      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary-400" aria-hidden="true" />
+      <p className="text-[0.8rem] leading-relaxed text-primary-300">
         Secrets are sent straight to your backend and stored there — they are never written into this
         app's source, environment variables or browser storage. After saving, only a masked preview is
         shown. Prefer scoped API keys over master credentials wherever the provider supports them.

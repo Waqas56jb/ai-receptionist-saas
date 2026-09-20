@@ -31,7 +31,7 @@ export default function BusinessHoursEditor({ hours, onChange, className = '' })
           {row.open ? (
             <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-1">
               {row.allDay ? (
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-[0.78rem] font-semibold text-brand-700">
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-primary-400/30 bg-primary-500/15 px-3 py-1.5 text-[0.78rem] font-semibold text-primary-400">
                   <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                   Open 24 hours
                 </span>
