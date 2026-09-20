@@ -110,8 +110,8 @@ export default function KnowledgeBaseSection() {
             <div className="h-full rounded-2xl border border-line bg-surface p-6 sm:p-7">
               <h3 className="font-display text-lg font-semibold text-ink">What your AI receptionist learns</h3>
               <p className="mt-2 text-[0.9rem] leading-relaxed text-muted">
-                The same platform adapts to any sector — a hotel teaches it rooms and amenities, a
-                clinic teaches it treatments and appointment rules.
+                The same platform adapts to any sector — a bank teaches it products and branch hours,
+                a hospital teaches it departments and visiting rules, a hotel teaches it rooms and amenities.
               </p>
 
               <ul className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">

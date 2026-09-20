@@ -4,16 +4,26 @@
  */
 
 export const businessTypes = [
-  'Hotel / Hospitality',
-  'Clinic / Healthcare',
-  'Restaurant / Café',
-  'Retail Store',
-  'Real Estate',
-  'Professional Services',
-  'Salon / Spa',
-  'Automotive',
-  'Education',
-  'Other',
+  'Bank',
+  'Microfinance Institution',
+  'Insurance Company',
+  'Hospital',
+  'Medical Clinic',
+  'Pharmacy',
+  'Restaurant',
+  'Café',
+  'Hotel',
+  'University',
+  'Training Center',
+  'Supermarket',
+  'Telecommunications',
+  'IT Company',
+  'Logistics Company',
+  'Travel Agency',
+  'Construction Company',
+  'Law Firm',
+  'Government Institution',
+  'Real Estate Agency',
 ]
 
 export const countries = [
@@ -28,6 +38,7 @@ export const countries = [
   'Belgium',
   'Switzerland',
   'United Arab Emirates',
+  'Djibouti',
   'Pakistan',
 ]
 
@@ -56,7 +67,7 @@ export const languages = [
 export const business = {
   id: 'biz_8f21',
   name: 'Harbour View Hotel',
-  type: 'Hotel / Hospitality',
+  type: 'Hotel',
   description:
     'A 42-room boutique hotel on the old port, with a rooftop restaurant, spa and conference facilities. Guests are mostly business travellers midweek and couples at the weekend.',
   website: 'https://harbourview.example.com',

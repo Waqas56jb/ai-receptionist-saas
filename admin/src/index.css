@@ -4,19 +4,19 @@
 
 :root,
 html[data-site-theme='dark'] {
-  --canvas: 4 16 14;
-  --canvas-soft: 7 22 19;
-  --surface: 10 28 24;
-  --surface-2: 13 36 31;
+  --canvas: 3 10 12;
+  --canvas-soft: 5 16 18;
+  --surface: 8 20 22;
+  --surface-2: 11 26 29;
   --ink: 232 243 239;
   --muted: 155 176 170;
   --subtle: 109 130 124;
-  --line: 38 72 64;
-  --line-strong: 58 102 90;
-  --slate-50: 7 22 19;
-  --slate-100: 13 36 31;
-  --slate-200: 38 72 64;
-  --slate-300: 58 102 90;
+  --line: 18 58 56;
+  --line-strong: 28 84 80;
+  --slate-50: 5 16 18;
+  --slate-100: 11 26 29;
+  --slate-200: 18 58 56;
+  --slate-300: 28 84 80;
   --slate-400: 109 130 124;
   --slate-500: 155 176 170;
   --slate-600: 176 194 188;
@@ -24,12 +24,12 @@ html[data-site-theme='dark'] {
   --slate-800: 220 232 228;
   --slate-900: 232 243 239;
   --slate-950: 240 248 245;
-  --ink-950: 4 16 14;
-  --ink-900: 7 22 19;
-  --ink-800: 10 28 24;
-  --ink-700: 13 36 31;
-  --ink-600: 18 48 42;
-  --ink-500: 26 64 56;
+  --ink-950: 3 10 12;
+  --ink-900: 5 16 18;
+  --ink-800: 8 20 22;
+  --ink-700: 11 26 29;
+  --ink-600: 14 36 38;
+  --ink-500: 20 52 54;
   --brand-50: 8 42 38;
   --brand-100: 10 55 48;
   --brand-200: 15 80 70;
@@ -137,27 +137,27 @@ html[data-site-theme='light'] {
 
   .bg-aurora {
     background:
-      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(20, 184, 166, 0.22), transparent 55%),
-      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(163, 230, 53, 0.1), transparent 50%),
-      radial-gradient(ellipse 50% 40% at 50% 100%, rgba(96, 165, 250, 0.08), transparent 55%);
+      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(20, 184, 166, 0.16), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(45, 212, 191, 0.1), transparent 50%),
+      radial-gradient(ellipse 50% 40% at 50% 100%, rgba(13, 148, 136, 0.08), transparent 55%);
   }
 
   html[data-site-theme='light'] .bg-aurora {
     background:
-      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(20, 184, 166, 0.14), transparent 55%),
-      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(163, 230, 53, 0.08), transparent 50%),
-      radial-gradient(ellipse 50% 40% at 50% 100%, rgba(96, 165, 250, 0.08), transparent 55%);
+      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(20, 184, 166, 0.12), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 90% 0%, rgba(45, 212, 191, 0.08), transparent 50%),
+      radial-gradient(ellipse 50% 40% at 50% 100%, rgba(13, 148, 136, 0.06), transparent 55%);
   }
 
   .bg-grid {
     background-image:
-      linear-gradient(to right, rgb(var(--line) / 0.45) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(var(--line) / 0.45) 1px, transparent 1px);
+      linear-gradient(to right, rgb(20 184 166 / 0.16) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(20 184 166 / 0.16) 1px, transparent 1px);
     background-size: 56px 56px;
   }
 
   .text-gradient {
-    background-image: linear-gradient(90deg, #5eead4 0%, #14b8a6 42%, #a3e635 100%);
+    background-image: linear-gradient(90deg, #5eead4 0%, #14b8a6 50%, #2dd4bf 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

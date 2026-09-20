@@ -89,9 +89,9 @@ export default {
       },
       backgroundImage: {
         'grid-light':
-          'linear-gradient(to right, rgb(var(--line) / 0.45) 1px, transparent 1px), linear-gradient(to bottom, rgb(var(--line) / 0.45) 1px, transparent 1px)',
+          'linear-gradient(to right, rgb(20 184 166 / 0.16) 1px, transparent 1px), linear-gradient(to bottom, rgb(20 184 166 / 0.16) 1px, transparent 1px)',
         'grid-dark':
-          'linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)',
+          'linear-gradient(to right, rgb(20 184 166 / 0.12) 1px, transparent 1px), linear-gradient(to bottom, rgb(20 184 166 / 0.12) 1px, transparent 1px)',
       },
       maxWidth: {
         site: '1400px',
