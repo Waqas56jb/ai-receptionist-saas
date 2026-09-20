@@ -24,14 +24,14 @@ export default function DataTable({
   if (loading) return <SkeletonTable rows={8} cols={Math.min(columns.length, 5)} className={className} />
   if (error) {
     return (
-      <div className={cn('rounded-2xl border border-slate-200/80 bg-white', className)}>
+      <div className={cn('rounded-2xl border border-line bg-surface', className)}>
         <ErrorState onRetry={onRetry} />
       </div>
     )
   }
   if (!table.rows.length) {
     return (
-      <div className={cn('rounded-2xl border border-slate-200/80 bg-white', className)}>
+      <div className={cn('rounded-2xl border border-line bg-surface', className)}>
         {empty || <EmptyState title="Nothing to show" description="No records match the current filters." />}
       </div>
     )
@@ -40,7 +40,7 @@ export default function DataTable({
   const allSelected = selectable && table.selected.length === table.rows.length
 
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-slate-200/80 bg-white', className)}>
+    <div className={cn('overflow-hidden rounded-2xl border border-line bg-surface', className)}>
       {selectable && table.selected.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-200 bg-brand-50/70 px-5 py-3">
           <p className="text-[0.82rem] font-semibold text-brand-900">
@@ -63,7 +63,7 @@ export default function DataTable({
       <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[54rem] border-collapse text-left">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/60">
+            <tr className="border-b border-line bg-canvas-soft/80">
               {selectable && (
                 <th scope="col" className="w-10 px-4 py-3">
                   <input
@@ -193,7 +193,7 @@ export function Pagination({ table }) {
   const to = Math.min(page * pageSize, total)
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 bg-slate-50/60 px-5 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-canvas-soft/80 px-5 py-3">
       <p className="text-[0.78rem] text-slate-500">
         Showing <span className="font-semibold text-ink-900">{from}–{to}</span> of{' '}
         <span className="font-semibold text-ink-900">{total}</span>
@@ -204,7 +204,7 @@ export function Pagination({ table }) {
           type="button"
           onClick={() => setPage(Math.max(1, page - 1))}
           disabled={page === 1}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:text-ink-900 disabled:opacity-40"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-line bg-surface text-muted transition-colors hover:text-ink disabled:opacity-40"
           aria-label="Previous page"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -216,7 +216,7 @@ export function Pagination({ table }) {
           type="button"
           onClick={() => setPage(Math.min(totalPages, page + 1))}
           disabled={page === totalPages}
-          className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:text-ink-900 disabled:opacity-40"
+          className="grid h-8 w-8 place-items-center rounded-lg border border-line bg-surface text-muted transition-colors hover:text-ink disabled:opacity-40"
           aria-label="Next page"
         >
           <ChevronRight className="h-4 w-4" />

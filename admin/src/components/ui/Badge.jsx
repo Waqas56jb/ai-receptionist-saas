@@ -1,14 +1,14 @@
 import { cn } from '../../lib/utils'
 
 const tones = {
-  neutral: 'border-slate-200 bg-slate-50 text-slate-600',
+  neutral: 'border-line bg-surface-2 text-muted',
   brand: 'border-brand-200 bg-brand-50 text-brand-700',
-  success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  warning: 'border-amber-200 bg-amber-50 text-amber-700',
-  danger: 'border-rose-200 bg-rose-50 text-rose-700',
-  info: 'border-sky-200 bg-sky-50 text-sky-700',
-  purple: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700',
-  dark: 'border-ink-800 bg-ink-900 text-white',
+  success: 'border-emerald-400/25 bg-emerald-400/10 text-emerald-400',
+  warning: 'border-amber-400/25 bg-amber-400/10 text-amber-300',
+  danger: 'border-rose-400/25 bg-rose-400/10 text-rose-400',
+  info: 'border-sky-400/25 bg-sky-400/10 text-sky-300',
+  purple: 'border-fuchsia-400/25 bg-fuchsia-400/10 text-fuchsia-300',
+  dark: 'border-line bg-ink-900 text-ink',
 }
 
 /**

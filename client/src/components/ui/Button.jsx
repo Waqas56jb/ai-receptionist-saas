@@ -6,18 +6,18 @@ const base =
 
 const variants = {
   primary:
-    'bg-brand-600 text-white shadow-[0_8px_20px_-8px_rgba(47,78,219,0.6)] hover:bg-brand-700 hover:shadow-[0_12px_28px_-8px_rgba(47,78,219,0.55)] hover:-translate-y-0.5 active:translate-y-0',
+    'rounded-lg bg-primary-400 text-primary-950 shadow-lg shadow-primary-500/30 hover:bg-primary-300 hover:-translate-y-0.5 active:translate-y-0',
   secondary:
-    'bg-white text-ink-900 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 hover:-translate-y-0.5 active:translate-y-0',
-  outline: 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-ink-900',
-  subtle: 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-ink-900',
-  ghost: 'text-slate-600 hover:text-ink-900 hover:bg-slate-100',
-  danger: 'bg-rose-600 text-white hover:bg-rose-700',
-  dangerGhost: 'text-rose-600 hover:bg-rose-50',
+    'rounded-lg bg-surface text-ink border border-line hover:border-line-strong hover:bg-surface-2 hover:-translate-y-0.5 active:translate-y-0',
+  outline: 'rounded-lg border border-line bg-surface text-muted hover:border-line-strong hover:bg-surface-2 hover:text-ink',
+  subtle: 'rounded-lg bg-surface-2 text-muted hover:bg-line hover:text-ink',
+  ghost: 'text-muted hover:text-ink hover:bg-surface-2',
+  danger: 'rounded-lg bg-rose-600 text-white hover:bg-rose-700',
+  dangerGhost: 'text-rose-500 hover:bg-rose-50',
   onDark:
-    'bg-white text-ink-900 hover:bg-brand-50 hover:-translate-y-0.5 active:translate-y-0 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.5)]',
+    'rounded-lg bg-primary-400 text-primary-950 hover:bg-primary-300 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-primary-500/30',
   outlineDark:
-    'border border-white/20 text-white hover:bg-white/10 hover:border-white/30 hover:-translate-y-0.5 active:translate-y-0',
+    'rounded-lg border border-line-strong text-ink hover:bg-surface-2 hover:border-primary-400 hover:-translate-y-0.5 active:translate-y-0',
 }
 
 const sizes = {

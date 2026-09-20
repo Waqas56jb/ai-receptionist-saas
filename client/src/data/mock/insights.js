@@ -46,22 +46,22 @@ export const summary = {
 }
 
 export const channelBreakdown = [
-  { name: 'Voice', value: 363, color: '#2F4EDB' },
-  { name: 'WhatsApp', value: 288, color: '#10B981' },
-  { name: 'Instagram', value: 96, color: '#D946EF' },
-  { name: 'Website', value: 132, color: '#38BDF8' },
+  { name: 'Voice', value: 363, color: '#14b8a6' },
+  { name: 'WhatsApp', value: 288, color: '#34d399' },
+  { name: 'Instagram', value: 96, color: '#c084fc' },
+  { name: 'Website', value: 132, color: '#60a5fa' },
 ]
 
 export const handlingBreakdown = [
-  { name: 'Handled by AI', value: 92, color: '#2F4EDB' },
-  { name: 'Human handoff', value: 8, color: '#94A3B8' },
+  { name: 'Handled by AI', value: 92, color: '#14b8a6' },
+  { name: 'Human handoff', value: 8, color: '#8aa39c' },
 ]
 
 export const languageBreakdown = [
-  { name: 'English', value: 58, color: '#2F4EDB' },
-  { name: 'French', value: 27, color: '#6E8FFA' },
-  { name: 'German', value: 9, color: '#9AB4FF' },
-  { name: 'Italian', value: 6, color: '#C2D3FF' },
+  { name: 'English', value: 58, color: '#14b8a6' },
+  { name: 'French', value: 27, color: '#2dd4bf' },
+  { name: 'German', value: 9, color: '#5eead4' },
+  { name: 'Italian', value: 6, color: '#99f6e4' },
 ]
 
 export const peakHours = [

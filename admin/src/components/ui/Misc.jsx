@@ -9,7 +9,7 @@ import { useOnClickOutside } from '../../hooks'
 export function Tabs({ tabs, value, onChange, className = '', size = 'md' }) {
   return (
     <div className={cn('-mx-1 overflow-x-auto px-1 pb-1', className)}>
-      <div className="inline-flex min-w-full gap-1 rounded-xl border border-slate-200/80 bg-slate-50/80 p-1" role="tablist">
+      <div className="inline-flex min-w-full gap-1 rounded-xl border border-line bg-canvas-soft p-1" role="tablist">
         {tabs.map((tab) => {
           const id = typeof tab === 'string' ? tab : tab.id
           const label = typeof tab === 'string' ? tab : tab.label
@@ -26,7 +26,7 @@ export function Tabs({ tabs, value, onChange, className = '', size = 'md' }) {
               className={cn(
                 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-all duration-200',
                 size === 'sm' ? 'px-3 py-1.5 text-[0.76rem]' : 'px-3.5 py-2 text-[0.82rem]',
-                active ? 'bg-white text-ink-900 shadow-subtle' : 'text-slate-500 hover:text-ink-900',
+                active ? 'bg-surface text-ink shadow-subtle' : 'text-slate-500 hover:text-ink',
               )}
             >
               {Icon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
@@ -64,7 +64,7 @@ export function Dropdown({ trigger, children, align = 'right', width = 'w-56', c
             transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
             onClick={() => setOpen(false)}
             className={cn(
-              'absolute z-50 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-lift',
+              'absolute z-50 mt-2 overflow-hidden rounded-xl border border-line bg-surface p-1.5 shadow-lift',
               align === 'right' ? 'right-0' : 'left-0',
               width,
             )}
@@ -119,7 +119,7 @@ export function Toggle({ checked, onChange, label, description, disabled, size =
       aria-label={!label ? 'Toggle' : undefined}
       disabled={disabled}
       onClick={() => onChange?.(!checked)}
-      className={cn('relative inline-flex shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50', dims.track, checked ? 'bg-brand-600' : 'bg-slate-300')}
+      className={cn('relative inline-flex shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50', dims.track, checked ? 'bg-primary-400' : 'bg-slate-300')}
     >
       <span className={cn('inline-block transform rounded-full bg-white shadow transition-transform duration-200', dims.knob, checked ? dims.shift : 'translate-x-1')} />
     </button>
@@ -165,7 +165,7 @@ export function Avatar({ name = '', size = 'md', tone = 'brand', className = '' 
 export function StatCard({ label, value, delta, deltaTone = 'up', icon: Icon, hint, className = '' }) {
   const positive = deltaTone === 'up'
   return (
-    <div className={cn('rounded-2xl border border-slate-200/80 bg-white p-5 transition-shadow duration-300 hover:shadow-card', className)}>
+    <div className={cn('rounded-2xl border border-line bg-surface p-5 transition-shadow duration-300 hover:shadow-card', className)}>
       <div className="flex items-start justify-between gap-3">
         <p className="text-[0.7rem] font-bold uppercase tracking-wider text-slate-500">{label}</p>
         {Icon && (

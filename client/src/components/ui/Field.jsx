@@ -3,17 +3,17 @@ import { Eye, EyeOff, ChevronDown } from 'lucide-react'
 import cn from '../../lib/cn'
 
 const controlBase =
-  'w-full rounded-xl border bg-white text-[0.9rem] text-ink-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:bg-slate-50 disabled:text-slate-400'
+  'w-full rounded-xl border bg-surface text-[0.9rem] text-ink placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400/30 disabled:bg-canvas-soft disabled:text-slate-400'
 
 const controlState = (error) =>
   error
     ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-500/25'
-    : 'border-slate-200 hover:border-slate-300 focus:border-brand-500'
+    : 'border-line hover:border-line-strong focus:border-primary-400'
 
 export function Label({ htmlFor, children, required, hint }) {
   return (
     <div className="mb-1.5 flex items-baseline justify-between gap-3">
-      <label htmlFor={htmlFor} className="text-[0.8rem] font-semibold text-ink-900">
+      <label htmlFor={htmlFor} className="text-[0.8rem] font-semibold text-ink">
         {children}
         {required && <span className="ml-0.5 text-rose-500">*</span>}
       </label>
@@ -181,7 +181,7 @@ export function RadioCard({ checked, onChange, title, description, icon: Icon, n
         'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all duration-200',
         checked
           ? 'border-brand-400 bg-brand-50/60 ring-1 ring-brand-400/40'
-          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50',
+          : 'border-line bg-surface hover:border-line-strong hover:bg-surface-2',
         className,
       )}
     >

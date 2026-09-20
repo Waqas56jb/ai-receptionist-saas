@@ -5,10 +5,10 @@ import Logo from '../components/ui/Logo'
 
 export default function NotFound() {
   return (
-    <div className="grid min-h-screen place-items-center bg-slate-50 px-5">
+    <div className="grid min-h-screen place-items-center bg-canvas px-5">
       <div className="w-full max-w-md text-center">
         <Logo size="md" className="mx-auto" />
-        <span className="mx-auto mt-8 grid h-12 w-12 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-400">
+        <span className="mx-auto mt-8 grid h-12 w-12 place-items-center rounded-2xl border border-line bg-surface text-muted">
           <Compass className="h-5 w-5" aria-hidden="true" />
         </span>
         <h1 className="mt-5 font-display text-2xl font-bold text-ink-900">Page not found</h1>

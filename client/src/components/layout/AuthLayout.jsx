@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Check, Sparkles } from 'lucide-react'
 import Logo from '../ui/Logo'
+import ThemeToggle from '../ui/ThemeToggle'
 
 const highlights = [
   'Answer every call and message 24/7',
@@ -14,16 +15,20 @@ export default function AuthLayout({ title, description, children, footer, wide 
   const reduceMotion = useReducedMotion()
 
   return (
-    <div className="min-h-screen bg-white lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+    <div className="relative min-h-screen bg-canvas lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+      <div className="pointer-events-none absolute inset-0 bg-aurora lg:hidden" aria-hidden="true" />
       {/* Form side */}
-      <div className="flex min-h-screen flex-col px-5 py-8 sm:px-8 lg:px-12">
+      <div className="relative flex min-h-screen flex-col px-5 py-8 sm:px-8 lg:px-12">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="rounded-lg" aria-label="Back to the website">
             <Logo size="md" />
           </Link>
-          <Link to="/" className="text-[0.8rem] font-semibold text-slate-500 transition-colors hover:text-ink-900">
-            Back to website
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link to="/" className="text-[0.8rem] font-semibold text-muted transition-colors hover:text-ink">
+              Back to website
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-1 items-center justify-center py-10">
@@ -33,7 +38,7 @@ export default function AuthLayout({ title, description, children, footer, wide 
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className={wide ? 'w-full max-w-xl' : 'w-full max-w-sm'}
           >
-            <h1 className="font-display text-[1.7rem] font-bold tracking-tight text-ink-900 sm:text-[1.9rem]">{title}</h1>
+            <h1 className="font-display text-[1.7rem] font-bold tracking-tight text-ink sm:text-[1.9rem]">{title}</h1>
             {description && <p className="mt-2.5 text-[0.9rem] leading-relaxed text-slate-500">{description}</p>}
             <div className="mt-8">{children}</div>
           </motion.div>
@@ -43,15 +48,14 @@ export default function AuthLayout({ title, description, children, footer, wide 
       </div>
 
       {/* Brand side */}
-      <div className="relative hidden overflow-hidden bg-ink-900 lg:block">
+      <div className="relative hidden overflow-hidden bg-ink-950 lg:block">
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <div className="absolute inset-0 bg-grid-dark [background-size:56px_56px] opacity-40" />
-          <div className="absolute -right-24 top-0 h-96 w-96 rounded-full bg-brand-600/25 blur-[120px]" />
-          <div className="absolute -left-20 bottom-0 h-80 w-80 rounded-full bg-brand-500/15 blur-[120px]" />
+          <div className="absolute inset-0 bg-aurora" />
+          <div className="absolute inset-0 bg-grid [background-size:56px_56px] opacity-50" />
         </div>
 
         <div className="relative flex h-full flex-col justify-center px-12 xl:px-16">
-          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-brand-200">
+          <span className="eyebrow">
             <Sparkles className="h-3 w-3" aria-hidden="true" />
             Business portal
           </span>

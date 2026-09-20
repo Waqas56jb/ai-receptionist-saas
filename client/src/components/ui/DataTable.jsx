@@ -21,22 +21,22 @@ export default function DataTable({
   footer,
 }) {
   if (loading) return <SkeletonTable rows={6} cols={Math.min(columns.length, 5)} className={className} />
-  if (error) return <div className={cn('rounded-2xl border border-slate-200/80 bg-white', className)}><ErrorState onRetry={onRetry} /></div>
+  if (error) return <div className={cn('rounded-2xl border border-line bg-surface', className)}><ErrorState onRetry={onRetry} /></div>
   if (!rows?.length) {
     return (
-      <div className={cn('rounded-2xl border border-slate-200/80 bg-white', className)}>
+      <div className={cn('rounded-2xl border border-line bg-surface', className)}>
         {empty || <EmptyState title="Nothing here yet" description="Records will appear as soon as there is activity." />}
       </div>
     )
   }
 
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-slate-200/80 bg-white', className)}>
+    <div className={cn('overflow-hidden rounded-2xl border border-line bg-surface', className)}>
       {/* Desktop table */}
       <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[46rem] border-collapse text-left">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/60">
+            <tr className="border-b border-line bg-canvas-soft/80">
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -104,7 +104,7 @@ export default function DataTable({
         })}
       </ul>
 
-      {footer && <div className="border-t border-slate-200/80 bg-slate-50/60 px-5 py-3 text-[0.78rem] text-slate-500">{footer}</div>}
+      {footer && <div className="border-t border-line bg-canvas-soft/80 px-5 py-3 text-[0.78rem] text-slate-500">{footer}</div>}
     </div>
   )
 }

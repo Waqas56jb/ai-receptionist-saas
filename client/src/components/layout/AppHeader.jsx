@@ -22,6 +22,7 @@ import searchService from '../../services/searchService'
 import notificationService from '../../services/notificationService'
 import Avatar from '../ui/Avatar'
 import Logo from '../ui/Logo'
+import ThemeToggle from '../ui/ThemeToggle'
 import Dropdown, { DropdownDivider, DropdownItem, DropdownLabel } from '../ui/Dropdown'
 
 function GlobalSearch({ id = 'global-search' }) {
@@ -75,7 +76,7 @@ function GlobalSearch({ id = 'global-search' }) {
           setOpen(true)
         }}
         placeholder="Search contacts, conversations, leads…"
-        className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-[0.85rem] text-ink-900 transition-colors placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+        className="h-10 w-full rounded-xl border border-line bg-canvas-soft/70 pl-10 pr-3 text-[0.85rem] text-ink transition-colors placeholder:text-slate-400 focus:border-primary-400 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary-400/30"
       />
 
       <AnimatePresence>
@@ -86,7 +87,7 @@ function GlobalSearch({ id = 'global-search' }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.16 }}
-            className="absolute left-0 right-0 top-12 z-50 max-h-[26rem] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lift"
+            className="absolute left-0 right-0 top-12 z-50 max-h-[26rem] overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-lift"
           >
             {loading && <p className="px-3 py-3 text-[0.8rem] text-slate-500">Searching…</p>}
             {!loading && !results.length && (
@@ -134,7 +135,7 @@ function NotificationsMenu() {
         <button
           type="button"
           onClick={toggle}
-          className="relative grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-ink-900"
+          className="relative grid h-10 w-10 place-items-center rounded-xl border border-line bg-surface text-muted transition-colors hover:bg-surface-2 hover:text-ink"
           aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}
         >
           <Bell className="h-[1.05rem] w-[1.05rem]" />
@@ -191,12 +192,12 @@ export default function AppHeader({ onOpenSidebar }) {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-line bg-surface/85 backdrop-blur-xl">
       <div className="flex h-[4.25rem] items-center gap-3 px-4 sm:gap-4 sm:px-6">
         <button
           type="button"
           onClick={onOpenSidebar}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-ink-900 transition-colors hover:bg-slate-50 lg:hidden"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line bg-surface text-ink transition-colors hover:bg-surface-2 lg:hidden"
           aria-label="Open navigation"
         >
           <Menu className="h-5 w-5" />
@@ -212,9 +213,10 @@ export default function AppHeader({ onOpenSidebar }) {
         </Link>
 
         <div className="flex shrink-0 items-center gap-2">
+          <ThemeToggle className="hidden sm:inline-flex" />
           <Link
             to="/app/help"
-            className="hidden h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-ink-900 sm:grid"
+            className="hidden h-10 w-10 place-items-center rounded-xl border border-line bg-surface text-muted transition-colors hover:bg-surface-2 hover:text-ink sm:grid"
             aria-label="Help and support"
           >
             <LifeBuoy className="h-[1.05rem] w-[1.05rem]" />
@@ -228,7 +230,7 @@ export default function AppHeader({ onOpenSidebar }) {
               <button
                 type="button"
                 onClick={toggle}
-                className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-2.5 transition-colors hover:bg-slate-50"
+                className="flex items-center gap-2.5 rounded-xl border border-line bg-surface py-1.5 pl-1.5 pr-2.5 transition-colors hover:bg-surface-2"
                 aria-label="Account menu"
               >
                 <Avatar name={user?.name} size="sm" />
@@ -271,7 +273,7 @@ export default function AppHeader({ onOpenSidebar }) {
       </div>
 
       {/* Search moves to its own row on small screens */}
-      <div className="border-t border-slate-200/80 px-4 py-2.5 md:hidden">
+      <div className="border-t border-line px-4 py-2.5 md:hidden">
         <GlobalSearch id="global-search-mobile" />
       </div>
     </header>

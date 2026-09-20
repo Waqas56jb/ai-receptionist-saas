@@ -25,8 +25,8 @@ export default function AdminSidebar({ onNavigate, collapsed = false, onToggleCo
     .filter((group) => group.items.length > 0)
 
   return (
-    <div className={cn('flex h-full flex-col bg-white', className)}>
-      <div className={cn('flex h-[4.25rem] shrink-0 items-center border-b border-slate-200/80', collapsed ? 'justify-center px-2' : 'justify-between px-4')}>
+    <div className={cn('flex h-full flex-col bg-surface', className)}>
+      <div className={cn('flex h-[4.25rem] shrink-0 items-center border-b border-line', collapsed ? 'justify-center px-2' : 'justify-between px-4')}>
         {collapsed ? (
           <img src={logoIcon} alt="DEVMARK admin" className="h-8 w-8 rounded-lg" />
         ) : (
@@ -78,14 +78,14 @@ export default function AdminSidebar({ onNavigate, collapsed = false, onToggleCo
                             'group flex items-center gap-2.5 rounded-lg py-2 text-[0.82rem] font-medium transition-colors',
                             collapsed ? 'justify-center px-2' : 'px-3',
                             isActive
-                              ? 'bg-brand-600 text-white shadow-[0_6px_16px_-8px_rgba(47,78,219,0.8)]'
-                              : 'text-slate-600 hover:bg-slate-100 hover:text-ink-900',
+                              ? 'bg-primary-400 text-primary-950 shadow-lg shadow-primary-500/20'
+                              : 'text-slate-600 hover:bg-surface-2 hover:text-ink',
                           )
                         }
                       >
                         {({ isActive }) => (
                           <>
-                            <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600')} aria-hidden="true" />
+                            <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-primary-950' : 'text-slate-400 group-hover:text-slate-600')} aria-hidden="true" />
                             {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
                           </>
                         )}
@@ -100,10 +100,10 @@ export default function AdminSidebar({ onNavigate, collapsed = false, onToggleCo
       </nav>
 
       {!collapsed && (
-        <div className="shrink-0 border-t border-slate-200/80 p-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+        <div className="shrink-0 border-t border-line p-3">
+          <div className="rounded-xl border border-line bg-canvas-soft p-3.5">
             <p className="text-[0.64rem] font-bold uppercase tracking-wider text-slate-400">Signed in as</p>
-            <p className="mt-1 text-[0.82rem] font-semibold text-ink-900">{role?.name || 'Admin'}</p>
+            <p className="mt-1 text-[0.82rem] font-semibold text-ink">{role?.name || 'Admin'}</p>
             <p className="mt-1 text-[0.72rem] leading-relaxed text-slate-500">
               {role?.id === 'super-admin' ? 'Full platform access.' : `${role?.permissions.length || 0} permissions granted.`}
             </p>

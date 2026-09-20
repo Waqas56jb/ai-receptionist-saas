@@ -16,7 +16,7 @@ export function SkeletonText({ lines = 3, className = '' }) {
 
 export function SkeletonCard({ className = '' }) {
   return (
-    <div className={cn('rounded-2xl border border-slate-200/80 bg-white p-5', className)}>
+    <div className={cn('rounded-2xl border border-line bg-surface p-5', className)}>
       <Skeleton className="h-9 w-9 rounded-xl" />
       <Skeleton className="mt-4 h-3 w-24" />
       <Skeleton className="mt-3 h-6 w-20" />
@@ -36,7 +36,7 @@ export function SkeletonStats({ count = 4, className = '' }) {
 
 export function SkeletonTable({ rows = 6, cols = 5, className = '' }) {
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-slate-200/80 bg-white', className)}>
+    <div className={cn('overflow-hidden rounded-2xl border border-line bg-surface', className)}>
       <div className="border-b border-slate-200/80 bg-slate-50/60 px-5 py-3">
         <Skeleton className="h-3 w-32" />
       </div>
@@ -56,7 +56,7 @@ export function SkeletonTable({ rows = 6, cols = 5, className = '' }) {
 
 export function SkeletonChart({ className = '' }) {
   return (
-    <div className={cn('rounded-2xl border border-slate-200/80 bg-white p-5', className)}>
+    <div className={cn('rounded-2xl border border-line bg-surface p-5', className)}>
       <Skeleton className="h-3 w-28" />
       <div className="mt-6 flex h-40 items-end gap-3">
         {[45, 70, 55, 85, 62, 90, 48].map((h, i) => (

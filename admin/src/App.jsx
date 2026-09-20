@@ -63,9 +63,9 @@ const Maintenance = named(() => import('./pages/system/System'), 'Maintenance')
 
 function RouteFallback() {
   return (
-    <div className="grid min-h-screen place-items-center bg-ink-950" role="status" aria-live="polite">
-      <span className="flex items-center gap-3 text-slate-400">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-brand-400" />
+    <div className="grid min-h-screen place-items-center bg-canvas" role="status" aria-live="polite">
+      <span className="flex items-center gap-3 text-muted">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-primary-400" />
         <span className="text-sm">Loading…</span>
       </span>
     </div>

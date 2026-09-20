@@ -6,7 +6,7 @@ export function EmptyState({ icon: Icon, title, description, action, className =
   return (
     <div className={cn('flex flex-col items-center justify-center px-6 text-center', compact ? 'py-10' : 'py-16', className)}>
       {Icon && (
-        <span className="grid h-12 w-12 place-items-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-400">
+        <span className="grid h-12 w-12 place-items-center rounded-2xl border border-line bg-surface-2 text-muted">
           <Icon className="h-5 w-5" aria-hidden="true" />
         </span>
       )}
@@ -38,7 +38,7 @@ export function ErrorState({ onRetry, title = 'Something went wrong.', descripti
 /** Shown when the signed-in role does not hold the required permission. */
 export function NoPermission({ permission, className = '' }) {
   return (
-    <div className={cn('flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center', className)}>
+    <div className={cn('flex flex-col items-center justify-center rounded-2xl border border-line bg-surface px-6 py-16 text-center', className)}>
       <span className="grid h-12 w-12 place-items-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-600">
         <ShieldAlert className="h-5 w-5" aria-hidden="true" />
       </span>

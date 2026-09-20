@@ -25,7 +25,7 @@ export default function Dropdown({ trigger, children, align = 'right', width = '
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
             className={cn(
-              'absolute z-50 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-lift',
+              'absolute z-50 mt-2 overflow-hidden rounded-xl border border-line bg-surface p-1.5 shadow-lift',
               align === 'right' ? 'right-0' : 'left-0',
               width,
             )}

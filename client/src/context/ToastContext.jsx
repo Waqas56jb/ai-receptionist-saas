@@ -11,9 +11,9 @@ const icons = {
 }
 
 const styles = {
-  success: 'border-emerald-200 bg-white text-emerald-700',
-  error: 'border-rose-200 bg-white text-rose-700',
-  info: 'border-slate-200 bg-white text-slate-700',
+  success: 'border-emerald-400/25 bg-surface text-emerald-400',
+  error: 'border-rose-400/25 bg-surface text-rose-400',
+  info: 'border-line bg-surface text-muted',
 }
 
 export function ToastProvider({ children }) {

@@ -54,16 +54,8 @@ export default function MultilingualSection() {
   const current = conversations[active]
 
   return (
-    <section
-      className="dark-section section-y relative overflow-hidden bg-ink-950"
-      aria-labelledby="multilingual-heading"
-    >
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute inset-0 bg-grid-dark [background-size:64px_64px] opacity-40" />
-        <div className="absolute left-1/2 top-0 h-[28rem] w-[36rem] -translate-x-1/2 rounded-full bg-brand-600/20 blur-[130px]" />
-      </div>
-
-      <div className="container-page relative">
+    <section id="multilingual" className="relative scroll-mt-24 overflow-hidden py-24" aria-labelledby="multilingual-heading">
+      <div className="section-shell relative">
         <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2 lg:gap-16">
           <div>
             <SectionHeading
@@ -71,7 +63,6 @@ export default function MultilingualSection() {
               eyebrow="Multilingual AI"
               title="Speak your customer's language."
               description="The AI recognises the language a customer writes or speaks in and replies naturally in the same language — without you configuring anything in advance."
-              tone="dark"
               align="left"
             />
 
@@ -85,11 +76,11 @@ export default function MultilingualSection() {
                     aria-pressed={active === i}
                     className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
                       active === i
-                        ? 'border-brand-400/40 bg-brand-500/15 text-white'
-                        : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:text-white'
+                        ? 'border-primary-400/40 bg-primary-500/15 text-ink'
+                        : 'border-line bg-surface text-muted hover:border-line-strong hover:text-ink'
                     }`}
                   >
-                    <Languages className="h-4 w-4 text-brand-300" aria-hidden="true" />
+                    <Languages className="h-4 w-4 text-primary-400" aria-hidden="true" />
                     {conversation.native}
                   </button>
                 ))}
@@ -97,9 +88,9 @@ export default function MultilingualSection() {
             </Reveal>
 
             <Reveal delay={0.24}>
-              <div className="mt-8 flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                <ArrowLeftRight className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" aria-hidden="true" />
-                <p className="text-[0.875rem] leading-relaxed text-slate-300">
+              <div className="mt-8 flex items-start gap-3 rounded-xl border border-line bg-surface p-4">
+                <ArrowLeftRight className="mt-0.5 h-4 w-4 shrink-0 text-primary-400" aria-hidden="true" />
+                <p className="text-[0.875rem] leading-relaxed text-muted">
                   A guest can start a conversation in one language and switch mid-sentence — the AI
                   follows, and your team still reads a translated transcript in the dashboard.
                 </p>
@@ -110,14 +101,13 @@ export default function MultilingualSection() {
           <Reveal delay={0.1}>
             <ChatPanel
               key={current.code}
-              tone="dark"
               title="Harbour View Hotel"
               channel={`WhatsApp · ${current.detected}`}
               status="Live"
               messages={current.messages}
               footer={
-                <span className="inline-flex items-center gap-2 text-xs font-medium text-slate-400">
-                  <Globe className="h-3.5 w-3.5 text-brand-300" aria-hidden="true" />
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-muted">
+                  <Globe className="h-3.5 w-3.5 text-primary-400" aria-hidden="true" />
                   Replying in {current.language} · Transcript available in English
                 </span>
               }

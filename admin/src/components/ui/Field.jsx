@@ -3,17 +3,17 @@ import { ChevronDown, Eye, EyeOff } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 const controlBase =
-  'w-full rounded-xl border bg-white text-[0.88rem] text-ink-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/30 disabled:bg-slate-50 disabled:text-slate-400'
+  'w-full rounded-xl border bg-surface text-[0.88rem] text-ink placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400/30 disabled:bg-canvas-soft disabled:text-slate-400'
 
 const state = (error) =>
   error
     ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-500/25'
-    : 'border-slate-200 hover:border-slate-300 focus:border-brand-500'
+    : 'border-line hover:border-line-strong focus:border-primary-400'
 
 export function Label({ htmlFor, children, required, hint }) {
   return (
     <div className="mb-1.5 flex items-baseline justify-between gap-3">
-      <label htmlFor={htmlFor} className="text-[0.78rem] font-semibold text-ink-900">
+      <label htmlFor={htmlFor} className="text-[0.78rem] font-semibold text-ink">
         {children}
         {required && <span className="ml-0.5 text-rose-500">*</span>}
       </label>

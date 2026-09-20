@@ -4,7 +4,7 @@ import cn from '../../lib/cn'
 export default function StatCard({ label, value, delta, deltaTone = 'up', icon: Icon, hint, className = '' }) {
   const positive = deltaTone === 'up'
   return (
-    <div className={cn('rounded-2xl border border-slate-200/80 bg-white p-5 transition-shadow duration-300 hover:shadow-card', className)}>
+    <div className={cn('rounded-2xl border border-line bg-surface p-5 transition-shadow duration-300 hover:shadow-card', className)}>
       <div className="flex items-start justify-between gap-3">
         <p className="text-[0.72rem] font-bold uppercase tracking-wider text-slate-500">{label}</p>
         {Icon && (

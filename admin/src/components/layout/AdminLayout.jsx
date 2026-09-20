@@ -12,7 +12,7 @@ function PageFallback() {
   return (
     <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-live="polite">
       <span className="flex items-center gap-3 text-slate-500">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-primary-400" />
         <span className="text-sm">Loading…</span>
       </span>
     </div>
@@ -59,7 +59,7 @@ function MobileDrawer({ open, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: reduceMotion ? 0 : '-100%' }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="relative h-full w-[17.5rem] max-w-[86vw] border-r border-slate-200 bg-white shadow-panel"
+            className="relative h-full w-[17.5rem] max-w-[86vw] border-r border-line bg-surface shadow-panel"
             aria-label="Navigation"
           >
             <button
@@ -106,7 +106,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-canvas">
       <a
         href="#admin-main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[80] focus:rounded-lg focus:bg-ink-900 focus:px-4 focus:py-2 focus:text-sm focus:text-white"
@@ -116,7 +116,7 @@ export default function AdminLayout() {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 hidden border-r border-slate-200/80 transition-[width] duration-200 lg:block',
+          'fixed inset-y-0 left-0 z-30 hidden border-r border-line transition-[width] duration-200 lg:block',
           collapsed ? 'w-[4.5rem]' : 'w-[16.5rem]',
         )}
       >

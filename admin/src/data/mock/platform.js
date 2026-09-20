@@ -16,16 +16,16 @@ export const growthSeries = [
 ]
 
 export const revenueByPlan = [
-  { name: 'Professional', value: 1192, color: '#2F4EDB' },
-  { name: 'Enterprise', value: 998, color: '#6E8FFA' },
-  { name: 'Starter', value: 395, color: '#9AB4FF' },
+  { name: 'Professional', value: 1192, color: '#14b8a6' },
+  { name: 'Enterprise', value: 998, color: '#2dd4bf' },
+  { name: 'Starter', value: 395, color: '#5eead4' },
 ]
 
 export const channelDistribution = [
-  { name: 'Voice', value: 8, color: '#2F4EDB' },
-  { name: 'WhatsApp', value: 7, color: '#10B981' },
-  { name: 'Web', value: 6, color: '#38BDF8' },
-  { name: 'Instagram', value: 5, color: '#D946EF' },
+  { name: 'Voice', value: 8, color: '#14b8a6' },
+  { name: 'WhatsApp', value: 7, color: '#34d399' },
+  { name: 'Web', value: 6, color: '#60a5fa' },
+  { name: 'Instagram', value: 5, color: '#c084fc' },
 ]
 
 export const subscriptionMovement = [

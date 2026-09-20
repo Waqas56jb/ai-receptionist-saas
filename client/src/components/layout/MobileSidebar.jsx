@@ -44,7 +44,7 @@ export default function MobileSidebar({ open, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: reduceMotion ? 0 : '-100%' }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="relative h-full w-[17.5rem] max-w-[86vw] border-r border-slate-200 bg-white shadow-panel"
+            className="relative h-full w-[17.5rem] max-w-[86vw] border-r border-line bg-surface shadow-panel"
             aria-label="Navigation"
           >
             <button

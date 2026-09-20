@@ -1,123 +1,92 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { brand } from '../../config/brand'
 import SectionHeading from '../ui/SectionHeading'
 import Reveal from '../ui/Reveal'
-import Button from '../ui/Button'
 import { pricingPlans } from '../../data/landing'
 
 export default function Pricing() {
+  const [selected, setSelected] = useState('professional')
+  const current = pricingPlans.find((plan) => plan.id === selected) || pricingPlans[1]
+
   return (
-    <section
-      id="pricing"
-      className="section-y scroll-mt-24 bg-slate-50/70"
-      aria-labelledby="pricing-heading"
-    >
-      <div className="container-page">
+    <section id="pricing" className="scroll-mt-24 py-24" aria-labelledby="pricing-heading">
+      <div className="section-shell">
         <SectionHeading
           id="pricing-heading"
           eyebrow="Pricing"
-          title="Simple plans for every stage."
-          description="Final pricing is being confirmed. Talk to us and we'll match a plan to the number of calls and messages your business handles."
+          title="Choose the plan that fits your front desk"
+          description="Start free while we confirm final pricing, or talk to us and we'll match a plan to the calls and messages you handle."
         />
 
-        <div className="mt-14 grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-          {pricingPlans.map((plan, i) => (
-            <Reveal key={plan.name} delay={i * 0.09}>
-              <article
-                className={`relative flex h-full flex-col rounded-2xl p-7 transition duration-300 sm:p-8 ${
-                  plan.featured
-                    ? 'border border-ink-800 bg-ink-900 shadow-panel lg:-mt-4 lg:pb-10 lg:pt-10'
-                    : 'border border-slate-200/80 bg-white shadow-subtle hover:border-brand-200 hover:shadow-card'
-                }`}
-              >
-                {plan.featured && (
-                  <span className="absolute -top-3 left-7 rounded-full bg-ember-500 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wider text-white sm:left-8">
-                    Most popular
+        <Reveal delay={0.1} className="mx-auto mt-14 max-w-3xl">
+          <div className="space-y-3">
+            {pricingPlans.map((plan) => {
+              const active = selected === plan.id
+              return (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => setSelected(plan.id)}
+                  className={`group relative flex w-full items-center gap-4 rounded-2xl border p-5 text-left transition duration-300 ${
+                    active
+                      ? 'border-primary-500/60 bg-primary-500/10 shadow-lg shadow-primary-600/10'
+                      : 'border-line bg-surface hover:border-line-strong hover:bg-surface-2/40'
+                  }`}
+                >
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                      active ? 'border-primary-500 bg-primary-500' : 'border-line group-hover:border-primary-400'
+                    }`}
+                  >
+                    {active && <Check className="h-3 w-3 text-primary-950" strokeWidth={3.5} aria-hidden="true" />}
                   </span>
-                )}
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-display text-lg font-bold tracking-tight text-ink">{plan.name}</span>
+                      {plan.featured && (
+                        <span className="rounded-full bg-primary-500 px-2 py-0.5 text-xxs font-semibold text-primary-950">
+                          Most Popular
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted">{plan.hint}</span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span className="font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">
+                      {plan.price}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
 
-                <h3
-                  className={`font-display text-lg font-bold ${
-                    plan.featured ? 'text-white' : 'text-ink-900'
-                  }`}
-                >
-                  {plan.name}
-                </h3>
-                <p
-                  className={`mt-2 text-[0.9rem] leading-relaxed ${
-                    plan.featured ? 'text-slate-300' : 'text-slate-600'
-                  }`}
-                >
-                  {plan.description}
-                </p>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
+            <p className="text-xs text-muted">{current.description}</p>
+            {current.cta === 'Talk to Sales' ? (
+              <a
+                href={`mailto:${brand.contactEmail}?subject=Enterprise%20plan%20enquiry`}
+                className="btn-mint !px-5 !py-2 text-xs"
+              >
+                {current.cta}
+              </a>
+            ) : (
+              <Link to="/signup" className="btn-mint !px-5 !py-2 text-xs">
+                {current.cta}
+              </Link>
+            )}
+          </div>
 
-                <p
-                  className={`mt-6 font-display text-2xl font-bold tracking-tight sm:text-[1.75rem] ${
-                    plan.featured ? 'text-white' : 'text-ink-900'
-                  }`}
-                >
-                  {plan.price}
-                </p>
-
-                <ul className="mt-6 flex-1 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5">
-                      <span
-                        className={`mt-0.5 grid h-[1.125rem] w-[1.125rem] shrink-0 place-items-center rounded-full ${
-                          plan.featured ? 'bg-brand-500/25 text-brand-200' : 'bg-brand-50 text-brand-600'
-                        }`}
-                      >
-                        <Check className="h-2.5 w-2.5" strokeWidth={3.5} aria-hidden="true" />
-                      </span>
-                      <span
-                        className={`text-[0.875rem] leading-relaxed ${
-                          plan.featured ? 'text-slate-300' : 'text-slate-600'
-                        }`}
-                      >
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                {plan.cta === 'Talk to Sales' ? (
-                  <Button
-                    as="a"
-                    href={`mailto:${brand.contactEmail}?subject=Enterprise%20plan%20enquiry`}
-                    size="lg"
-                    variant={plan.featured ? 'onDark' : 'secondary'}
-                    className="mt-8 w-full"
-                  >
-                    {plan.cta}
-                  </Button>
-                ) : (
-                  <Button
-                    as={Link}
-                    to="/signup"
-                    size="lg"
-                    variant={plan.featured ? 'onDark' : 'secondary'}
-                    className="mt-8 w-full"
-                  >
-                    {plan.cta}
-                  </Button>
-                )}
-              </article>
-            </Reveal>
-          ))}
-        </div>
-
-        <Reveal delay={0.16}>
-          <p className="mt-10 text-center text-sm text-slate-500">
-            Not sure which plan fits?{' '}
-            <a
-              href={`mailto:${brand.contactEmail}?subject=Plan%20advice`}
-              className="font-semibold text-brand-600 underline-offset-4 hover:underline"
-            >
-              Talk to Sales
-            </a>{' '}
-            and we'll help you choose.
-          </p>
+          <ul className="mt-6 grid gap-2 sm:grid-cols-2">
+            {current.features.map((feature) => (
+              <li key={feature} className="flex items-start gap-2 text-sm text-muted">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-500" strokeWidth={2.5} aria-hidden="true" />
+                {feature}
+              </li>
+            ))}
+          </ul>
         </Reveal>
       </div>
     </section>

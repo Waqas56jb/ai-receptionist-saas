@@ -4,12 +4,12 @@ import {
 } from 'recharts'
 import { cn } from '../../lib/utils'
 
-const axis = { stroke: '#94A3B8', fontSize: 11, tickLine: false, axisLine: false }
+const axis = { stroke: '#8aa39c', fontSize: 11, tickLine: false, axisLine: false }
 
 function ChartTooltip({ active, payload, label, prefix = '', suffix = '' }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lift">
+    <div className="rounded-xl border border-line bg-surface px-3 py-2 shadow-lift">
       {label && <p className="text-[0.72rem] font-semibold text-ink-900">{label}</p>}
       <ul className="mt-1 space-y-0.5">
         {payload.map((entry) => (
@@ -26,7 +26,7 @@ function ChartTooltip({ active, payload, label, prefix = '', suffix = '' }) {
 
 export function ChartFrame({ title, description, action, children, className = '', height = 260 }) {
   return (
-    <div className={cn('rounded-2xl border border-slate-200/80 bg-white p-5', className)}>
+    <div className={cn('rounded-2xl border border-line bg-surface p-5', className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-display text-[0.92rem] font-semibold text-ink-900">{title}</h3>
@@ -53,7 +53,7 @@ export function TrendChart({ data, series, prefix = '', suffix = '' }) {
         </defs>
         <XAxis dataKey="date" {...axis} />
         <YAxis {...axis} width={46} />
-        <Tooltip content={<ChartTooltip prefix={prefix} suffix={suffix} />} cursor={{ stroke: '#CBD5E1' }} />
+        <Tooltip content={<ChartTooltip prefix={prefix} suffix={suffix} />} cursor={{ stroke: '#3a665a' }} />
         {series.map((s) => (
           <Area key={s.key} type="monotone" dataKey={s.key} name={s.label} stroke={s.color} strokeWidth={2} fill={`url(#ag-${s.key})`} dot={false} activeDot={{ r: 4 }} />
         ))}
@@ -83,7 +83,7 @@ export function LineSeriesChart({ data, series }) {
       <LineChart data={data} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
         <XAxis dataKey="date" {...axis} />
         <YAxis {...axis} width={46} />
-        <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#CBD5E1' }} />
+        <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#3a665a' }} />
         <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-[0.74rem] text-slate-600">{v}</span>} />
         {series.map((s) => (
           <Line key={s.key} type="monotone" dataKey={s.key} name={s.label} stroke={s.color} strokeWidth={2} dot={false} />
@@ -110,13 +110,13 @@ export function DonutChart({ data, prefix = '', suffix = '' }) {
 }
 
 export const chartColors = {
-  brand: '#2F4EDB',
-  brandLight: '#6E8FFA',
-  brandPale: '#9AB4FF',
-  emerald: '#10B981',
-  amber: '#F59E0B',
-  rose: '#E11D48',
-  fuchsia: '#D946EF',
-  sky: '#38BDF8',
-  slate: '#94A3B8',
+  brand: '#14b8a6',
+  brandLight: '#2dd4bf',
+  brandPale: '#5eead4',
+  emerald: '#34d399',
+  amber: '#fbbf24',
+  rose: '#fb7185',
+  fuchsia: '#c084fc',
+  sky: '#60a5fa',
+  slate: '#8aa39c',
 }

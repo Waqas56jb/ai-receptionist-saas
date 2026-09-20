@@ -14,13 +14,13 @@ function NavItem({ item, onNavigate }) {
       className={({ isActive }) =>
         cn(
           'group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.83rem] font-medium transition-colors',
-          isActive ? 'bg-brand-600 text-white shadow-[0_6px_16px_-8px_rgba(47,78,219,0.8)]' : 'text-slate-600 hover:bg-slate-100 hover:text-ink-900',
+          isActive ? 'bg-primary-400 text-primary-950 shadow-lg shadow-primary-500/20' : 'text-slate-600 hover:bg-surface-2 hover:text-ink',
         )
       }
     >
       {({ isActive }) => (
         <>
-          <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600')} aria-hidden="true" />
+          <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-primary-950' : 'text-slate-400 group-hover:text-slate-600')} aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
         </>
       )}
@@ -42,8 +42,8 @@ export default function AppSidebar({ onNavigate, className = '' }) {
   }, [pathname])
 
   return (
-    <div className={cn('flex h-full flex-col bg-white', className)}>
-      <div className="flex h-[4.25rem] shrink-0 items-center border-b border-slate-200/80 px-5">
+    <div className={cn('flex h-full flex-col bg-surface', className)}>
+      <div className="flex h-[4.25rem] shrink-0 items-center border-b border-line px-5">
         <NavLink to="/app/dashboard" onClick={onNavigate} className="rounded-lg" aria-label="Go to dashboard">
           <Logo size="sm" />
         </NavLink>
@@ -76,13 +76,13 @@ export default function AppSidebar({ onNavigate, className = '' }) {
         })}
       </nav>
 
-      <div className="shrink-0 border-t border-slate-200/80 p-3">
+      <div className="shrink-0 border-t border-line p-3">
         <div className="rounded-xl border border-brand-200/70 bg-brand-50/70 p-3.5">
           <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-600 text-white">
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary-400 text-primary-950">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
-            <p className="text-[0.78rem] font-semibold text-ink-900">Professional plan</p>
+            <p className="text-[0.78rem] font-semibold text-ink">Professional plan</p>
           </div>
           <p className="mt-2 text-[0.72rem] leading-relaxed text-slate-600">
             342 of 500 calls used this month.

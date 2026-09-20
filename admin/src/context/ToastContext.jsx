@@ -6,10 +6,10 @@ const ToastContext = createContext(null)
 
 const icons = { success: CheckCircle2, error: AlertTriangle, warning: AlertTriangle, info: Info }
 const tones = {
-  success: 'border-emerald-200 text-emerald-700',
-  error: 'border-rose-200 text-rose-700',
-  warning: 'border-amber-200 text-amber-700',
-  info: 'border-slate-200 text-slate-700',
+  success: 'border-emerald-400/25 text-emerald-400',
+  error: 'border-rose-400/25 text-rose-400',
+  warning: 'border-amber-400/25 text-amber-300',
+  info: 'border-line text-muted',
 }
 
 export function ToastProvider({ children }) {
@@ -61,7 +61,7 @@ export function ToastProvider({ children }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.97 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border bg-white px-4 py-3 shadow-lift ${tones[t.type]}`}
+                className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border bg-surface px-4 py-3 shadow-lift ${tones[t.type]}`}
               >
                 <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 <p className="flex-1 text-[0.85rem] font-medium leading-relaxed text-ink-900">{t.message}</p>

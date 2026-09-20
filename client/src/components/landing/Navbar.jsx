@@ -1,161 +1,277 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Menu, X, ArrowRight } from 'lucide-react'
+import { Menu, X, ChevronDown, Moon, Sun } from 'lucide-react'
 import Logo from '../ui/Logo'
-import Button from '../ui/Button'
-import { navLinks } from '../../data/landing'
+import { megaNav } from '../../data/landing'
 import { brand } from '../../config/brand'
+import { useSiteTheme } from '../../context/SiteThemeContext'
+
+const menus = [
+  { id: 'product', label: 'Product' },
+  { id: 'solutions', label: 'Solutions' },
+  { id: 'resources', label: 'Resources' },
+]
+
+function MegaItem({ item, onClick }) {
+  return (
+    <li>
+      <a
+        href={item.href}
+        onClick={onClick}
+        className="group flex items-start gap-3.5 rounded-xl p-2.5 transition hover:bg-surface"
+      >
+        <span
+          className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line transition"
+          style={{ backgroundColor: item.bg, color: item.color }}
+        >
+          <item.icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-ink">{item.title}</span>
+          <span className="mt-0.5 block text-xs leading-relaxed text-muted">{item.hint}</span>
+        </span>
+      </a>
+    </li>
+  )
+}
+
+function MegaPanel({ data, onClose }) {
+  return (
+    <div className="mx-auto grid w-full max-w-site gap-10 px-5 py-10 sm:px-8 lg:grid-cols-12">
+      {data.columns.map((column) => (
+        <div key={column.title} className="lg:col-span-4">
+          <p className="mb-5 text-xxs font-semibold uppercase tracking-[0.2em] text-subtle">
+            {column.title}
+          </p>
+          <ul className="space-y-1">
+            {column.items.map((item) => (
+              <MegaItem key={item.title} item={item} onClick={onClose} />
+            ))}
+          </ul>
+        </div>
+      ))}
+      <div className="lg:col-span-4">
+        <a
+          href={data.featured.href}
+          onClick={onClose}
+          className="group block overflow-hidden rounded-2xl border border-line bg-surface transition hover:border-line-strong"
+        >
+          <div className="aspect-[16/9] overflow-hidden bg-canvas">
+            <div className="flex h-full items-end bg-gradient-to-br from-primary-500/20 via-surface to-canvas p-6">
+              <p className="font-display text-sm font-semibold text-ink">{data.featured.eyebrow}</p>
+            </div>
+          </div>
+          <div className="p-5">
+            <p className="font-display text-base font-bold leading-snug text-ink">{data.featured.title}</p>
+            <span className="mt-3 inline-flex text-sm font-semibold text-primary-500 transition group-hover:gap-2">
+              {data.featured.cta}
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+  )
+}
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
-  const [open, setOpen] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [open, setOpen] = useState(null)
+  const [mobile, setMobile] = useState(false)
   const reduceMotion = useReducedMotion()
+  const { toggle } = useSiteTheme()
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12)
+    const onScroll = () => {
+      const y = window.scrollY
+      setScrolled(y > 8)
+      const height = document.documentElement.scrollHeight - window.innerHeight
+      setProgress(height > 0 ? Math.min(y / height, 1) : 0)
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Lock body scroll while the mobile sheet is open.
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
+    document.body.style.overflow = mobile ? 'hidden' : ''
     return () => {
       document.body.style.overflow = ''
     }
-  }, [open])
+  }, [mobile])
 
   useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && setOpen(false)
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setOpen(null)
+        setMobile(false)
+      }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  return (
-    <>
-      {/* Dims the page behind the mobile sheet. Kept as a sibling of the header
-          (not a child) so the header bar itself stays solid white. */}
-      <AnimatePresence>
-        {open && (
-          <motion.button
-            type="button"
-            tabIndex={-1}
-            aria-hidden="true"
-            key="nav-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-40 h-screen w-full cursor-default bg-ink-900/40 backdrop-blur-sm lg:hidden"
-          />
-        )}
-      </AnimatePresence>
+  const closeAll = () => {
+    setOpen(null)
+    setMobile(false)
+  }
 
+  return (
+    <div className="sticky top-0 z-50">
       <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          open
-            ? 'border-b border-slate-200/70 bg-white'
-            : scrolled
-              ? 'border-b border-slate-200/70 bg-white/80 backdrop-blur-xl'
-              : 'border-b border-transparent bg-transparent'
+        onMouseLeave={() => setOpen(null)}
+        className={`relative border-b bg-canvas/90 backdrop-blur-xl transition-all duration-300 ${
+          scrolled || open || mobile
+            ? 'border-line shadow-[0_10px_30px_-24px_rgba(8,9,11,0.5)]'
+            : 'border-transparent'
         }`}
       >
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-ink-900 focus:px-4 focus:py-2 focus:text-sm focus:text-white"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-primary-500 focus:px-4 focus:py-2 focus:text-sm focus:text-primary-950"
         >
           Skip to content
         </a>
 
-        <nav className="container-page" aria-label="Main">
-          <div
-            className={`flex items-center justify-between transition-all duration-300 ${
-              scrolled ? 'h-16' : 'h-[4.5rem]'
-            }`}
-          >
-            <a href="#top" className="rounded-lg" aria-label={`${brand.name} home`}>
-              <Logo size="lg" />
+        <div className="mx-auto flex h-16 w-full max-w-site items-center gap-6 px-5 sm:px-8 lg:h-[4.5rem]">
+          <a href="#top" className="shrink-0 rounded-lg" aria-label={`${brand.name} home`}>
+            <Logo size="sm" />
+          </a>
+
+          <nav className="hidden flex-1 items-center gap-1 lg:flex" aria-label="Main">
+            {menus.map((menu) => (
+              <button
+                key={menu.id}
+                type="button"
+                onMouseEnter={() => setOpen(menu.id)}
+                onClick={() => setOpen((current) => (current === menu.id ? null : menu.id))}
+                aria-expanded={open === menu.id}
+                className={`group inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition hover:text-ink ${
+                  open === menu.id ? 'text-ink' : 'text-muted'
+                }`}
+              >
+                {menu.label}
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                    open === menu.id ? 'rotate-180 text-primary-500' : ''
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+            ))}
+            <a
+              href="#pricing"
+              onMouseEnter={() => setOpen(null)}
+              className="rounded-lg px-3.5 py-2 text-sm font-medium text-muted transition hover:text-ink"
+            >
+              Pricing
             </a>
+          </nav>
 
-            <ul className="hidden items-center gap-1 lg:flex">
-              {navLinks.map((link) => (
-                <li key={link.label}>
-                  <a
-                    href={link.href}
-                    className="rounded-lg px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-ink-900"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-
-            <div className="hidden items-center gap-2 lg:flex">
-              <Button as={Link} to="/login" variant="ghost" size="md">
-                Sign In
-              </Button>
-              <Button as={Link} to="/signup" variant="primary" size="md">
-                Get Started
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
-
+          <div className="ms-auto flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setOpen((v) => !v)}
-              className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-ink-900 transition-colors hover:bg-slate-50 lg:hidden"
-              aria-expanded={open}
-              aria-controls="mobile-nav"
-              aria-label={open ? 'Close menu' : 'Open menu'}
+              onClick={toggle}
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+              className="relative hidden h-9 w-9 items-center justify-center rounded-full border border-line bg-surface-2/70 text-muted transition hover:border-line-strong hover:text-ink sm:inline-flex"
             >
-              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              <Sun className="theme-icon-sun h-4 w-4" aria-hidden="true" />
+              <Moon className="theme-icon-moon h-4 w-4" aria-hidden="true" />
+            </button>
+            <Link
+              to="/login"
+              className="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted transition hover:text-ink md:inline-block"
+            >
+              Sign in
+            </Link>
+            <Link to="/signup" className="btn-mint hidden !px-5 sm:inline-flex">
+              Start for Free
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobile((v) => !v)}
+              aria-expanded={mobile}
+              aria-label={mobile ? 'Close menu' : 'Open menu'}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line text-ink transition hover:border-line-strong lg:hidden"
+            >
+              {mobile ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
-        </nav>
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 h-px overflow-hidden">
+          <div
+            className="h-full origin-left bg-gradient-to-r from-primary-500 via-secondary-400 to-primary-400 transition-transform duration-150 ease-out"
+            style={{ transform: `scaleX(${progress})` }}
+          />
+        </div>
 
         <AnimatePresence>
-          {open && (
+          {open && megaNav[open] && (
             <motion.div
-              id="mobile-nav"
-              key="mobile-nav"
+              key={open}
+              initial={{ opacity: 0, y: reduceMotion ? 0 : -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: reduceMotion ? 0 : -4 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-x-0 top-full hidden border-b border-line bg-canvas shadow-2xl shadow-black/20 lg:block"
+            >
+              <MegaPanel data={megaNav[open]} onClose={() => setOpen(null)} />
+              <div className="border-t border-line bg-canvas-soft">
+                <div className="mx-auto flex max-w-site items-center justify-end gap-2 px-5 py-3 sm:px-8">
+                  <Link to="/signup" className="btn-mint !px-5 !py-2 text-xs" onClick={closeAll}>
+                    Start for Free
+                  </Link>
+                  <a href="#get-started" className="btn-ghost-surface !px-5 !py-2 text-xs" onClick={closeAll}>
+                    Book a walkthrough
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {mobile && (
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: reduceMotion ? 0.1 : 0.28, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden border-t border-slate-200/70 bg-white lg:hidden"
+              transition={{ duration: reduceMotion ? 0.1 : 0.28 }}
+              className="overflow-hidden border-t border-line bg-canvas lg:hidden"
             >
-              <div className="container-page py-5">
-                <ul className="flex flex-col">
-                  {navLinks.map((link) => (
-                    <li key={link.label}>
-                      <a
-                        href={link.href}
-                        onClick={() => setOpen(false)}
-                        className="block rounded-xl px-2 py-3 text-base font-medium text-ink-900 transition-colors hover:bg-slate-50"
-                      >
-                        {link.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-4 flex flex-col gap-2.5 border-t border-slate-200/70 pt-5">
-                  <Button as={Link} to="/login" variant="secondary" size="lg" onClick={() => setOpen(false)}>
-                    Sign In
-                  </Button>
-                  <Button as={Link} to="/signup" variant="primary" size="lg" onClick={() => setOpen(false)}>
-                    Get Started
-                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                  </Button>
+              <div className="space-y-5 px-5 py-5">
+                {menus.map((menu) => (
+                  <div key={menu.id}>
+                    <p className="text-xxs font-semibold uppercase tracking-[0.2em] text-subtle">
+                      {menu.label}
+                    </p>
+                    <ul className="mt-2">
+                      {megaNav[menu.id].columns.flatMap((col) => col.items).map((item) => (
+                        <MegaItem key={`${menu.id}-${item.title}`} item={item} onClick={closeAll} />
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <div className="flex gap-2 border-t border-line pt-4">
+                  <Link
+                    to="/login"
+                    onClick={closeAll}
+                    className="flex-1 rounded-lg border border-line px-4 py-2.5 text-center text-sm font-medium text-ink"
+                  >
+                    Sign in
+                  </Link>
+                  <Link to="/signup" onClick={closeAll} className="btn-mint flex-1 !py-2.5">
+                    Start for Free
+                  </Link>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </header>
-    </>
+    </div>
   )
 }

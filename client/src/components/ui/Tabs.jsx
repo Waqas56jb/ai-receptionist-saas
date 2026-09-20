@@ -7,7 +7,7 @@ import cn from '../../lib/cn'
 export default function Tabs({ tabs, value, onChange, className = '', size = 'md' }) {
   return (
     <div className={cn('-mx-1 overflow-x-auto px-1 pb-1', className)}>
-      <div className="inline-flex min-w-full gap-1 rounded-xl border border-slate-200/80 bg-slate-50/80 p-1" role="tablist">
+      <div className="inline-flex min-w-full gap-1 rounded-xl border border-line bg-canvas-soft p-1" role="tablist">
         {tabs.map((tab) => {
           const id = typeof tab === 'string' ? tab : tab.id
           const label = typeof tab === 'string' ? tab : tab.label
@@ -24,7 +24,7 @@ export default function Tabs({ tabs, value, onChange, className = '', size = 'md
               className={cn(
                 'inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-all duration-200',
                 size === 'sm' ? 'px-3 py-1.5 text-[0.78rem]' : 'px-3.5 py-2 text-[0.83rem]',
-                active ? 'bg-white text-ink-900 shadow-subtle' : 'text-slate-500 hover:text-ink-900',
+                active ? 'bg-surface text-ink shadow-subtle' : 'text-slate-500 hover:text-ink',
               )}
             >
               {Icon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
@@ -66,7 +66,7 @@ export function FilterPills({ options, value, onChange, className = '' }) {
               'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[0.78rem] font-semibold transition-colors',
               active
                 ? 'border-brand-300 bg-brand-50 text-brand-700'
-                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-ink-900',
+                : 'border-line bg-surface text-slate-600 hover:border-line-strong hover:text-ink',
             )}
           >
             {label}

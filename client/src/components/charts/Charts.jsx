@@ -15,18 +15,18 @@ import {
 import cn from '../../lib/cn'
 
 const axis = {
-  stroke: '#94A3B8',
+  stroke: '#8aa39c',
   fontSize: 11,
   tickLine: false,
   axisLine: false,
 }
 
-const grid = { stroke: '#E2E8F0', strokeDasharray: '3 3' }
+const grid = { stroke: '#3a665a', strokeDasharray: '3 3' }
 
 function ChartTooltip({ active, payload, label, suffix = '' }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lift">
+    <div className="rounded-xl border border-line bg-surface px-3 py-2 shadow-lift">
       {label && <p className="text-[0.72rem] font-semibold text-ink-900">{label}</p>}
       <ul className="mt-1 space-y-0.5">
         {payload.map((entry) => (
@@ -46,7 +46,7 @@ function ChartTooltip({ active, payload, label, suffix = '' }) {
 
 export function ChartFrame({ title, description, action, children, className = '', height = 260 }) {
   return (
-    <div className={cn('rounded-2xl border border-slate-200/80 bg-white p-5', className)}>
+    <div className={cn('rounded-2xl border border-line bg-surface p-5', className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-display text-[0.95rem] font-semibold text-ink-900">{title}</h3>
@@ -75,7 +75,7 @@ export function TrendChart({ data, series, height = 260 }) {
         </defs>
         <XAxis dataKey="date" {...axis} />
         <YAxis {...axis} width={44} />
-        <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#CBD5E1' }} />
+        <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#3a665a' }} />
         {series.map((s) => (
           <Area
             key={s.key}
@@ -140,11 +140,11 @@ export function DonutChart({ data, suffix = '', innerRadius = 58, outerRadius = 
 }
 
 export const chartColors = {
-  brand: '#2F4EDB',
-  brandLight: '#6E8FFA',
-  emerald: '#10B981',
-  fuchsia: '#D946EF',
-  sky: '#38BDF8',
-  slate: '#94A3B8',
-  ember: '#F58220',
+  brand: '#14b8a6',
+  brandLight: '#2dd4bf',
+  emerald: '#34d399',
+  fuchsia: '#c084fc',
+  sky: '#60a5fa',
+  slate: '#8aa39c',
+  ember: '#fbbf24',
 }

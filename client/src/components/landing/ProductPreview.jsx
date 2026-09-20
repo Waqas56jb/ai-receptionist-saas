@@ -54,8 +54,8 @@ export default function ProductPreview() {
   const maxBar = Math.max(...chart.flatMap((d) => [d.calls, d.messages]))
 
   return (
-    <section className="section-y bg-slate-50/70" aria-labelledby="preview-heading">
-      <div className="container-page">
+    <section id="preview" className="scroll-mt-24 py-24" aria-labelledby="preview-heading">
+      <div className="section-shell">
         <SectionHeading
           id="preview-heading"
           eyebrow="Business Dashboard"
@@ -64,39 +64,33 @@ export default function ProductPreview() {
         />
 
         <Reveal delay={0.1}>
-          <div className="mt-14 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lift sm:rounded-[1.5rem]">
-            {/* Window chrome */}
-            <div className="flex items-center gap-2 border-b border-slate-200/80 bg-slate-50/80 px-4 py-3">
+          <div className="panel-raised mt-14 overflow-hidden rounded-2xl">
+            <div className="flex items-center gap-2 border-b border-line bg-surface-2/70 px-4 py-2.5">
               <span className="flex gap-1.5" aria-hidden="true">
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-accent-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
               </span>
-              <div className="mx-auto flex max-w-xs flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5">
-                <Search className="h-3 w-3 text-slate-400" aria-hidden="true" />
-                <span className="truncate text-[0.7rem] text-slate-400">
-                  app.example.com/dashboard
-                </span>
+              <div className="mx-auto flex max-w-xs flex-1 items-center gap-2 rounded-lg border border-line bg-canvas/60 px-3 py-1.5">
+                <Search className="h-3 w-3 text-subtle" aria-hidden="true" />
+                <span className="truncate text-[0.7rem] text-subtle">app.devmark / dashboard</span>
               </div>
             </div>
 
             <div className="flex">
-              {/* Sidebar */}
-              <aside className="hidden w-52 shrink-0 border-r border-slate-200/80 bg-slate-50/50 p-4 lg:block">
+              <aside className="hidden w-52 shrink-0 border-r border-line bg-canvas-soft p-4 lg:block">
                 <div className="flex items-center gap-2 px-2 pb-4">
-                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-ink-900">
-                    <Sparkles className="h-3.5 w-3.5 text-brand-300" aria-hidden="true" />
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary-500/20">
+                    <Sparkles className="h-3.5 w-3.5 text-primary-400" aria-hidden="true" />
                   </span>
-                  <span className="font-display text-sm font-bold text-ink-900">Harbour View</span>
+                  <span className="font-display text-sm font-bold text-ink">Harbour View</span>
                 </div>
                 <ul className="space-y-1">
                   {sidebar.map((item) => (
                     <li key={item.label}>
                       <span
                         className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[0.8rem] font-medium ${
-                          item.active
-                            ? 'bg-brand-600 text-white'
-                            : 'text-slate-500'
+                          item.active ? 'bg-primary-400 text-primary-950' : 'text-muted'
                         }`}
                       >
                         <item.icon className="h-4 w-4" aria-hidden="true" />
@@ -107,22 +101,18 @@ export default function ProductPreview() {
                 </ul>
               </aside>
 
-              {/* Main */}
               <div className="min-w-0 flex-1 p-4 sm:p-6">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
-                    <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg">
-                      Overview
-                    </h3>
-                    <p className="text-xs text-slate-500">Last 7 days</p>
+                    <h3 className="font-display text-base font-bold text-ink sm:text-lg">Overview</h3>
+                    <p className="text-xs text-muted">Last 7 days</p>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-700">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
                     AI receptionist active
                   </span>
                 </div>
 
-                {/* Stats */}
                 <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
                   {stats.map((stat, i) => (
                     <motion.div
@@ -131,16 +121,14 @@ export default function ProductPreview() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, amount: 0.5 }}
                       transition={{ duration: 0.45, delay: reduceMotion ? 0 : i * 0.07 }}
-                      className="rounded-xl border border-slate-200/80 bg-white p-3.5 shadow-subtle"
+                      className="rounded-xl border border-line bg-canvas/40 p-3.5"
                     >
-                      <p className="text-[0.7rem] font-medium uppercase tracking-wider text-slate-500">
-                        {stat.label}
-                      </p>
+                      <p className="text-[0.7rem] font-medium uppercase tracking-wider text-subtle">{stat.label}</p>
                       <div className="mt-1.5 flex items-baseline gap-2">
-                        <span className="font-display text-xl font-bold tabular-nums text-ink-900 sm:text-2xl">
+                        <span className="font-display text-xl font-bold tabular-nums text-ink sm:text-2xl">
                           {stat.value}
                         </span>
-                        <span className="inline-flex items-center text-[0.7rem] font-semibold text-emerald-600">
+                        <span className="inline-flex items-center text-[0.7rem] font-semibold text-emerald-400">
                           <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
                           {stat.delta}
                         </span>
@@ -150,26 +138,23 @@ export default function ProductPreview() {
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-                  {/* Chart */}
-                  <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-subtle">
+                  <div className="rounded-xl border border-line bg-canvas/40 p-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-[0.8rem] font-semibold text-ink-900">Activity</p>
-                      <div className="flex items-center gap-3 text-[0.65rem] font-medium text-slate-500">
+                      <p className="text-[0.8rem] font-semibold text-ink">Activity</p>
+                      <div className="flex items-center gap-3 text-[0.65rem] font-medium text-muted">
                         <span className="inline-flex items-center gap-1.5">
-                          <span className="h-2 w-2 rounded-sm bg-brand-600" aria-hidden="true" />
+                          <span className="h-2 w-2 rounded-sm bg-primary-400" aria-hidden="true" />
                           Calls
                         </span>
                         <span className="inline-flex items-center gap-1.5">
-                          <span className="h-2 w-2 rounded-sm bg-brand-200" aria-hidden="true" />
+                          <span className="h-2 w-2 rounded-sm bg-primary-700" aria-hidden="true" />
                           Messages
                         </span>
                       </div>
                     </div>
-
                     <div className="mt-5 flex items-end gap-2 sm:gap-3">
                       {chart.map((entry, i) => (
                         <div key={entry.day} className="flex flex-1 flex-col items-center gap-2">
-                          {/* Definite height so the percentage bar heights resolve */}
                           <div className="flex h-28 w-full items-end justify-center gap-1 lg:h-40">
                             {['calls', 'messages'].map((series) => (
                               <motion.span
@@ -184,35 +169,32 @@ export default function ProductPreview() {
                                 }}
                                 style={{ height: `${(entry[series] / maxBar) * 100}%` }}
                                 className={`w-full max-w-[10px] origin-bottom rounded-t-[3px] ${
-                                  series === 'calls' ? 'bg-brand-600' : 'bg-brand-200'
+                                  series === 'calls' ? 'bg-primary-400' : 'bg-primary-700'
                                 }`}
                               />
                             ))}
                           </div>
-                          <span className="text-[0.6rem] font-medium text-slate-400">{entry.day}</span>
+                          <span className="text-[0.6rem] font-medium text-subtle">{entry.day}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Recent conversations */}
-                  <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-subtle">
-                    <p className="text-[0.8rem] font-semibold text-ink-900">Recent conversations</p>
-                    <ul className="mt-3 divide-y divide-slate-100">
+                  <div className="rounded-xl border border-line bg-canvas/40 p-4">
+                    <p className="text-[0.8rem] font-semibold text-ink">Recent conversations</p>
+                    <ul className="mt-3 divide-y divide-line">
                       {conversations.map((item) => (
                         <li key={item.name} className="flex items-center gap-3 py-2.5">
-                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-2 text-muted">
                             <item.icon className="h-3.5 w-3.5" aria-hidden="true" />
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-[0.78rem] font-semibold text-ink-900">
-                              {item.name}
-                            </p>
-                            <p className="truncate text-[0.72rem] text-slate-500">{item.preview}</p>
+                            <p className="truncate text-[0.78rem] font-semibold text-ink">{item.name}</p>
+                            <p className="truncate text-[0.72rem] text-muted">{item.preview}</p>
                           </div>
                           <div className="shrink-0 text-right">
-                            <p className="text-[0.65rem] text-slate-400">{item.time}</p>
-                            <p className="text-[0.65rem] font-semibold text-brand-600">{item.tag}</p>
+                            <p className="text-[0.65rem] text-subtle">{item.time}</p>
+                            <p className="text-[0.65rem] font-semibold text-primary-500">{item.tag}</p>
                           </div>
                         </li>
                       ))}
@@ -225,9 +207,7 @@ export default function ProductPreview() {
         </Reveal>
 
         <Reveal delay={0.16}>
-          <p className="mt-5 text-center text-xs text-slate-400">
-            Product preview — sample data shown for illustration.
-          </p>
+          <p className="mt-5 text-center text-xs text-subtle">Product preview — sample data shown for illustration.</p>
         </Reveal>
       </div>
     </section>

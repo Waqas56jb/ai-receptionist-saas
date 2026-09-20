@@ -2,17 +2,18 @@ import { Loader2 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none whitespace-nowrap'
+  'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none whitespace-nowrap'
 
 const variants = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700 shadow-[0_8px_20px_-8px_rgba(47,78,219,0.6)]',
-  secondary: 'bg-white text-ink-900 border border-slate-200 hover:border-slate-300 hover:bg-slate-50',
-  outline: 'border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-ink-900',
-  subtle: 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-ink-900',
-  ghost: 'text-slate-600 hover:text-ink-900 hover:bg-slate-100',
+  primary:
+    'bg-primary-400 text-primary-950 shadow-lg shadow-primary-500/30 hover:bg-primary-300 hover:-translate-y-0.5',
+  secondary: 'bg-surface text-ink border border-line hover:border-line-strong hover:bg-surface-2',
+  outline: 'border border-line bg-surface text-muted hover:border-line-strong hover:bg-surface-2 hover:text-ink',
+  subtle: 'bg-surface-2 text-muted hover:bg-line hover:text-ink',
+  ghost: 'text-muted hover:text-ink hover:bg-surface-2',
   danger: 'bg-rose-600 text-white hover:bg-rose-700',
-  dangerGhost: 'text-rose-600 hover:bg-rose-50',
-  onDark: 'bg-white text-ink-900 hover:bg-brand-50',
+  dangerGhost: 'text-rose-500 hover:bg-rose-50',
+  onDark: 'bg-primary-400 text-primary-950 hover:bg-primary-300 shadow-lg shadow-primary-500/30',
 }
 
 const sizes = {

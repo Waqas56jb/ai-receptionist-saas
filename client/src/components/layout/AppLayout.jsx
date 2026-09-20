@@ -9,7 +9,7 @@ function PageFallback() {
   return (
     <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-live="polite">
       <span className="flex items-center gap-3 text-slate-500">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-primary-400" />
         <span className="text-sm">Loading…</span>
       </span>
     </div>
@@ -26,7 +26,7 @@ export default function AppLayout() {
   }, [location.pathname])
 
   return (
-    <div className="min-h-screen bg-slate-50/70">
+    <div className="min-h-screen bg-canvas">
       <a
         href="#app-main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[80] focus:rounded-lg focus:bg-ink-900 focus:px-4 focus:py-2 focus:text-sm focus:text-white"
@@ -35,7 +35,7 @@ export default function AppLayout() {
       </a>
 
       {/* Persistent sidebar from lg up */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[16.5rem] border-r border-slate-200/80 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[16.5rem] border-r border-line lg:block">
         <AppSidebar />
       </aside>
 

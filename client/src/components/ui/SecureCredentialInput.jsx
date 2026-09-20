@@ -48,7 +48,7 @@ export default function SecureCredentialInput({
   }
 
   return (
-    <div className={cn('rounded-xl border border-slate-200 bg-white p-4', className)}>
+    <div className={cn('rounded-xl border border-line bg-surface p-4', className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-lg', saved ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400')}>
@@ -110,7 +110,7 @@ export default function SecureCredentialInput({
               placeholder={`Paste your ${label.toLowerCase()}`}
               autoComplete="off"
               spellCheck={false}
-              className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 pr-10 font-mono text-[0.8rem] text-ink-900 transition-colors placeholder:font-sans placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+              className="h-10 w-full rounded-lg border border-line bg-surface px-3 pr-10 font-mono text-[0.8rem] text-ink transition-colors placeholder:font-sans placeholder:text-slate-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/30"
             />
             <button
               type="button"

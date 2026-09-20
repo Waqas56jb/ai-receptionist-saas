@@ -123,9 +123,9 @@ export default function Onboarding() {
 
   if (!business) {
     return (
-      <div className="grid min-h-screen place-items-center bg-slate-50">
-        <div className="flex items-center gap-3 text-slate-500">
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-brand-600" />
+      <div className="grid min-h-screen place-items-center bg-canvas">
+        <div className="flex items-center gap-3 text-muted">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-primary-400" />
           <span className="text-sm">Loading your setup…</span>
         </div>
       </div>
@@ -133,8 +133,8 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/70">
-      <header className="border-b border-slate-200/80 bg-white">
+    <div className="min-h-screen bg-canvas">
+      <header className="border-b border-line bg-surface/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
           <Logo size="sm" />
           <button type="button" onClick={skip} className="text-[0.8rem] font-semibold text-slate-500 transition-colors hover:text-ink-900">
@@ -155,9 +155,9 @@ export default function Onboarding() {
                   <span
                     className={cn(
                       'grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-[0.8rem] font-bold transition-colors',
-                      done && 'border-brand-600 bg-brand-600 text-white',
-                      active && !done && 'border-brand-600 bg-white text-brand-700',
-                      !done && !active && 'border-slate-200 bg-white text-slate-400',
+                      done && 'border-primary-400 bg-primary-400 text-primary-950',
+                      active && !done && 'border-primary-400 bg-surface text-primary-400',
+                      !done && !active && 'border-line bg-surface text-muted',
                     )}
                   >
                     {done ? <Check className="h-4 w-4" aria-hidden="true" /> : <s.icon className="h-4 w-4" aria-hidden="true" />}
@@ -170,7 +170,7 @@ export default function Onboarding() {
             })}
           </div>
           <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200">
-            <div className="h-full rounded-full bg-brand-600 transition-[width] duration-500" style={{ width: `${progress}%` }} />
+            <div className="h-full rounded-full bg-primary-400 transition-[width] duration-500" style={{ width: `${progress}%` }} />
           </div>
         </div>
 
@@ -181,7 +181,7 @@ export default function Onboarding() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: reduceMotion ? 0 : -8 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-7"
+            className="rounded-2xl border border-line bg-surface p-5 sm:p-7"
           >
             {step === 1 && (
               <section>

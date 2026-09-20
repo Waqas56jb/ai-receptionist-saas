@@ -70,7 +70,7 @@ export default function FilterBar({ table, filters = [], searchPlaceholder = 'Se
 
 function Chip({ label, onRemove }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[0.75rem] font-medium text-slate-600">
+    <span className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1 text-[0.75rem] font-medium text-muted">
       {label}
       <button type="button" onClick={onRemove} className="text-slate-400 transition-colors hover:text-rose-600" aria-label={`Remove ${label}`}>
         <X className="h-3 w-3" />

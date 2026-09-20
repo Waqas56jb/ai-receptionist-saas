@@ -1,68 +1,51 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, CalendarDays } from 'lucide-react'
 import Reveal from '../ui/Reveal'
-import Button from '../ui/Button'
 import { brand } from '../../config/brand'
 
 export default function FinalCTA() {
   return (
     <section
       id="get-started"
-      className="dark-section relative scroll-mt-24 overflow-hidden bg-ink-900 py-20 sm:py-24 lg:py-28"
+      className="relative scroll-mt-24 overflow-hidden border-t border-line py-20 sm:py-24 lg:py-28"
       aria-labelledby="cta-heading"
     >
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute inset-0 bg-grid-dark [background-size:64px_64px] opacity-40" />
-        <div className="absolute left-1/2 top-1/2 h-[30rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-600/20 blur-[130px]" />
-      </div>
-
-      <div className="container-page relative">
+      <div className="pointer-events-none absolute inset-0 bg-aurora" aria-hidden="true" />
+      <div className="section-shell relative">
         <div className="mx-auto max-w-2xl text-center">
           <Reveal>
-            <span className="eyebrow-dark">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-300" aria-hidden="true" />
-              Get Started
-            </span>
+            <h6 className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-500">
+              One afternoon is enough
+            </h6>
           </Reveal>
-
           <Reveal delay={0.06}>
             <h2
               id="cta-heading"
-              className="mt-6 text-[2.125rem] font-bold leading-[1.1] tracking-tight text-white sm:text-[2.75rem] lg:text-[3.15rem]"
+              className="mt-3 font-display text-3xl font-bold leading-[1.1] tracking-tight text-ink sm:text-4xl lg:text-[3.15rem]"
             >
-              Never miss another customer.
+              The phones are already ringing
             </h2>
           </Reveal>
-
           <Reveal delay={0.12}>
-            <p className="mt-5 text-pretty text-base leading-relaxed text-slate-300 sm:text-lg">
-              Give your business an AI receptionist that works 24/7 — answering calls, replying to
-              messages and turning enquiries into booked customers.
+            <p className="mt-5 text-pretty text-base leading-relaxed text-muted sm:text-lg">
+              Get an AI receptionist on the number and inboxes you already use — no card details, no
+              hardware order, no installer to schedule.
             </p>
           </Reveal>
-
           <Reveal delay={0.18}>
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button as={Link} to="/signup" variant="onDark" size="lg">
-                Get Started
+              <Link to="/signup" className="btn-mint !px-7 !py-3.5 text-base">
+                Start for Free
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
-              <Button
-                as="a"
+              </Link>
+              <a
                 href={`mailto:${brand.contactEmail}?subject=Demo%20request`}
-                variant="outlineDark"
-                size="lg"
+                className="btn-ghost-surface !px-7 !py-3.5 text-base"
               >
                 <CalendarDays className="h-[1.1rem] w-[1.1rem]" aria-hidden="true" />
-                Book a Demo
-              </Button>
+                Book a walkthrough
+              </a>
             </div>
-          </Reveal>
-
-          <Reveal delay={0.24}>
-            <p className="mt-6 text-sm text-slate-400">
-              Set up your business, connect a number, go live the same day.
-            </p>
           </Reveal>
         </div>
       </div>
