@@ -222,6 +222,16 @@ html[data-site-theme='light'] {
     -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
     mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
   }
+
+  .device-stage {
+    perspective: 1480px;
+    perspective-origin: 50% 48%;
+    transform-style: preserve-3d;
+  }
+
+  .device-stage > * {
+    transform-style: preserve-3d;
+  }
 }
 
 html:not([data-site-theme='light']) .text-ink-900,

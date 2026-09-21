@@ -676,6 +676,7 @@ export const footerColumns = [
     links: [
       { label: 'Features', href: '#product' },
       { label: 'How It Works', href: '#how-it-works' },
+      { label: 'Live screens', href: '#screens' },
       { label: 'Integrations', href: '#solutions' },
       { label: 'Pricing', href: '#pricing' },
     ],

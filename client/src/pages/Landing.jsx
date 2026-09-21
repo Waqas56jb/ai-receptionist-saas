@@ -5,6 +5,7 @@ import KnowledgeBaseSection from '../components/landing/KnowledgeBaseSection'
 import ChannelsSection from '../components/landing/ChannelsSection'
 import HowItWorks from '../components/landing/HowItWorks'
 import Industries from '../components/landing/Industries'
+import DeviceShowcase from '../components/landing/DeviceShowcase'
 import MultilingualSection from '../components/landing/MultilingualSection'
 import AvailabilitySection from '../components/landing/AvailabilitySection'
 import ProductPreview from '../components/landing/ProductPreview'
@@ -26,6 +27,7 @@ export default function Landing() {
           <SolutionSection />
           <HowItWorks />
           <Industries />
+          <DeviceShowcase />
           <ChannelsSection />
           <KnowledgeBaseSection />
           <MultilingualSection />
