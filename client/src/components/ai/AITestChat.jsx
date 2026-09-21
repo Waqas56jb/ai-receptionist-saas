@@ -6,10 +6,10 @@ import { channelLabel } from '../../lib/channels'
 import aiService from '../../services/aiService'
 
 const suggestions = [
-  'Do you have rooms available tomorrow?',
-  'Is breakfast included?',
-  'Do you have parking?',
-  'What is your cancellation policy?',
+  'What are your opening hours?',
+  'How can I contact you?',
+  'What services do you offer?',
+  'Where are you located?',
 ]
 
 const seed = [

@@ -1,65 +1,156 @@
 /**
- * In-memory session store seeded from the mock files. Edits made in the console
- * survive navigation for the length of the browser session.
+ * In-session admin store. Starts empty so the console only shows live API data.
  */
-import * as adminsData from '../data/mock/admins'
-import * as businessData from '../data/mock/businesses'
-import * as userData from '../data/mock/users'
-import * as revenueData from '../data/mock/revenue'
-import * as commsData from '../data/mock/comms'
-import * as platformData from '../data/mock/platform'
 import { clone } from './mockClient'
 
 export const store = {
-  admins: clone(adminsData.admins),
-  adminSessions: clone(adminsData.adminSessions),
-  securityEvents: clone(adminsData.securityEvents),
-  loginAttempts: clone(adminsData.loginAttempts),
+  admins: [],
+  adminSessions: [],
+  securityEvents: [],
+  loginAttempts: [],
 
-  businesses: clone(businessData.businesses),
-  businessNotes: clone(businessData.businessNotes),
+  businesses: [],
+  businessNotes: {},
 
-  users: clone(userData.users),
-  userNotes: clone(userData.userNotes),
+  users: [],
+  userNotes: {},
 
-  plans: clone(revenueData.plans),
-  subscriptions: clone(revenueData.subscriptions),
-  payments: clone(revenueData.payments),
-  invoices: clone(revenueData.invoices),
+  plans: [
+    {
+      id: 'plan_starter',
+      name: 'Starter',
+      description: 'For small businesses taking their first messages with AI.',
+      monthlyPrice: 0,
+      annualPrice: 0,
+      trialDays: 14,
+      status: 'Active',
+      limits: { calls: 0, aiMinutes: 0, messages: 0, documents: 20, storageGb: 2, users: 3 },
+      features: { voice: false, whatsapp: true, instagram: false, analytics: true, crm: true },
+      subscribers: 0,
+      mrr: 0,
+      createdAt: null,
+    },
+    {
+      id: 'plan_professional',
+      name: 'Professional',
+      description: 'For growing businesses handling customers across every channel.',
+      monthlyPrice: 0,
+      annualPrice: 0,
+      trialDays: 14,
+      status: 'Active',
+      limits: { calls: 0, aiMinutes: 0, messages: 0, documents: 50, storageGb: 10, users: 10 },
+      features: { voice: false, whatsapp: true, instagram: false, analytics: true, crm: true },
+      subscribers: 0,
+      mrr: 0,
+      createdAt: null,
+    },
+    {
+      id: 'plan_enterprise',
+      name: 'Enterprise',
+      description: 'For multi-location businesses and teams with custom requirements.',
+      monthlyPrice: 0,
+      annualPrice: 0,
+      trialDays: 30,
+      status: 'Active',
+      limits: { calls: 0, aiMinutes: 0, messages: 0, documents: 500, storageGb: 100, users: 50 },
+      features: { voice: false, whatsapp: true, instagram: false, analytics: true, crm: true },
+      subscribers: 0,
+      mrr: 0,
+      createdAt: null,
+    },
+  ],
+  subscriptions: [],
+  payments: [],
+  invoices: [],
 
-  aiAgents: clone(commsData.aiAgents),
-  voice: clone(commsData.voiceConnections),
-  whatsapp: clone(commsData.whatsappConnections),
-  instagram: clone(commsData.instagramConnections),
-  conversations: clone(commsData.conversations),
-  calls: clone(commsData.calls),
-  messages: clone(commsData.messages),
-  transcripts: clone(commsData.transcripts),
+  aiAgents: [],
+  voice: [],
+  whatsapp: [],
+  instagram: [],
+  conversations: [],
+  calls: [],
+  messages: [],
+  transcripts: [],
 
-  notifications: clone(platformData.notifications),
-  tickets: clone(platformData.tickets),
-  announcements: clone(platformData.announcements),
-  auditLogs: clone(platformData.auditLogs),
-  settings: clone(platformData.settings || platformData.platformSettings),
-  integrations: clone(platformData.integrations),
-  featureFlags: clone(platformData.featureFlags),
-  maintenance: clone(platformData.maintenance),
+  notifications: [],
+  tickets: [],
+  announcements: [],
+  auditLogs: [],
+  settings: {
+    general: { platformName: 'DEVMARK Receptionist', supportEmail: '', contactEmail: '', timezone: 'Africa/Djibouti', currency: 'USD' },
+    ai: { defaultLanguage: 'English', defaultPersonality: 'Professional', maxAiMinutesPerCall: 15, maxKnowledgeDocs: 500, provider: 'OpenAI' },
+    communication: { voiceProvider: '', whatsappProvider: 'WhatsApp QR (live session)', instagramProvider: '', recordCalls: false, storeTranscripts: false },
+    billing: { currency: 'USD', taxRate: 0, taxLabel: 'Tax', invoicePrefix: 'INV', dunningRetries: 3 },
+    notifications: { failedPayments: true, newBusiness: true, usageAlerts: true, aiErrors: true, weeklyDigest: false },
+    security: { minPasswordLength: 12, requireTwoFactor: false, sessionHours: 12, lockoutAttempts: 5 },
+  },
+  integrations: [],
+  featureFlags: [
+    { id: 'whatsapp', name: 'WhatsApp', description: 'WhatsApp Business messaging.', enabled: true, plans: ['Starter', 'Professional', 'Enterprise'] },
+    { id: 'web', name: 'Website widget', description: 'Embedded text and voice agent.', enabled: true, plans: ['Starter', 'Professional', 'Enterprise'] },
+    { id: 'crm', name: 'CRM', description: 'Contacts and lead pipeline.', enabled: true, plans: ['Starter', 'Professional', 'Enterprise'] },
+    { id: 'analytics', name: 'Analytics', description: 'Business-level reporting.', enabled: true, plans: ['Professional', 'Enterprise'] },
+    { id: 'ai-training', name: 'AI training', description: 'Document upload and website import.', enabled: true, plans: ['Starter', 'Professional', 'Enterprise'] },
+  ],
+  maintenance: { enabled: false, message: '' },
 }
 
-export { adminsData, businessData, userData, revenueData, commsData, platformData }
+export const businessData = {
+  industries: [
+    'Bank',
+    'Microfinance Institution',
+    'Insurance Company',
+    'Hospital',
+    'Medical Clinic',
+    'Pharmacy',
+    'Restaurant',
+    'Café',
+    'Hotel',
+    'University',
+    'Training Center',
+    'Supermarket',
+    'Telecommunications',
+    'IT Company',
+    'Logistics Company',
+    'Travel Agency',
+    'Construction Company',
+    'Law Firm',
+    'Government Institution',
+    'Real Estate Agency',
+  ],
+  statuses: ['Active', 'Pending', 'Suspended', 'Blocked'],
+  businessStatuses: ['Active', 'Trial', 'Suspended', 'Pending', 'Deleted'],
+}
+export const userData = {
+  statuses: ['Active', 'Invited', 'Suspended', 'Blocked'],
+  roles: ['Owner', 'Admin', 'Manager', 'Agent / Staff'],
+  userRoles: ['Owner', 'Admin', 'Manager', 'Agent / Staff'],
+  userStatuses: ['Active', 'Invited', 'Suspended', 'Blocked'],
+  userLoginHistory: {},
+}
+export const revenueData = {
+  plans: [],
+  subscriptionStatuses: ['Active', 'Trial', 'Past Due', 'Cancelled', 'Suspended', 'Expired'],
+  paymentStatuses: ['Successful', 'Pending', 'Failed', 'Refunded'],
+  invoiceStatuses: ['Paid', 'Open', 'Overdue', 'Void', 'Refunded'],
+}
+export const commsData = {}
+export const platformData = {
+  ticketStatuses: ['Open', 'In Progress', 'Waiting', 'Resolved', 'Closed'],
+  ticketPriorities: ['Low', 'Medium', 'High', 'Urgent'],
+}
 
-/** Every destructive admin action writes a line here, as the real system will. */
 export function writeAudit({ admin, action, resource, resourceId, resourceName, detail, result = 'Success' }) {
   store.auditLogs = [
     {
       id: `log_${Date.now()}`,
-      admin: admin || 'Saqib Rahman',
-      adminId: 'adm_1',
+      admin: admin || 'Admin',
+      adminId: null,
       action,
       resource,
       resourceId,
       resourceName,
-      ip: '103.244.•••.•••',
+      ip: '',
       at: new Date().toISOString(),
       result,
       detail,
@@ -67,3 +158,5 @@ export function writeAudit({ admin, action, resource, resourceId, resourceName, 
     ...store.auditLogs,
   ]
 }
+
+export { clone }

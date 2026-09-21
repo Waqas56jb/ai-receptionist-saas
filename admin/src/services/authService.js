@@ -1,5 +1,6 @@
-import { request, clone } from './mockClient'
-import { admins, currentAdmin, adminSessions, loginAttempts } from '../data/mock/admins'
+import { request } from './mockClient'
+import { api } from './api'
+import { allPermissions } from '../config/permissions'
 
 /**
  * Mock admin auth. No password is validated and no token is stored — only a
@@ -28,16 +29,20 @@ function writeSession(session) {
 export const authService = {
   getSession: () => readSession(),
 
-  login: ({ email } = {}) =>
-    request(() => {
-      // Signing in with another admin's address adopts that admin's role, which
-      // makes the permission gating easy to demonstrate.
-      const match = admins.find((a) => a.email.toLowerCase() === String(email || '').toLowerCase())
-      const admin = clone(match && match.status === 'Active' ? match : currentAdmin)
-      const session = { admin, signedInAt: new Date().toISOString() }
+  login: async ({ email, password } = {}) => {
+    try {
+      const session = await api('/admin/auth/login', { method: 'POST', body: { email, password } })
+      session.admin = {
+        ...session.admin,
+        roleId: session.admin?.roleId || 'super-admin',
+        permissions: session.admin?.permissions?.length ? session.admin.permissions : allPermissions,
+      }
       writeSession(session)
       return session
-    }),
+    } catch (error) {
+      throw error
+    }
+  },
 
   logout: () =>
     request(() => {
@@ -49,8 +54,8 @@ export const authService = {
   resetPassword: () => request({ ok: true }),
   changePassword: () => request({ ok: true }),
 
-  getSessions: () => request(() => adminSessions),
-  getLoginAttempts: () => request(() => loginAttempts),
+  getSessions: () => request(() => []),
+  getLoginAttempts: () => request(() => []),
 }
 
 export default authService

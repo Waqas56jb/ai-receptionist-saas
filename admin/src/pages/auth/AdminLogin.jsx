@@ -15,7 +15,7 @@ export default function AdminLogin() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [form, setForm] = useState({ email: 'saqib@devmark.example.com', password: 'demo1234', remember: true })
+  const [form, setForm] = useState({ email: 'admin@gmail.com', password: 'admin@123!', remember: true })
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -39,7 +39,7 @@ export default function AdminLogin() {
 
     setLoading(true)
     try {
-      const session = await login({ email: form.email })
+      const session = await login({ email: form.email, password: form.password })
       toast.success(`Signed in as ${session.admin.role}.`)
       navigate(location.state?.from || '/dashboard', { replace: true })
     } catch {
@@ -79,9 +79,8 @@ export default function AdminLogin() {
         </Button>
 
         <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center text-[0.74rem] leading-relaxed text-slate-500">
-          Demo build — no real authentication runs yet. Sign in with another admin's address
-          (for example <span className="font-semibold">tomas@devmark.example.com</span>) to see the
-          portal with that role's permissions.
+          Demo login: <span className="font-semibold text-ink-900">admin@gmail.com</span> /{' '}
+          <span className="font-semibold text-ink-900">admin@123!</span>
         </p>
       </form>
     </AuthLayout>

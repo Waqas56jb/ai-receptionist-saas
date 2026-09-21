@@ -1,9 +1,32 @@
 import { request, clone } from './mockClient'
 import { store } from './store'
+import { api } from './api'
+
+function hydrateStore(session) {
+  if (!session) return
+  if (session.user) {
+    store.user = {
+      ...store.user,
+      id: session.user.id || store.user.id,
+      name: session.user.name || '',
+      email: session.user.email || '',
+      role: session.user.role || store.user.role,
+      phone: session.user.phone || store.user.phone,
+    }
+  }
+  if (session.business) {
+    store.business = {
+      ...store.business,
+      id: session.business.id || store.business.id,
+      name: session.business.name || '',
+      email: session.user?.email || store.business.email,
+    }
+  }
+}
 
 /**
- * Mock auth. No password is ever validated here and no token is stored —
- * only a session flag, so nothing sensitive lives in the browser.
+ * Session is issued by the live API. Local storage keeps the JWT so the
+ * portal can call authenticated endpoints.
  */
 const SESSION_KEY = 'devmark.portal.session'
 const ONBOARDING_KEY = 'devmark.portal.onboarded'
@@ -46,36 +69,28 @@ export const authService = {
     }
   },
 
-  login: ({ email }) =>
-    request(() => {
-      const session = {
-        user: { ...clone(store.user), email: email || store.user.email },
-        business: { id: store.business.id, name: store.business.name },
-        signedInAt: new Date().toISOString(),
-      }
+  login: async ({ email, password }) => {
+    try {
+      const session = await api('/auth/login', { method: 'POST', body: { email, password } })
       writeSession(session)
+      hydrateStore(session)
       return session
-    }),
+    } catch (error) {
+      throw error
+    }
+  },
 
-  signup: (payload) =>
-    request(() => {
-      if (payload.businessName) store.business.name = payload.businessName
-      if (payload.businessType) store.business.type = payload.businessType
-      if (payload.country) store.business.country = payload.country
-      if (payload.phone) store.business.phone = payload.phone
-      if (payload.website) store.business.website = payload.website
-      if (payload.fullName) store.user.name = payload.fullName
-      if (payload.email) store.user.email = payload.email
-
-      const session = {
-        user: clone(store.user),
-        business: { id: store.business.id, name: store.business.name },
-        signedInAt: new Date().toISOString(),
-      }
+  signup: async (payload) => {
+    try {
+      const session = await api('/auth/signup', { method: 'POST', body: payload })
       writeSession(session)
+      hydrateStore(session)
       authService.setOnboarded(false)
       return session
-    }),
+    } catch (error) {
+      throw error
+    }
+  },
 
   logout: () =>
     request(() => {
@@ -111,5 +126,7 @@ export const authService = {
       return clone(store.user)
     }),
 }
+
+hydrateStore(readSession())
 
 export default authService

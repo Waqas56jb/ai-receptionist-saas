@@ -22,7 +22,7 @@ export default function Usage() {
   }
 
   const data = usage.data
-  const nearLimit = (data?.metrics || []).filter((m) => m.used / m.limit >= 0.75)
+  const nearLimit = (data?.metrics || []).filter((m) => m.limit > 0 && m.used / m.limit >= 0.75)
 
   return (
     <>
@@ -58,13 +58,16 @@ export default function Usage() {
               description={`${formatDate(data.cycleStart)} — ${formatDate(data.cycleEnd)}`}
             />
             <CardBody className="space-y-6">
+              {data.metrics.length === 0 && (
+                <p className="text-sm text-slate-500">No usage recorded yet. Numbers appear when customers message you on WhatsApp or the website widget.</p>
+              )}
               {data.metrics.map((metric) => (
                 <ProgressBar
                   key={metric.key}
                   label={`${metric.label} (${metric.unit})`}
                   value={metric.used}
-                  max={metric.limit}
-                  hint={`${Math.max(0, metric.limit - metric.used)} ${metric.unit} remaining`}
+                  max={metric.limit || Math.max(metric.used, 1)}
+                  hint={metric.limit ? `${Math.max(0, metric.limit - metric.used)} ${metric.unit} remaining` : `${metric.used} ${metric.unit} used`}
                 />
               ))}
             </CardBody>
@@ -77,10 +80,12 @@ export default function Usage() {
                   <p className="text-[0.72rem] font-bold uppercase tracking-wider text-slate-500">{metric.label}</p>
                   <p className="mt-2 font-display text-2xl font-bold tabular-nums text-ink-900">
                     {metric.used}
-                    <span className="text-base font-semibold text-slate-400"> / {metric.limit}</span>
+                    {metric.limit > 0 && <span className="text-base font-semibold text-slate-400"> / {metric.limit}</span>}
                   </p>
                   <p className="mt-1 text-[0.75rem] text-slate-500">
-                    {Math.round((metric.used / metric.limit) * 100)}% of your {metric.unit} allowance
+                    {metric.limit > 0
+                      ? `${Math.round((metric.used / metric.limit) * 100)}% of your ${metric.unit} allowance`
+                      : `Live ${metric.unit} from WhatsApp and the website widget`}
                   </p>
                 </CardBody>
               </Card>
@@ -90,8 +95,8 @@ export default function Usage() {
           <div className="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
             <p className="text-[0.83rem] leading-relaxed text-slate-600">
-              These allowances are demonstration values. Final plan limits will be confirmed before
-              launch and will be enforced by the backend, not by this screen.
+              Usage is counted from live WhatsApp and website conversations. Plan limits will be
+              enforced by the backend once billing is connected.
             </p>
           </div>
         </>

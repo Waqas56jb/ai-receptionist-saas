@@ -4,10 +4,8 @@ import {
   ArrowLeft,
   Bot,
   CheckCheck,
-  Instagram,
   MessageSquare,
   MessagesSquare,
-  Phone,
   Radio,
   Search,
   Send,
@@ -31,15 +29,13 @@ import conversationService from '../../../services/conversationService'
 import { formatTime, timeAgo } from '../../../lib/format'
 import { channelLabel } from '../../../lib/channels'
 
-const channelIcon = { voice: Phone, whatsapp: MessageSquare, instagram: Instagram, web: Radio }
+const channelIcon = { whatsapp: MessageSquare, web: Radio }
 
 const filters = [
   { id: 'all', label: 'All' },
-  { id: 'voice', label: 'Voice' },
   { id: 'whatsapp', label: 'WhatsApp' },
-  { id: 'instagram', label: 'Instagram' },
+  { id: 'web', label: 'Website' },
   { id: 'unread', label: 'Unread' },
-  { id: 'leads', label: 'Leads' },
   { id: 'resolved', label: 'Resolved' },
 ]
 
@@ -122,7 +118,7 @@ export default function Conversations() {
     <>
       <PageHeader
         title="Conversations"
-        description="Every call, message and chat in one inbox."
+        description="WhatsApp and website widget chats in one inbox."
         badge={<Badge tone="brand">{rows.filter((c) => c.unread).length} unread</Badge>}
       />
 

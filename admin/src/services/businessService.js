@@ -1,10 +1,40 @@
 import { request, makeId } from './mockClient'
 import { store, businessData, writeAudit } from './store'
+import { live } from './api'
+
+function asBusiness(row) {
+  if (!row) return null
+  return {
+    id: row.id,
+    name: row.business_name || row.business || row.name,
+    owner: row.name,
+    email: row.email,
+    phone: row.phone,
+    plan: row.plan || 'Starter',
+    status: row.status || 'Active',
+    aiStatus: 'Online',
+    channels: ['whatsapp', 'web'],
+    users: 1,
+    calls: 0,
+    messages: 0,
+    mrr: 0,
+    usagePct: 0,
+    createdAt: row.createdAt || row.created_at,
+    lastActive: row.lastLogin || row.last_login,
+  }
+}
 
 export const businessService = {
-  list: () => request(() => store.businesses),
+  list: () =>
+    live('/admin/accounts', {}, () => request(() => store.businesses)).then((rows) =>
+      (Array.isArray(rows) ? rows : []).map(asBusiness),
+    ),
 
-  get: (id) => request(() => store.businesses.find((b) => b.id === id) || null),
+  get: (id) =>
+    live('/admin/accounts', {}, () => request(() => store.businesses.find((b) => b.id === id) || null)).then((rows) => {
+      const list = Array.isArray(rows) ? rows : rows ? [rows] : []
+      return asBusiness(list.find((row) => row.id === id) || store.businesses.find((b) => b.id === id))
+    }),
 
   create: (payload, admin) =>
     request(() => {
@@ -94,7 +124,11 @@ export const businessService = {
       return { ok: true, business: business?.name, startedAt: new Date().toISOString(), reason }
     }, { latency: [500, 900] }),
 
-  getReferenceData: () => request({ industries: businessData.industries, statuses: businessData.businessStatuses }),
+  getReferenceData: () =>
+    request({
+      industries: businessData.industries || [],
+      statuses: businessData.businessStatuses || businessData.statuses || [],
+    }),
 }
 
 export default businessService

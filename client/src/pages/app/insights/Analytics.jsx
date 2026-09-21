@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bot, CalendarDays, Clock, MessagesSquare, Phone, Send, Target, UserCheck } from 'lucide-react'
+import { Bot, MessagesSquare, Send, Target, UserCheck } from 'lucide-react'
 import cn from '../../../lib/cn'
 import PageHeader from '../../../components/layout/PageHeader'
 import { Card, CardBody, CardHeader } from '../../../components/ui/Card'
@@ -10,7 +10,7 @@ import { ChartFrame, ColumnChart, DonutChart, TrendChart, chartColors } from '..
 import useAsync from '../../../hooks/useAsync'
 import analyticsService from '../../../services/analyticsService'
 import { dateRanges } from '../../../data/mock/insights'
-import { formatDuration, formatNumber, formatPercent } from '../../../lib/format'
+import { formatNumber, formatPercent } from '../../../lib/format'
 
 export default function Analytics() {
   const [range, setRange] = useState('7d')
@@ -18,6 +18,7 @@ export default function Analytics() {
   const summary = useAsync(() => analyticsService.getSummary(range), [range])
   const series = useAsync(() => analyticsService.getTimeseries(range), [range])
   const breakdowns = useAsync(() => analyticsService.getBreakdowns(), [])
+  const kpis = useAsync(() => analyticsService.getDailyKpis(), [])
 
   const s = summary.data
 
@@ -55,14 +56,30 @@ export default function Analytics() {
 
       {s && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total calls" value={formatNumber(s.calls)} icon={Phone} delta="+9.2%" />
-          <StatCard label="Total messages" value={formatNumber(s.messages)} icon={Send} delta="+12.8%" />
-          <StatCard label="Conversations" value={formatNumber(s.conversations)} icon={MessagesSquare} delta="+7.4%" />
-          <StatCard label="Leads" value={formatNumber(s.leads)} icon={Target} delta="+18.1%" />
-          <StatCard label="Bookings" value={formatNumber(s.bookings)} icon={CalendarDays} delta="+11.0%" />
-          <StatCard label="AI resolution rate" value={formatPercent(s.aiResolution)} icon={Bot} delta="+2.6%" />
-          <StatCard label="Human handoff rate" value={formatPercent(s.handoff)} icon={UserCheck} delta="-2.6%" deltaTone="down" />
-          <StatCard label="Average call duration" value={formatDuration(s.avgDuration)} icon={Clock} hint="Across answered calls" />
+          <StatCard label="Messages" value={formatNumber(s.messages)} icon={Send} />
+          <StatCard label="Conversations" value={formatNumber(s.conversations)} icon={MessagesSquare} />
+          <StatCard label="WhatsApp" value={formatNumber(s.whatsapp)} icon={Send} />
+          <StatCard label="Website" value={formatNumber(s.web)} icon={MessagesSquare} />
+          <StatCard label="Inbound" value={formatNumber(s.inbound)} icon={Target} />
+          <StatCard label="Replies" value={formatNumber(s.outbound)} icon={Bot} />
+          <StatCard label="AI resolution rate" value={formatPercent(s.aiResolution || 0)} icon={Bot} />
+          <StatCard label="Human handoff" value={formatPercent(s.handoff || 0)} icon={UserCheck} />
+        </div>
+      )}
+
+      {kpis.data?.daily && (
+        <div className="mt-4">
+          <ChartFrame title="Daily conversations" description="This account only — WhatsApp and website widget.">
+            <TrendChart
+              data={kpis.data.daily}
+              series={[
+                { key: 'inbound', label: 'Inbound', color: chartColors.brand },
+                { key: 'outbound', label: 'Replies', color: chartColors.emerald },
+                { key: 'web', label: 'Website', color: chartColors.sky },
+                { key: 'whatsapp', label: 'WhatsApp', color: chartColors.emerald },
+              ]}
+            />
+          </ChartFrame>
         </div>
       )}
 
@@ -70,24 +87,24 @@ export default function Analytics() {
         {series.loading ? (
           <SkeletonChart />
         ) : (
-          <ChartFrame title="Calls over time" description="Answered calls per period">
-            <TrendChart data={series.data || []} series={[{ key: 'calls', label: 'Calls', color: chartColors.brand }]} />
+          <ChartFrame title="WhatsApp over time" description="WhatsApp messages per period">
+            <TrendChart data={series.data || []} series={[{ key: 'whatsapp', label: 'WhatsApp', color: chartColors.brand }]} />
           </ChartFrame>
         )}
 
         {series.loading ? (
           <SkeletonChart />
         ) : (
-          <ChartFrame title="Messages over time" description="WhatsApp, Instagram and web messages">
-            <TrendChart data={series.data || []} series={[{ key: 'messages', label: 'Messages', color: chartColors.brandLight }]} />
+          <ChartFrame title="Website over time" description="Website widget chats">
+            <TrendChart data={series.data || []} series={[{ key: 'web', label: 'Website', color: chartColors.sky }]} />
           </ChartFrame>
         )}
 
         {series.loading ? (
           <SkeletonChart />
         ) : (
-          <ChartFrame title="Leads over time" description="New qualified opportunities">
-            <TrendChart data={series.data || []} series={[{ key: 'leads', label: 'Leads', color: chartColors.emerald }]} />
+          <ChartFrame title="Inbound over time" description="Customer messages">
+            <TrendChart data={series.data || []} series={[{ key: 'inbound', label: 'Inbound', color: chartColors.emerald }]} />
           </ChartFrame>
         )}
 

@@ -1,33 +1,77 @@
 import { request, makeId } from './mockClient'
 import { store, platformData, writeAudit } from './store'
+import { api } from './api'
+
+const emptyPlatform = {
+  businesses: { total: 0, active: 0, trial: 0, suspended: 0, pending: 0, newThisMonth: 0 },
+  users: { total: 0, active: 0, invited: 0, suspended: 0, blocked: 0, newThisMonth: 0 },
+  revenue: { mrr: 0, arr: 0, totalRevenue: 0, currentMonth: 0, previousMonth: 0, growthPct: 0 },
+  ai: { calls: 0, minutes: 0, messages: 0, conversations: 0, resolutionRate: 0 },
+  channels: { voice: 0, whatsapp: 0, instagram: 0, web: 0 },
+}
 
 export const analyticsService = {
-  getSummary: () => request(platformData.platformSummary),
-  getGrowth: () => request(platformData.growthSeries),
-  getRevenueByPlan: () => request(platformData.revenueByPlan),
-  getChannelDistribution: () => request(platformData.channelDistribution),
-  getSubscriptionMovement: () => request(platformData.subscriptionMovement),
-  getHealth: () => request(platformData.platformHealth, { latency: [150, 320] }),
-  getActivity: () => request(platformData.recentActivity),
+  getSummary: async () => {
+    try {
+      const [accounts, whatsapp, conversations] = await Promise.all([
+        api('/admin/accounts'),
+        api('/admin/whatsapp').catch(() => []),
+        api('/admin/conversations').catch(() => []),
+      ])
+      const rows = Array.isArray(accounts) ? accounts : []
+      const wa = Array.isArray(whatsapp) ? whatsapp : []
+      const inbox = Array.isArray(conversations) ? conversations : []
+      const active = rows.filter((row) => row.status === 'Active').length
+      const blocked = rows.filter((row) => row.status === 'Blocked').length
+      const suspended = rows.filter((row) => row.status === 'Suspended').length
+      const pending = rows.filter((row) => row.status === 'Pending' || row.status === 'Invited').length
+      const connectedWa = wa.filter((row) => row.connected || row.status === 'connected').length
+      const messages = wa.reduce((sum, row) => sum + (Number(row.messages) || 0), 0)
+      return {
+        ...emptyPlatform,
+        businesses: { ...emptyPlatform.businesses, total: rows.length, active, suspended, pending },
+        users: { ...emptyPlatform.users, total: rows.length, active, blocked, suspended, invited: pending },
+        ai: {
+          ...emptyPlatform.ai,
+          messages,
+          conversations: inbox.length,
+        },
+        channels: { voice: 0, whatsapp: connectedWa, instagram: 0, web: rows.length },
+      }
+    } catch {
+      return emptyPlatform
+    }
+  },
+  getGrowth: () => request([]),
+  getRevenueByPlan: () => request([]),
+  getChannelDistribution: () =>
+    request([
+      { name: 'WhatsApp', value: 0, color: '#34d399' },
+      { name: 'Website', value: 0, color: '#60a5fa' },
+    ]),
+  getSubscriptionMovement: () => request([]),
+  getHealth: () => request([]),
+  getActivity: () => request([]),
 
   /** Usage per business, with the plan allowance it is measured against. */
-  getUsageByBusiness: () =>
-    request(() =>
-      store.businesses.map((b) => {
-        const plan = store.plans.find((p) => p.name === b.plan)
-        return {
-          businessId: b.id,
-          business: b.name,
-          plan: b.plan,
-          status: b.status,
-          usagePct: b.usagePct,
-          calls: b.calls,
-          messages: b.messages,
-          callLimit: plan?.limits.calls ?? 0,
-          messageLimit: plan?.limits.messages ?? 0,
-        }
-      }),
-    ),
+  getUsageByBusiness: async () => {
+    try {
+      const rows = await api('/admin/accounts')
+      return (Array.isArray(rows) ? rows : []).map((b) => ({
+        businessId: b.id,
+        business: b.business_name || b.business || b.name,
+        plan: b.plan || 'Starter',
+        status: b.status || 'Active',
+        usagePct: 0,
+        calls: 0,
+        messages: 0,
+        callLimit: 0,
+        messageLimit: 0,
+      }))
+    } catch {
+      return []
+    }
+  },
 }
 
 export const supportService = {

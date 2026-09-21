@@ -1,14 +1,13 @@
 import { Link } from 'react-router-dom'
-import { Database, Instagram, MessageSquare, Mic, SlidersHorizontal } from 'lucide-react'
+import { Database, Globe, MessageSquare, SlidersHorizontal } from 'lucide-react'
 import cn from '../../lib/cn'
 import { RadioCard } from '../ui/Field'
 import Badge from '../ui/Badge'
 import { formatDate } from '../../lib/format'
 
 const channelMeta = {
-  voice: { label: 'Voice knowledge', icon: Mic, route: '/app/voice-agent' },
   whatsapp: { label: 'WhatsApp knowledge', icon: MessageSquare, route: '/app/whatsapp-agent' },
-  instagram: { label: 'Instagram knowledge', icon: Instagram, route: '/app/instagram-agent' },
+  web: { label: 'Website knowledge', icon: Globe, route: '/app/website-widget' },
 }
 
 /**

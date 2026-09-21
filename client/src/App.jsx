@@ -24,21 +24,11 @@ const KnowledgeBase = lazy(() => import('./pages/app/ai/KnowledgeBase'))
 const AIConfigurationMode = lazy(() => import('./pages/app/ai/AIConfigurationMode'))
 const AITest = lazy(() => import('./pages/app/ai/AITest'))
 
-const VoiceAgent = lazy(() => import('./pages/app/agents/VoiceAgent'))
 const WhatsAppAgent = lazy(() => import('./pages/app/agents/WhatsAppAgent'))
-const InstagramAgent = lazy(() => import('./pages/app/agents/InstagramAgent'))
+const WebsiteWidget = lazy(() => import('./pages/app/agents/WebsiteWidget'))
 const Channels = lazy(() => import('./pages/app/channels/Channels'))
-const CalendarIntegration = lazy(() => import('./pages/app/channels/CalendarIntegration'))
 
 const Conversations = lazy(() => import('./pages/app/comms/Conversations'))
-const Calls = lazy(() => import('./pages/app/comms/Calls'))
-const Messages = lazy(() => import('./pages/app/comms/Messages'))
-const Transcripts = lazy(() => import('./pages/app/comms/Transcripts'))
-
-const Contacts = lazy(() => import('./pages/app/crm/Contacts'))
-const ContactDetail = lazy(() => import('./pages/app/crm/ContactDetail'))
-const Leads = lazy(() => import('./pages/app/crm/Leads'))
-const Bookings = lazy(() => import('./pages/app/crm/Bookings'))
 
 const Analytics = lazy(() => import('./pages/app/insights/Analytics'))
 const Usage = lazy(() => import('./pages/app/insights/Usage'))
@@ -126,22 +116,23 @@ export default function App() {
           <Route path="ai-config" element={<AIConfigurationMode />} />
           <Route path="ai-test" element={<AITest />} />
 
-          {/* Channel agents */}
-          <Route path="voice-agent" element={<VoiceAgent />} />
+          {/* Live channel agents */}
           <Route path="whatsapp-agent" element={<WhatsAppAgent />} />
-          <Route path="instagram-agent" element={<InstagramAgent />} />
+          <Route path="website-widget" element={<WebsiteWidget />} />
+          <Route path="voice-agent" element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="instagram-agent" element={<Navigate to="/app/dashboard" replace />} />
 
           {/* Communication */}
           <Route path="conversations" element={<Conversations />} />
-          <Route path="calls" element={<Calls />} />
-          <Route path="messages" element={<Messages />} />
-          <Route path="transcripts" element={<Transcripts />} />
+          <Route path="calls" element={<Navigate to="/app/conversations" replace />} />
+          <Route path="messages" element={<Navigate to="/app/conversations" replace />} />
+          <Route path="transcripts" element={<Navigate to="/app/conversations" replace />} />
 
-          {/* CRM */}
-          <Route path="contacts" element={<Contacts />} />
-          <Route path="contacts/:id" element={<ContactDetail />} />
-          <Route path="leads" element={<Leads />} />
-          <Route path="bookings" element={<Bookings />} />
+          {/* Hidden until live */}
+          <Route path="contacts" element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="contacts/:id" element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="leads" element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="bookings" element={<Navigate to="/app/dashboard" replace />} />
 
           {/* Analytics */}
           <Route path="analytics" element={<Analytics />} />
@@ -149,10 +140,10 @@ export default function App() {
 
           {/* Integrations */}
           <Route path="channels" element={<Channels />} />
-          <Route path="integrations/phone" element={<VoiceAgent />} />
           <Route path="integrations/whatsapp" element={<WhatsAppAgent />} />
-          <Route path="integrations/instagram" element={<InstagramAgent />} />
-          <Route path="integrations/calendar" element={<CalendarIntegration />} />
+          <Route path="integrations/phone" element={<Navigate to="/app/channels" replace />} />
+          <Route path="integrations/instagram" element={<Navigate to="/app/channels" replace />} />
+          <Route path="integrations/calendar" element={<Navigate to="/app/channels" replace />} />
 
           {/* Account */}
           <Route path="subscription" element={<Subscription />} />

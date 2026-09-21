@@ -35,14 +35,9 @@ const NotFound = lazy(() => import('./pages/NotFound'))
  */
 const named = (loader, key) => lazy(() => loader().then((mod) => ({ default: mod[key] })))
 
-const VoiceChannels = named(() => import('./pages/ai/Channels'), 'VoiceChannels')
 const WhatsAppChannels = named(() => import('./pages/ai/Channels'), 'WhatsAppChannels')
-const InstagramChannels = named(() => import('./pages/ai/Channels'), 'InstagramChannels')
 
 const Conversations = named(() => import('./pages/comms/Communication'), 'Conversations')
-const Calls = named(() => import('./pages/comms/Communication'), 'Calls')
-const Messages = named(() => import('./pages/comms/Communication'), 'Messages')
-const Transcripts = named(() => import('./pages/comms/Communication'), 'Transcripts')
 
 const PlatformAnalytics = named(() => import('./pages/analytics/Analytics'), 'PlatformAnalytics')
 const RevenueAnalytics = named(() => import('./pages/analytics/Analytics'), 'RevenueAnalytics')
@@ -114,13 +109,13 @@ export default function App() {
           <Route path="ai-agents" element={gated('ai.viewConfig', <AIAgents />)} />
           <Route path="ai-agents/:id" element={gated('ai.viewConfig', <AIAgentDetail />)} />
           <Route path="ai-usage" element={gated('ai.viewUsage', <AIUsage />)} />
-          <Route path="voice" element={gated('channels.voice', <VoiceChannels />)} />
           <Route path="whatsapp" element={gated('channels.whatsapp', <WhatsAppChannels />)} />
-          <Route path="instagram" element={gated('channels.instagram', <InstagramChannels />)} />
           <Route path="conversations" element={gated('analytics.business', <Conversations />)} />
-          <Route path="calls" element={gated('analytics.business', <Calls />)} />
-          <Route path="messages" element={gated('analytics.business', <Messages />)} />
-          <Route path="transcripts" element={gated('analytics.business', <Transcripts />)} />
+          <Route path="voice" element={<Navigate to="/dashboard" replace />} />
+          <Route path="instagram" element={<Navigate to="/dashboard" replace />} />
+          <Route path="calls" element={<Navigate to="/conversations" replace />} />
+          <Route path="messages" element={<Navigate to="/conversations" replace />} />
+          <Route path="transcripts" element={<Navigate to="/conversations" replace />} />
 
           {/* Analytics */}
           <Route path="analytics" element={gated('analytics.platform', <PlatformAnalytics />)} />

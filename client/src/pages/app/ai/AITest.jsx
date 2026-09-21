@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Database, Instagram, MessageSquare, Mic, Save, SlidersHorizontal } from 'lucide-react'
+import { Database, Globe, MessageSquare, Save, SlidersHorizontal } from 'lucide-react'
 import PageHeader from '../../../components/layout/PageHeader'
 import { Card, CardBody, CardHeader } from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
@@ -15,14 +15,13 @@ import channelService from '../../../services/channelService'
 import knowledgeService from '../../../services/knowledgeService'
 
 const channelTabs = [
-  { id: 'voice', label: 'Voice', icon: Mic },
   { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
-  { id: 'instagram', label: 'Instagram', icon: Instagram },
+  { id: 'web', label: 'Website', icon: Globe },
 ]
 
 export default function AITest() {
   const toast = useToast()
-  const [channel, setChannel] = useState('voice')
+  const [channel, setChannel] = useState('whatsapp')
   const [mode, setMode] = useState('shared')
 
   const config = useAsync(() => aiService.getConfig(), [])

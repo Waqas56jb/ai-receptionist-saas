@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Ban, CheckCircle2, Eye, KeyRound, MoreHorizontal, ShieldOff, Trash2, Users as UsersIcon } from 'lucide-react'
+import { Ban, CheckCircle2, Eye, KeyRound, MoreHorizontal, Plus, ShieldOff, Trash2, Users as UsersIcon } from 'lucide-react'
 import { exportCsv, formatDate, timeAgo } from '../../lib/utils'
 import PageHeader from '../../components/layout/PageHeader'
 import Button from '../../components/ui/Button'
 import Badge, { StatusBadge } from '../../components/ui/Badge'
 import DataTable from '../../components/ui/DataTable'
 import FilterBar from '../../components/ui/FilterBar'
-import { ConfirmDialog } from '../../components/ui/Modal'
-import { Select, Textarea } from '../../components/ui/Field'
+import Modal, { ConfirmDialog } from '../../components/ui/Modal'
+import { Input, Select, Textarea } from '../../components/ui/Field'
 import { EmptyState } from '../../components/ui/States'
 import { Avatar, Dropdown, DropdownDivider, DropdownItem } from '../../components/ui/Misc'
 import { useAsync, useTable } from '../../hooks'
@@ -36,6 +36,8 @@ export default function Users() {
   const [reason, setReason] = useState('')
   const [note, setNote] = useState('')
   const [deleting, setDeleting] = useState(null)
+  const [creating, setCreating] = useState(false)
+  const [draft, setDraft] = useState({ name: '', email: '', password: '', businessName: '', phone: '', role: 'Owner', plan: 'Starter' })
   const [busy, setBusy] = useState(false)
 
   const applyStatus = async () => {
@@ -143,6 +145,12 @@ export default function Users() {
         title="Users"
         description="Every person with access to a business account on the platform."
         badge={users.data && <Badge tone="brand">{users.data.length} users</Badge>}
+        actions={
+          <Button size="sm" disabled={!can('users.edit')} onClick={() => setCreating(true)}>
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            Create account
+          </Button>
+        }
       />
 
       <FilterBar
@@ -207,6 +215,51 @@ export default function Users() {
           />
         }
       />
+
+      <Modal
+        open={creating}
+        onClose={() => setCreating(false)}
+        title="Create account"
+        description="The new business gets its own WhatsApp session, knowledge base and conversation history."
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              loading={busy}
+              onClick={async () => {
+                setBusy(true)
+                try {
+                  users.setData(await userService.create(draft))
+                  toast.success('Account created.')
+                  setCreating(false)
+                  setDraft({ name: '', email: '', password: '', businessName: '', phone: '', role: 'Owner', plan: 'Starter' })
+                } catch (error) {
+                  toast.error(error.message)
+                } finally {
+                  setBusy(false)
+                }
+              }}
+            >
+              Create account
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input label="Name" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} required />
+          <Input label="Email" type="email" value={draft.email} onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))} required />
+          <Input label="Password" type="password" value={draft.password} onChange={(e) => setDraft((d) => ({ ...d, password: e.target.value }))} required />
+          <Input label="Business" value={draft.businessName} onChange={(e) => setDraft((d) => ({ ...d, businessName: e.target.value }))} />
+          <Input label="Phone" value={draft.phone} onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))} />
+          <div className="grid grid-cols-2 gap-3">
+            <Select label="Role" options={['Owner', 'Admin', 'Manager']} value={draft.role} onChange={(e) => setDraft((d) => ({ ...d, role: e.target.value }))} />
+            <Select label="Plan" options={['Starter', 'Professional', 'Enterprise']} value={draft.plan} onChange={(e) => setDraft((d) => ({ ...d, plan: e.target.value }))} />
+          </div>
+        </div>
+      </Modal>
 
       <ConfirmDialog
         open={Boolean(statusChange)}

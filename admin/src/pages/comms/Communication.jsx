@@ -69,7 +69,7 @@ export function Conversations() {
         searchPlaceholder="Search business, customer or message…"
         filters={[
           { key: 'business', label: 'Businesses', options: (businesses.data || []).map((b) => b.name) },
-          { key: 'channel', label: 'Channels', options: ['voice', 'whatsapp', 'instagram', 'web'] },
+          { key: 'channel', label: 'Channels', options: ['whatsapp', 'web'] },
           { key: 'status', label: 'Statuses', options: ['Open', 'Resolved', 'Escalated'] },
           { key: 'handledBy', label: 'Handled by', options: ['AI', 'Human'] },
         ]}

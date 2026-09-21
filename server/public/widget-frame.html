@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Website chat</title>
+    <style>
+      :root {
+        --canvas: #031014;
+        --surface: #0a1c1f;
+        --line: rgba(45, 212, 191, 0.22);
+        --ink: #e8f6f2;
+        --muted: #8aa39c;
+        --mint: #2dd4bf;
+        --mint-ink: #042f2e;
+        --bubble: #123033;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: transparent;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: var(--ink);
+      }
+      #launcher {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 76px;
+        height: 76px;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+      #miniOrb { width: 76px; height: 76px; display: block; }
+      #panel {
+        display: none;
+        flex-direction: column;
+        height: 100%;
+        background: var(--canvas);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+        position: relative;
+      }
+      body.open #panel { display: flex; }
+      body.open #launcher { display: none; }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+      header .mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: rgba(45, 212, 191, 0.16);
+        color: var(--mint);
+        font-weight: 700;
+      }
+      header h1 { margin: 0; font-size: 15px; }
+      header p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+      header .actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+      header button {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 22px;
+        cursor: pointer;
+      }
+      #voiceToggle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(45, 212, 191, 0.16);
+        color: var(--mint);
+        display: grid;
+        place-items: center;
+        font-size: 0;
+      }
+      #voiceToggle svg { width: 18px; height: 18px; }
+      #thread {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .row { display: flex; }
+      .row.out { justify-content: flex-end; }
+      .bubble {
+        max-width: 82%;
+        padding: 10px 13px;
+        border-radius: 16px;
+        font-size: 14px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+      }
+      .row.in .bubble { background: var(--bubble); border-bottom-left-radius: 4px; }
+      .row.out .bubble { background: var(--mint); color: var(--mint-ink); border-bottom-right-radius: 4px; }
+      form {
+        display: flex;
+        gap: 8px;
+        padding: 12px;
+        border-top: 1px solid var(--line);
+        background: var(--surface);
+      }
+      input {
+        flex: 1;
+        border: 1px solid var(--line);
+        background: var(--canvas);
+        color: var(--ink);
+        border-radius: 12px;
+        padding: 11px 12px;
+        font-size: 14px;
+        outline: none;
+      }
+      form button {
+        border: 0;
+        border-radius: 12px;
+        background: var(--mint);
+        color: var(--mint-ink);
+        font-weight: 700;
+        padding: 0 14px;
+        cursor: pointer;
+      }
+      form button:disabled { opacity: 0.55; cursor: wait; }
+      #micBtn {
+        width: 42px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+      }
+      #micBtn svg { width: 18px; height: 18px; }
+      #voiceLayer {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 38%, #0a2a2c 0%, #031014 68%);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 3;
+      }
+      body.voice #voiceLayer { display: flex; }
+      #orb { width: min(280px, 78%); height: min(280px, 46vh); }
+      #voiceStatus { margin: 8px 0 0; color: var(--mint); font-size: 14px; font-weight: 600; }
+      #voiceHint { margin: 6px 0 22px; color: var(--muted); font-size: 12px; }
+      #hangup {
+        border: 0;
+        border-radius: 999px;
+        background: #fb7185;
+        color: #fff;
+        font-weight: 700;
+        padding: 10px 18px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="launcher" type="button" aria-label="Open voice assistant">
+      <canvas id="miniOrb" width="76" height="76"></canvas>
+    </button>
+    <section id="panel" aria-label="Website chat">
+      <header>
+        <div class="mark" id="mark">AI</div>
+        <div>
+          <h1 id="title">AI receptionist</h1>
+          <p id="subtitle">Chat or talk — trained on this business</p>
+        </div>
+        <div class="actions">
+          <button type="button" id="voiceToggle" aria-label="Start voice agent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+              <path d="M19 10a7 7 0 0 1-14 0" />
+              <path d="M12 17v4" />
+            </svg>
+          </button>
+          <button type="button" id="close" aria-label="Close chat">×</button>
+        </div>
+      </header>
+      <div id="thread"></div>
+      <form id="form">
+        <button type="button" id="micBtn" aria-label="Talk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+            <path d="M19 10a7 7 0 0 1-14 0" />
+            <path d="M12 17v4" />
+          </svg>
+        </button>
+        <input id="input" autocomplete="off" placeholder="Type a message…" />
+        <button type="submit">Send</button>
+      </form>
+      <div id="voiceLayer">
+        <canvas id="orb"></canvas>
+        <p id="voiceStatus">Connecting voice…</p>
+        <p id="voiceHint">Speak naturally. The 3D agent listens and replies in real time.</p>
+        <button type="button" id="hangup">End voice</button>
+      </div>
+    </section>
+    <script>
+      (function () {
+        var token = location.pathname.replace(/\/+$/, '').split('/').pop()
+        var origin = location.origin
+        var visitorKey = 'dm.widget.visitor.' + token
+        var visitorId = localStorage.getItem(visitorKey) || ('vis_' + Math.random().toString(36).slice(2, 10))
+        localStorage.setItem(visitorKey, visitorId)
+        var thread = document.getElementById('thread')
+        var form = document.getElementById('form')
+        var input = document.getElementById('input')
+        var statusEl = document.getElementById('voiceStatus')
+        var open = false
+        var voiceOn = false
+        var session = null
+
+        function tellParent() {
+          if (window.parent !== window) {
+            window.parent.postMessage({ type: 'dm-widget-resize', open: open, voice: voiceOn }, '*')
+          }
+        }
+
+        function setOpen(next) {
+          open = next
+          document.body.classList.toggle('open', open)
+          if (!open) stopVoice()
+          tellParent()
+          if (open && !voiceOn) setTimeout(function () { input.focus() }, 80)
+        }
+
+        function addBubble(from, text) {
+          if (!text) return
+          var row = document.createElement('div')
+          row.className = 'row ' + (from === 'customer' ? 'out' : 'in')
+          var bubble = document.createElement('div')
+          bubble.className = 'bubble'
+          bubble.textContent = text
+          row.appendChild(bubble)
+          thread.appendChild(row)
+          thread.scrollTop = thread.scrollHeight
+        }
+
+        function createOrb(canvas, compact) {
+          var ctx = canvas.getContext('2d')
+          var t = 0
+          var level = 0
+          var mode = 'idle'
+          function fit() {
+            var dpr = window.devicePixelRatio || 1
+            var w = canvas.clientWidth || canvas.width
+            var h = canvas.clientHeight || canvas.height
+            canvas.width = Math.max(1, w * dpr)
+            canvas.height = Math.max(1, h * dpr)
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+          }
+          function draw() {
+            t += 0.018
+            var w = canvas.clientWidth || 76
+            var h = canvas.clientHeight || 76
+            ctx.clearRect(0, 0, w, h)
+            var cx = w / 2
+            var cy = h / 2
+            var pulse = 1 + level * 0.42 + Math.sin(t * (mode === 'speak' ? 6 : 2.2)) * 0.05
+            var r = Math.min(w, h) * (compact ? 0.28 : 0.2) * pulse
+            var glow = ctx.createRadialGradient(cx, cy, r * 0.15, cx, cy, r * 2.4)
+            glow.addColorStop(0, mode === 'speak' ? 'rgba(94,234,212,0.7)' : 'rgba(45,212,191,0.5)')
+            glow.addColorStop(1, 'rgba(45,212,191,0)')
+            ctx.fillStyle = glow
+            ctx.beginPath()
+            ctx.arc(cx, cy, r * 2.3, 0, Math.PI * 2)
+            ctx.fill()
+            var sphere = ctx.createRadialGradient(cx - r * 0.32, cy - r * 0.38, r * 0.08, cx, cy, r)
+            sphere.addColorStop(0, '#d7fff7')
+            sphere.addColorStop(0.4, '#2dd4bf')
+            sphere.addColorStop(1, '#115e59')
+            ctx.fillStyle = sphere
+            ctx.beginPath()
+            ctx.arc(cx, cy, r, 0, Math.PI * 2)
+            ctx.fill()
+            for (var i = 0; i < 3; i += 1) {
+              var rot = t * (0.7 + i * 0.28) + i
+              ctx.save()
+              ctx.translate(cx, cy)
+              ctx.rotate(rot * 0.18)
+              ctx.strokeStyle = i === 0 ? 'rgba(204,251,241,0.9)' : 'rgba(45,212,191,0.4)'
+              ctx.lineWidth = compact ? 1.1 : 1.5
+              ctx.beginPath()
+              ctx.ellipse(0, 0, r * (1.55 + i * 0.32), r * (0.42 + i * 0.12), rot, 0, Math.PI * 2)
+              ctx.stroke()
+              ctx.restore()
+            }
+            requestAnimationFrame(draw)
+          }
+          fit()
+          draw()
+          return {
+            setLevel: function (n) { level = Math.max(0, Math.min(1, n)) },
+            setMode: function (m) { mode = m },
+            resize: fit,
+          }
+        }
+
+        var mini = createOrb(document.getElementById('miniOrb'), true)
+        var big = createOrb(document.getElementById('orb'), false)
+        window.addEventListener('resize', function () { mini.resize(); big.resize() })
+
+        function analyserLevel(analyser, bytes) {
+          analyser.getByteFrequencyData(bytes)
+          var sum = 0
+          for (var i = 0; i < bytes.length; i += 1) sum += bytes[i]
+          return sum / bytes.length / 180
+        }
+
+        function stopVoice() {
+          voiceOn = false
+          document.body.classList.remove('voice')
+          statusEl.textContent = 'Connecting voice…'
+          if (session) {
+            try { if (session.pc) session.pc.close() } catch (e) {}
+            try { if (session.stream) session.stream.getTracks().forEach(function (t) { t.stop() }) } catch (e) {}
+            try { if (session.audioCtx) session.audioCtx.close() } catch (e) {}
+            try { if (session.recorder && session.recorder.state !== 'inactive') session.recorder.stop() } catch (e) {}
+            session = null
+          }
+          mini.setMode('idle'); mini.setLevel(0)
+          big.setMode('idle'); big.setLevel(0)
+          tellParent()
+        }
+
+        function logVoice(inbound, outbound) {
+          fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/voice-log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visitorId: visitorId, visitorName: 'Website visitor', inbound: inbound || '', outbound: outbound || '' }),
+          }).catch(function () {})
+        }
+
+        function handleRealtimeEvent(raw) {
+          var event
+          try { event = JSON.parse(raw) } catch (e) { return }
+          var type = event.type || ''
+          if (type.indexOf('input_audio_transcription.completed') !== -1 || type === 'conversation.item.input_audio_transcription.completed') {
+            addBubble('customer', event.transcript || event.item?.content?.[0]?.transcript || '')
+            logVoice(event.transcript || '', '')
+            big.setMode('listen')
+          }
+          if (type.indexOf('output_audio_transcript.done') !== -1 || type === 'response.audio_transcript.done' || type === 'response.output_audio_transcript.done') {
+            addBubble('ai', event.transcript || '')
+            logVoice('', event.transcript || '')
+            big.setMode('speak')
+          }
+          if (type === 'response.created' || type.indexOf('output_audio.delta') !== -1) big.setMode('speak')
+          if (type === 'input_audio_buffer.speech_started') {
+            statusEl.textContent = 'Listening…'
+            big.setMode('listen')
+          }
+          if (type === 'response.done') {
+            statusEl.textContent = 'Listening…'
+            big.setMode('listen')
+          }
+        }
+
+        async function connectRealtime() {
+          var tokenRes = await fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/realtime', { method: 'POST' })
+          var data = await tokenRes.json()
+          if (!tokenRes.ok || !data.value) throw new Error(data.error || 'realtime')
+          var pc = new RTCPeerConnection()
+          var remote = new Audio()
+          remote.autoplay = true
+          pc.ontrack = function (ev) { remote.srcObject = ev.streams[0] }
+          var stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          stream.getTracks().forEach(function (track) { pc.addTrack(track, stream) })
+          var dc = pc.createDataChannel('oai-events')
+          dc.onmessage = function (ev) { handleRealtimeEvent(ev.data) }
+          dc.onopen = function () {
+            statusEl.textContent = 'Listening…'
+            dc.send(JSON.stringify({
+              type: 'response.create',
+              response: { instructions: 'Greet the visitor briefly as this business voice receptionist.' },
+            }))
+          }
+          var offer = await pc.createOffer()
+          await pc.setLocalDescription(offer)
+          var sdpRes = await fetch('https://api.openai.com/v1/realtime/calls', {
+            method: 'POST',
+            body: offer.sdp,
+            headers: { Authorization: 'Bearer ' + data.value, 'Content-Type': 'application/sdp' },
+          })
+          if (!sdpRes.ok) {
+            sdpRes = await fetch('https://api.openai.com/v1/realtime?model=' + encodeURIComponent(data.model || 'gpt-4o-realtime-preview'), {
+              method: 'POST',
+              body: offer.sdp,
+              headers: { Authorization: 'Bearer ' + data.value, 'Content-Type': 'application/sdp', 'OpenAI-Beta': 'realtime=v1' },
+            })
+          }
+          if (!sdpRes.ok) throw new Error('sdp')
+          await pc.setRemoteDescription({ type: 'answer', sdp: await sdpRes.text() })
+          var audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+          var analyser = audioCtx.createAnalyser()
+          analyser.fftSize = 64
+          var bytes = new Uint8Array(analyser.frequencyBinCount)
+          audioCtx.createMediaStreamSource(stream).connect(analyser)
+          var timer = setInterval(function () {
+            if (!voiceOn) { clearInterval(timer); return }
+            var lvl = analyserLevel(analyser, bytes)
+            big.setLevel(lvl)
+            mini.setLevel(lvl)
+          }, 80)
+          session = { pc: pc, stream: stream, audioCtx: audioCtx }
+        }
+
+        async function connectFallback() {
+          statusEl.textContent = 'Hold on — using speech turns'
+          var stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          var audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+          var analyser = audioCtx.createAnalyser()
+          analyser.fftSize = 64
+          var bytes = new Uint8Array(analyser.frequencyBinCount)
+          audioCtx.createMediaStreamSource(stream).connect(analyser)
+          var chunks = []
+          var recorder = new MediaRecorder(stream)
+          recorder.ondataavailable = function (ev) { if (ev.data.size) chunks.push(ev.data) }
+          recorder.onstop = function () {
+            if (!chunks.length) return
+            var blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
+            chunks = []
+            var body = new FormData()
+            body.append('audio', blob, 'voice.webm')
+            body.append('visitorId', visitorId)
+            body.append('visitorName', 'Website visitor')
+            statusEl.textContent = 'Thinking…'
+            fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/voice', { method: 'POST', body: body })
+              .then(function (res) { return res.json() })
+              .then(function (data) {
+                addBubble('customer', data.transcript)
+                addBubble('ai', data.reply || data.error || '')
+                if (data.audio) {
+                  var audio = new Audio('data:' + (data.mime || 'audio/mpeg') + ';base64,' + data.audio)
+                  big.setMode('speak')
+                  audio.onended = function () {
+                    if (voiceOn) {
+                      statusEl.textContent = 'Listening…'
+                      big.setMode('listen')
+                      try { recorder.start() } catch (e) {}
+                    }
+                  }
+                  audio.play()
+                } else if (voiceOn) {
+                  statusEl.textContent = 'Listening…'
+                  try { recorder.start() } catch (e) {}
+                }
+              })
+              .catch(function () {
+                addBubble('ai', 'I could not hear that just now.')
+                if (voiceOn) {
+                  statusEl.textContent = 'Listening…'
+                  try { recorder.start() } catch (e) {}
+                }
+              })
+          }
+          var silence = 0
+          var speaking = false
+          var timer = setInterval(function () {
+            if (!voiceOn) { clearInterval(timer); return }
+            var lvl = analyserLevel(analyser, bytes)
+            big.setLevel(lvl)
+            mini.setLevel(lvl)
+            if (lvl > 0.18) {
+              silence = 0
+              if (!speaking && recorder.state === 'inactive') {
+                speaking = true
+                statusEl.textContent = 'Listening…'
+                big.setMode('listen')
+                recorder.start()
+              }
+            } else if (speaking) {
+              silence += 1
+              if (silence > 14 && recorder.state === 'recording') {
+                speaking = false
+                recorder.stop()
+              }
+            }
+          }, 80)
+          session = { stream: stream, audioCtx: audioCtx, recorder: recorder }
+          statusEl.textContent = 'Listening…'
+        }
+
+        async function startVoice() {
+          if (voiceOn) return
+          voiceOn = true
+          document.body.classList.add('voice', 'open')
+          open = true
+          tellParent()
+          big.resize()
+          statusEl.textContent = 'Connecting voice…'
+          big.setMode('listen')
+          mini.setMode('listen')
+          try {
+            await connectRealtime()
+          } catch (error) {
+            try {
+              await connectFallback()
+            } catch (fallbackError) {
+              statusEl.textContent = 'Microphone or voice is unavailable'
+              addBubble('ai', 'I could not start the voice agent. Check microphone permission and the OpenAI key.')
+            }
+          }
+        }
+
+        document.getElementById('launcher').addEventListener('click', function () { setOpen(true) })
+        document.getElementById('close').addEventListener('click', function () { setOpen(false) })
+        document.getElementById('voiceToggle').addEventListener('click', startVoice)
+        document.getElementById('micBtn').addEventListener('click', startVoice)
+        document.getElementById('hangup').addEventListener('click', function () {
+          stopVoice()
+          tellParent()
+        })
+
+        Promise.all([
+          fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/config').then(function (res) { return res.json() }),
+          fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/history?visitorId=' + encodeURIComponent(visitorId)).then(function (res) { return res.json() }),
+        ])
+          .then(function (results) {
+            var config = results[0] || {}
+            var history = results[1] || {}
+            document.getElementById('title').textContent = config.businessName || 'AI receptionist'
+            document.getElementById('mark').textContent = (config.businessName || 'AI').slice(0, 2).toUpperCase()
+            ;(history.messages || []).forEach(function (msg) { addBubble(msg.from, msg.text) })
+            if (!(history.messages || []).length && config.greeting) addBubble('ai', config.greeting)
+          })
+          .catch(function () {
+            addBubble('ai', 'Hello — how can I help you today?')
+          })
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault()
+          var text = input.value.trim()
+          if (!text) return
+          input.value = ''
+          addBubble('customer', text)
+          form.querySelector('button[type="submit"]').disabled = true
+          fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visitorId: visitorId, message: text, visitorName: 'Website visitor' }),
+          })
+            .then(function (res) { return res.json() })
+            .then(function (data) {
+              addBubble('ai', data.reply || data.error || 'Thanks — we will get back to you.')
+            })
+            .catch(function () {
+              addBubble('ai', 'I could not send that just now. Please try again.')
+            })
+            .finally(function () {
+              form.querySelector('button[type="submit"]').disabled = false
+              input.focus()
+            })
+        })
+
+        tellParent()
+      })()
+    </script>
+  </body>
+</html>

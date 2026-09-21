@@ -1,5 +1,6 @@
 import { request, makeId } from './mockClient'
 import { store, biz } from './store'
+import { api } from './api'
 
 const collections = {
   services: 'services',
@@ -9,29 +10,42 @@ const collections = {
 }
 
 export const businessService = {
-  getBusiness: () => request(() => store.business),
+  getBusiness: async () => {
+    const me = await api('/me')
+    store.business = { ...store.business, ...me.business }
+    if (Array.isArray(me.hours) && me.hours.length) store.businessHours = me.hours
+    if (me.user) store.user = { ...store.user, ...me.user }
+    return store.business
+  },
 
-  updateBusiness: (patch) =>
-    request(() => {
-      Object.assign(store.business, patch)
-      return store.business
-    }),
+  updateBusiness: async (patch) => {
+    const next = await api('/me', { method: 'PATCH', body: patch })
+    store.business = { ...store.business, ...next }
+    return store.business
+  },
 
-  getHours: () => request(() => store.businessHours),
+  getHours: async () => {
+    const hours = await api('/me/hours')
+    store.businessHours = Array.isArray(hours) && hours.length ? hours : store.businessHours
+    return store.businessHours
+  },
 
-  updateHours: (hours) =>
-    request(() => {
-      store.businessHours = hours
-      return store.businessHours
-    }),
+  updateHours: async (hours) => {
+    store.businessHours = await api('/me/hours', { method: 'PUT', body: hours })
+    return store.businessHours
+  },
 
-  getProfile: () => request(() => store.user),
+  getProfile: async () => {
+    const me = await api('/me')
+    store.user = { ...store.user, ...me.user }
+    return store.user
+  },
 
-  updateProfile: (patch) =>
-    request(() => {
-      Object.assign(store.user, patch)
-      return store.user
-    }),
+  updateProfile: async (patch) => {
+    const next = await api('/me/profile', { method: 'PATCH', body: patch })
+    store.user = { ...store.user, ...next }
+    return store.user
+  },
 
   getTeam: () => request(() => store.team),
 

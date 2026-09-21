@@ -81,7 +81,12 @@ export default function Help() {
             <CardHeader icon={BookOpen} title="Documentation" description="Step-by-step guides for every part of the portal." />
             <CardBody>
               {!filteredArticles.length ? (
-                <EmptyState compact icon={Search} title="No articles match" description="Try a different word or browse the FAQs." />
+                <EmptyState
+                  compact
+                  icon={Search}
+                  title={query ? 'No articles match' : 'No documentation yet'}
+                  description={query ? 'Try a different word or browse the FAQs.' : 'Help articles will appear here when they are published.'}
+                />
               ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {filteredArticles.map((a) => (
@@ -108,7 +113,12 @@ export default function Help() {
             <CardHeader icon={MessageCircle} title="Frequently asked questions" />
             <CardBody className="space-y-2">
               {!filteredFaqs.length ? (
-                <EmptyState compact icon={Search} title="No answers match" description="Try a different search or contact support." />
+                <EmptyState
+                  compact
+                  icon={Search}
+                  title={query ? 'No answers match' : 'No FAQs yet'}
+                  description={query ? 'Try a different search or contact support.' : 'Answers will appear here as they are added.'}
+                />
               ) : (
                 filteredFaqs.map((f) => (
                   <div key={f.id} className="rounded-xl border border-slate-200">

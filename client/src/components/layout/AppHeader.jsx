@@ -63,7 +63,7 @@ function GlobalSearch({ id = 'global-search' }) {
   return (
     <div ref={ref} className="relative w-full max-w-md">
       <label htmlFor={id} className="sr-only">
-        Search contacts, conversations, leads, calls and knowledge
+        Search conversations and knowledge
       </label>
       <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
       <input
@@ -75,7 +75,7 @@ function GlobalSearch({ id = 'global-search' }) {
           setQuery(e.target.value)
           setOpen(true)
         }}
-        placeholder="Search contacts, conversations, leads…"
+        placeholder="Search conversations and knowledge…"
         className="h-10 w-full rounded-xl border border-line bg-canvas-soft/70 pl-10 pr-3 text-[0.85rem] text-ink transition-colors placeholder:text-slate-400 focus:border-primary-400 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary-400/30"
       />
 

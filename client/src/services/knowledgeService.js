@@ -1,53 +1,75 @@
 import { request, makeId } from './mockClient'
 import { store, ai } from './store'
+import { api, live } from './api'
 
 export const knowledgeService = {
-  listItems: () => request(() => store.knowledgeItems),
+  listItems: () => api('/knowledge'),
 
-  createItem: (item) =>
-    request(() => {
-      store.knowledgeItems = [
-        { id: makeId('kb'), status: 'Active', source: 'Manual', updatedAt: new Date().toISOString(), ...item },
-        ...store.knowledgeItems,
-      ]
-      return store.knowledgeItems
-    }),
+  createItem: (item) => api('/knowledge', { method: 'POST', body: item }),
 
-  updateItem: (id, patch) =>
-    request(() => {
-      store.knowledgeItems = store.knowledgeItems.map((k) =>
-        k.id === id ? { ...k, ...patch, updatedAt: new Date().toISOString() } : k,
-      )
-      return store.knowledgeItems
-    }),
+  updateItem: (id, patch) => api(`/knowledge/${id}`, { method: 'PATCH', body: patch }),
 
-  deleteItem: (id) =>
-    request(() => {
-      store.knowledgeItems = store.knowledgeItems.filter((k) => k.id !== id)
-      return store.knowledgeItems
-    }),
+  deleteItem: (id) => api(`/knowledge/${id}`, { method: 'DELETE' }),
 
-  listDocuments: () => request(() => store.documents),
-
-  uploadDocument: (file) =>
-    request(
-      () => {
-        store.documents = [
-          {
-            id: makeId('doc'),
-            name: file.name,
-            type: (file.name.split('.').pop() || '').toUpperCase(),
-            size: file.size,
-            uploadedAt: new Date().toISOString(),
-            status: 'Processing',
+  listDocuments: () =>
+    live('/knowledge', {}, async () => {
+      const items = await request(() => store.documents)
+      return items
+    }).then((rows) => {
+      if (Array.isArray(rows) && rows[0]?.fileName) {
+        return rows
+          .filter((row) => row.source === 'PDF' || row.source === 'Document' || row.source === 'Image')
+          .map((row) => ({
+            id: row.id,
+            name: row.fileName || row.title,
+            type: row.source,
+            size: 0,
+            uploadedAt: row.updatedAt,
+            status: row.status === 'Active' ? 'Indexed' : row.status,
             pages: null,
-          },
-          ...store.documents,
-        ]
-        return store.documents
-      },
-      { latency: [800, 1400] },
-    ),
+          }))
+      }
+      return rows
+    }),
+
+  uploadDocument: async (file) => {
+    try {
+      const form = new FormData()
+      form.append('files', file)
+      const rows = await api('/knowledge/upload', { method: 'POST', form })
+      return rows
+        .filter((row) => row.source === 'PDF' || row.source === 'Document' || row.source === 'Image')
+        .map((row) => ({
+          id: row.id,
+          name: row.fileName || row.title,
+          type: row.source,
+          size: file.size,
+          uploadedAt: row.updatedAt,
+          status: 'Indexed',
+          pages: null,
+        }))
+    } catch (error) {
+      if (error.code !== 'API_OFFLINE') throw error
+      return request(
+        () => {
+          store.documents = [
+            {
+              id: makeId('doc'),
+              name: file.name,
+              type: (file.name.split('.').pop() || '').toUpperCase(),
+              size: file.size,
+              uploadedAt: new Date().toISOString(),
+              status: 'Processing',
+              pages: null,
+            },
+            ...store.documents,
+          ]
+          return store.documents
+        },
+        { latency: [800, 1400] },
+      )
+    }
+  },
 
   reprocessDocument: (id) =>
     request(() => {
@@ -56,10 +78,12 @@ export const knowledgeService = {
     }),
 
   deleteDocument: (id) =>
-    request(() => {
-      store.documents = store.documents.filter((d) => d.id !== id)
-      return store.documents
-    }),
+    live(`/knowledge/${id}`, { method: 'DELETE' }, () =>
+      request(() => {
+        store.documents = store.documents.filter((d) => d.id !== id)
+        return store.documents
+      }),
+    ),
 
   listWebsiteSources: () => request(() => store.websiteSources),
 

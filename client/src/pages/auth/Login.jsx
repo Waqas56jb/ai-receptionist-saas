@@ -15,7 +15,7 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [form, setForm] = useState({ email: 'camille@harbourview.example.com', password: 'demo1234', remember: true })
+  const [form, setForm] = useState({ email: 'client@gmail.com', password: 'client@123!', remember: true })
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -42,7 +42,7 @@ export default function Login() {
     if (!validate()) return
     setLoading(true)
     try {
-      await login({ email: form.email })
+      await login({ email: form.email, password: form.password })
       toast.success('Welcome back!')
       navigate(location.state?.from || '/app/dashboard', { replace: true })
     } catch {
@@ -108,8 +108,8 @@ export default function Login() {
         </Button>
 
         <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center text-[0.75rem] leading-relaxed text-slate-500">
-          Demo build — the fields are pre-filled and any credentials will sign you in. No real
-          authentication runs until the backend milestone.
+          Demo login: <span className="font-semibold text-ink-900">client@gmail.com</span> /{' '}
+          <span className="font-semibold text-ink-900">client@123!</span>
         </p>
       </form>
     </AuthLayout>

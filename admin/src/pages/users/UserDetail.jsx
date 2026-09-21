@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   Ban, Building2, CalendarDays, CheckCircle2, History, KeyRound, Mail, MessagesSquare,
-  Phone, ShieldOff, StickyNote, UserRound,
+  Phone, ShieldOff, StickyNote, UserRound, BarChart3,
 } from 'lucide-react'
 import { formatDate, formatDateTime, formatDuration, timeAgo } from '../../lib/utils'
 import PageHeader from '../../components/layout/PageHeader'
@@ -21,9 +21,11 @@ import userService from '../../services/userService'
 import { subscriptionService } from '../../services/revenueService'
 import { conversationService } from '../../services/aiService'
 import { auditService } from '../../services/platformService'
+import { ChartFrame, TrendChart, chartColors } from '../../components/charts/Charts'
 
 const tabs = [
   { id: 'profile', label: 'Profile', icon: UserRound },
+  { id: 'kpis', label: 'KPIs', icon: BarChart3 },
   { id: 'activity', label: 'Activity', icon: CalendarDays },
   { id: 'security', label: 'Security', icon: KeyRound },
   { id: 'notes', label: 'Notes', icon: StickyNote },
@@ -55,6 +57,7 @@ export default function UserDetail() {
   const conversations = useAsync(() => conversationService.listConversations(), [])
   const audit = useAsync(() => auditService.list(), [])
   const subscription = useAsync(() => (user.data ? subscriptionService.listByBusiness(user.data.businessId) : Promise.resolve(null)), [user.data?.businessId])
+  const kpis = useAsync(() => userService.getKpis(id), [id])
 
   if (user.error) {
     return (
@@ -145,6 +148,27 @@ export default function UserDetail() {
       )}
 
       <Tabs tabs={tabs} value={tab} onChange={setTab} className="mb-5" size="sm" />
+
+      {tab === 'kpis' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+            <Card><CardBody><p className="text-[0.7rem] uppercase text-slate-500">Conversations</p><p className="mt-1 font-display text-2xl font-bold">{kpis.data?.summary?.conversations || 0}</p></CardBody></Card>
+            <Card><CardBody><p className="text-[0.7rem] uppercase text-slate-500">Messages</p><p className="mt-1 font-display text-2xl font-bold">{kpis.data?.summary?.messages || 0}</p></CardBody></Card>
+            <Card><CardBody><p className="text-[0.7rem] uppercase text-slate-500">Inbound</p><p className="mt-1 font-display text-2xl font-bold">{kpis.data?.summary?.inbound || 0}</p></CardBody></Card>
+            <Card><CardBody><p className="text-[0.7rem] uppercase text-slate-500">Voice notes</p><p className="mt-1 font-display text-2xl font-bold">{kpis.data?.summary?.voice || 0}</p></CardBody></Card>
+          </div>
+          <ChartFrame title="Daily conversations" description="This account only.">
+            <TrendChart
+              data={kpis.data?.daily || []}
+              series={[
+                { key: 'inbound', label: 'Inbound', color: chartColors.brand },
+                { key: 'outbound', label: 'Replies', color: chartColors.emerald },
+                { key: 'voice', label: 'Voice', color: chartColors.brandLight || chartColors.brand },
+              ]}
+            />
+          </ChartFrame>
+        </div>
+      )}
 
       {tab === 'profile' && (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">

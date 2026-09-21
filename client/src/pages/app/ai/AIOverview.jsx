@@ -99,7 +99,7 @@ export default function AIOverview() {
                     checked={config.data.enabled}
                     onChange={(v) => update({ enabled: v, status: v ? 'online' : 'paused' })}
                     label="AI receptionist enabled"
-                    description="When paused, calls and messages are not answered automatically."
+                    description="When paused, WhatsApp and website widget messages are not answered automatically."
                   />
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -187,9 +187,7 @@ export default function AIOverview() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {(channels.data || [])
-                    .filter((c) => c.id !== 'web')
-                    .map((channel) => (
+                  {(channels.data || []).map((channel) => (
                       <ChannelConfigCard
                         key={channel.id}
                         channel={channel}

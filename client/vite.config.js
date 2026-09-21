@@ -6,5 +6,10 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    proxy: {
+      '/api': 'http://localhost:4000',
+      '/widget.js': 'http://localhost:4000',
+      '/widget': 'http://localhost:4000',
+    },
   },
 })

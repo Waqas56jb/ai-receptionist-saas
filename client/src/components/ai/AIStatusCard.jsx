@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import { Bot, Database, Instagram, Languages, MessageSquare, Mic, SlidersHorizontal, UserRound } from 'lucide-react'
+import { Bot, Database, Globe, Languages, MessageSquare, SlidersHorizontal, UserRound } from 'lucide-react'
 import cn from '../../lib/cn'
 import Badge from '../ui/Badge'
 
-const channelIcon = { voice: Mic, whatsapp: MessageSquare, instagram: Instagram }
+const channelIcon = { whatsapp: MessageSquare, web: Globe }
 
 function Row({ icon: Icon, label, children }) {
   return (
@@ -63,9 +63,9 @@ export default function AIStatusCard({ config, channels = [], languages = [], cl
 
         {!compact &&
           channels
-            .filter((c) => c.id !== 'web')
+            .filter((c) => c.id === 'whatsapp' || c.id === 'web')
             .map((channel) => {
-              const Icon = channelIcon[channel.id] || Mic
+              const Icon = channelIcon[channel.id] || MessageSquare
               return (
                 <Row key={channel.id} icon={Icon} label={channel.name}>
                   <Badge tone={channel.connected ? 'success' : 'neutral'} size="sm" dot>

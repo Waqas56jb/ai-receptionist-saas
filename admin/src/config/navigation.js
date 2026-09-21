@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Building2, Users, ShieldCheck, CreditCard, Layers, Receipt, Banknote,
-  Bot, Mic, MessageSquare, Instagram, MessagesSquare, Phone, Send, FileText,
+  Bot, MessageSquare, MessagesSquare,
   ChartNoAxesCombined, Gauge, TrendingUp, LifeBuoy, Megaphone, ScrollText, Lock,
   Plug, ToggleLeft, Wrench, Settings,
 } from 'lucide-react'
@@ -37,13 +37,8 @@ export const navigation = [
     items: [
       { label: 'AI Agents', to: '/ai-agents', icon: Bot, permission: 'ai.viewConfig' },
       { label: 'AI Usage', to: '/ai-usage', icon: Gauge, permission: 'ai.viewUsage' },
-      { label: 'Voice', to: '/voice', icon: Mic, permission: 'channels.voice' },
       { label: 'WhatsApp', to: '/whatsapp', icon: MessageSquare, permission: 'channels.whatsapp' },
-      { label: 'Instagram', to: '/instagram', icon: Instagram, permission: 'channels.instagram' },
       { label: 'Conversations', to: '/conversations', icon: MessagesSquare, permission: 'analytics.business' },
-      { label: 'Calls', to: '/calls', icon: Phone, permission: 'analytics.business' },
-      { label: 'Messages', to: '/messages', icon: Send, permission: 'analytics.business' },
-      { label: 'Transcripts', to: '/transcripts', icon: FileText, permission: 'analytics.business' },
     ],
   },
   {

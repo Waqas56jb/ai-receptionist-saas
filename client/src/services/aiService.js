@@ -1,53 +1,55 @@
-import { request, clone, makeId } from './mockClient'
+import { request } from './mockClient'
 import { store, ai } from './store'
-
-function replyFor(text) {
-  const lower = text.toLowerCase()
-  const hit = ai.testResponses.find((r) => r.match.some((word) => lower.includes(word)))
-  return hit ? hit.reply : ai.testFallback
-}
+import { api } from './api'
 
 export const aiService = {
-  getConfig: () => request(() => store.aiConfig),
+  getConfig: async () => {
+    const settings = await api('/settings')
+    store.aiConfig = { ...store.aiConfig, ...settings.ai_config }
+    return store.aiConfig
+  },
 
-  updateConfig: (patch) =>
-    request(() => {
-      Object.assign(store.aiConfig, patch)
-      return store.aiConfig
-    }),
+  updateConfig: async (patch) => {
+    const settings = await api('/settings', { method: 'PUT', body: { ai_config: patch } })
+    store.aiConfig = { ...store.aiConfig, ...settings.ai_config }
+    return store.aiConfig
+  },
 
-  getPrompts: () => request(() => ({ prompts: store.prompts, versions: store.promptVersions })),
+  getPrompts: async () => {
+    const settings = await api('/settings')
+    store.prompts = { ...store.prompts, ...settings.prompts }
+    store.promptVersions = settings.prompt_versions || []
+    return { prompts: store.prompts, versions: store.promptVersions }
+  },
 
-  savePrompts: (prompts, note = 'Manual update') =>
-    request(() => {
-      store.prompts = { ...store.prompts, ...prompts }
-      const next = store.promptVersions.length + 1
-      store.promptVersions = [
-        { id: `v${next + 8}`, label: `Version ${next + 8}`, current: true, author: store.user.name, createdAt: new Date().toISOString(), note },
-        ...store.promptVersions.map((v) => ({ ...v, current: false })),
-      ]
-      return { prompts: store.prompts, versions: store.promptVersions }
-    }),
+  savePrompts: async (prompts, note = 'Manual update') => {
+    const current = await aiService.getPrompts()
+    const versions = [
+      { id: `v${Date.now()}`, label: `Version ${(current.versions || []).length + 1}`, current: true, author: store.user.name || 'Owner', createdAt: new Date().toISOString(), note },
+      ...(current.versions || []).map((row) => ({ ...row, current: false })),
+    ]
+    const settings = await api('/settings', { method: 'PUT', body: { prompts, prompt_versions: versions } })
+    store.prompts = settings.prompts
+    store.promptVersions = settings.prompt_versions || []
+    return { prompts: store.prompts, versions: store.promptVersions }
+  },
 
-  restoreVersion: (id) =>
-    request(() => {
-      store.promptVersions = store.promptVersions.map((v) => ({ ...v, current: v.id === id }))
-      return { prompts: store.prompts, versions: store.promptVersions }
-    }),
+  restoreVersion: async (id) => {
+    const current = await aiService.getPrompts()
+    const versions = (current.versions || []).map((row) => ({ ...row, current: row.id === id }))
+    const settings = await api('/settings', { method: 'PUT', body: { prompt_versions: versions } })
+    return { prompts: settings.prompts, versions: settings.prompt_versions || [] }
+  },
 
-  getChannelSettings: (channel) =>
-    request(() => {
-      if (channel === 'voice') return store.voiceSettings
-      if (channel === 'whatsapp') return store.whatsappSettings
-      return store.instagramSettings
-    }),
+  getChannelSettings: async (channel) => {
+    if (channel !== 'whatsapp' && channel !== 'web') return {}
+    return api(`/settings/${channel}`)
+  },
 
-  updateChannelSettings: (channel, patch) =>
-    request(() => {
-      const key = channel === 'voice' ? 'voiceSettings' : channel === 'whatsapp' ? 'whatsappSettings' : 'instagramSettings'
-      store[key] = { ...store[key], ...patch }
-      return store[key]
-    }),
+  updateChannelSettings: async (channel, patch) => {
+    if (channel !== 'whatsapp' && channel !== 'web') return patch
+    return api(`/settings/${channel}`, { method: 'PUT', body: patch })
+  },
 
   getOptions: () =>
     request({
@@ -59,23 +61,17 @@ export const aiService = {
       channelKnowledge: ai.channelKnowledge,
     }),
 
-  /** Playground reply — canned answers over the demo knowledge base. */
-  sendTestMessage: ({ text }) =>
-    request(
-      () => ({ id: makeId('msg'), from: 'ai', at: new Date().toISOString(), text: replyFor(text) }),
-      { latency: [500, 1100] },
-    ),
+  sendTestMessage: async ({ text }) => api('/ai/test', { method: 'POST', body: { text } }),
 
-  retrain: () =>
-    request(() => {
-      store.aiConfig.lastTrainedAt = new Date().toISOString()
-      return clone(store.aiConfig)
-    }, { latency: [900, 1600] }),
+  retrain: async () => {
+    const settings = await api('/settings', { method: 'PUT', body: { ai_config: { lastTrainedAt: new Date().toISOString() } } })
+    store.aiConfig = { ...store.aiConfig, ...settings.ai_config }
+    return store.aiConfig
+  },
 
-  testCall: () => request({ ok: true, message: 'Test call queued — your phone will ring shortly.' }, { latency: [700, 1200] }),
+  testCall: () => request({ ok: true, message: 'Voice calling is not live on this account.' }),
 
-  testMessage: (channel) =>
-    request({ ok: true, message: `Test ${channel} message sent to your connected account.` }, { latency: [700, 1200] }),
+  testMessage: (channel) => request({ ok: true, message: `Test ${channel} message will send from the live channel once connected.` }),
 }
 
 export default aiService

@@ -85,7 +85,7 @@ export default function AppSidebar({ onNavigate, className = '' }) {
             <p className="text-[0.78rem] font-semibold text-ink">Professional plan</p>
           </div>
           <p className="mt-2 text-[0.72rem] leading-relaxed text-muted">
-            342 of 500 calls used this month.
+            WhatsApp and website widget are live on this plan.
           </p>
           <NavLink
             to="/app/usage"

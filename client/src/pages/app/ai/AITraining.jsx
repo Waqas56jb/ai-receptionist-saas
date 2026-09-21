@@ -251,7 +251,7 @@ export default function AITraining() {
               ref={fileRef}
               type="file"
               multiple
-              accept=".pdf,.doc,.docx,.txt,.csv"
+              accept=".pdf,.doc,.docx,.txt,.csv,image/*"
               onChange={upload}
               className="sr-only"
               aria-label="Upload documents"
@@ -264,7 +264,7 @@ export default function AITraining() {
             >
               <UploadCloud className="h-6 w-6 text-brand-500" aria-hidden="true" />
               <span className="mt-3 text-[0.88rem] font-semibold text-ink-900">Drop files here or click to upload</span>
-              <span className="mt-1 text-[0.78rem] text-slate-500">PDF, DOC, DOCX, TXT or CSV · up to 20 MB each</span>
+              <span className="mt-1 text-[0.78rem] text-slate-500">PDF, images, DOC, DOCX, TXT or CSV · up to 20 MB each</span>
             </button>
 
             {documents.loading && <div className="mt-5 h-40 animate-pulse rounded-xl bg-slate-100" />}

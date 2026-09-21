@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import {
-  Activity, Bot, Building2, CreditCard, Instagram, MessageSquare, MessagesSquare,
-  Mic, Phone, TrendingUp, Users, Globe,
+  Bot, Building2, CreditCard, MessageSquare, MessagesSquare,
+  TrendingUp, Users, Globe,
 } from 'lucide-react'
 import { cn, formatCompactCurrency, formatCurrency, formatNumber, formatPercent, timeAgo } from '../../lib/utils'
 import PageHeader from '../../components/layout/PageHeader'
@@ -44,7 +44,7 @@ export default function Dashboard() {
       <PageHeader
         title={`Platform overview`}
         description={`Welcome back, ${admin?.name?.split(' ')[0] || 'admin'}. Here is how the platform is performing.`}
-        badge={<Badge tone="brand">Live data · demo dataset</Badge>}
+        badge={<Badge tone="brand">Live accounts</Badge>}
       />
 
       {summary.loading && <SkeletonStats count={4} />}
@@ -74,10 +74,10 @@ export default function Dashboard() {
 
           {/* AI + channels */}
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="AI calls" value={formatNumber(s.ai.calls)} icon={Phone} hint={`${formatNumber(s.ai.minutes)} AI minutes`} />
             <StatCard label="Messages" value={formatNumber(s.ai.messages)} icon={MessagesSquare} hint={`${formatNumber(s.ai.conversations)} conversations`} />
-            <StatCard label="AI resolution rate" value={formatPercent(s.ai.resolutionRate, 1)} delta="+2.4%" icon={Bot} hint="Resolved without a human" />
-            <StatCard label="Connected channels" value={formatNumber(s.channels.voice + s.channels.whatsapp + s.channels.instagram + s.channels.web)} icon={Activity} hint="Across all businesses" />
+            <StatCard label="AI resolution rate" value={formatPercent(s.ai.resolutionRate, 1)} icon={Bot} hint="Resolved without a human" />
+            <StatCard label="WhatsApp" value={formatNumber(s.channels.whatsapp)} icon={MessageSquare} hint="Connected WhatsApp accounts" />
+            <StatCard label="Website widgets" value={formatNumber(s.channels.web)} icon={Globe} hint="Live website agents" />
           </div>
 
           {/* Channel counts */}
@@ -86,9 +86,7 @@ export default function Dashboard() {
             <CardBody>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {[
-                  { label: 'Voice', value: s.channels.voice, icon: Mic, to: '/voice' },
                   { label: 'WhatsApp', value: s.channels.whatsapp, icon: MessageSquare, to: '/whatsapp' },
-                  { label: 'Instagram', value: s.channels.instagram, icon: Instagram, to: '/instagram' },
                   { label: 'Website', value: s.channels.web, icon: Globe, to: '/conversations' },
                 ].map((c) => (
                   <Link key={c.label} to={c.to} className="group rounded-xl border border-slate-200 p-4 transition-all hover:-translate-y-0.5 hover:border-primary-400/30 hover:shadow-card">
