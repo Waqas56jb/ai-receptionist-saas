@@ -15,10 +15,15 @@ const registerMailAuth = require('./mailAuth')
 
 const PORT = Number(process.env.PORT || 4000)
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-change-me'
-const SESSION_ROOT = path.join(__dirname, 'sessions')
+const ON_VERCEL = Boolean(process.env.VERCEL)
+const SESSION_ROOT = ON_VERCEL ? path.join('/tmp', 'devmark-sessions') : path.join(__dirname, 'sessions')
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
 
-fs.mkdirSync(SESSION_ROOT, { recursive: true })
+try {
+  fs.mkdirSync(SESSION_ROOT, { recursive: true })
+} catch (error) {
+  console.warn('Session directory unavailable:', error.message)
+}
 
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
 const supabase =
@@ -521,6 +526,9 @@ async function handleIncoming(accountId, sock, msg) {
 }
 
 async function startWhatsApp(accountId, { forceQr = false } = {}) {
+  if (ON_VERCEL) {
+    throw new Error('WhatsApp QR needs a long-running Node host. Auth, widget, knowledge and email work on this Vercel API.')
+  }
   let baileys
   try {
     baileys = require('@whiskeysockets/baileys')
@@ -599,6 +607,7 @@ async function startWhatsApp(accountId, { forceQr = false } = {}) {
 }
 
 async function restoreSessions() {
+  if (ON_VERCEL || !fs.existsSync(SESSION_ROOT)) return
   const dirs = fs.readdirSync(SESSION_ROOT, { withFileTypes: true }).filter((entry) => entry.isDirectory())
   for (const dir of dirs) {
     const creds = path.join(SESSION_ROOT, dir.name, 'creds.json')
@@ -656,14 +665,34 @@ const app = express()
 app.use(cors({ origin: true, credentials: true }))
 app.use(express.json({ limit: '8mb' }))
 
-app.get('/api/health', (_req, res) => {
-  res.json({
+let bootPromise = null
+function ensureStarted() {
+  if (!bootPromise) {
+    bootPromise = bootstrapLogins().catch((error) => {
+      console.warn('Bootstrap skipped:', error.message)
+    })
+  }
+  return bootPromise
+}
+
+function healthPayload() {
+  return {
     ok: true,
     supabase: Boolean(supabase),
     openai: Boolean(process.env.OPENAI_API_KEY),
     mailer: Boolean(process.env.MAIL_USER && process.env.MAIL_PASS),
+    vercel: ON_VERCEL,
     time: now(),
-  })
+  }
+}
+
+app.get(['/health', '/api/health'], (_req, res) => {
+  res.json(healthPayload())
+})
+
+app.use((req, res, next) => {
+  if (req.path === '/health' || req.path === '/api/health') return next()
+  ensureStarted().then(() => next(), next)
 })
 
 app.post('/api/auth/signup', async (req, res) => {
@@ -1769,13 +1798,17 @@ app.use((error, _req, res, _next) => {
   res.status(500).json({ error: error.message || 'Server error' })
 })
 
-app.listen(PORT, async () => {
-  console.log(`AI receptionist API on http://localhost:${PORT}`)
-  console.log(`Supabase: ${supabase ? 'connected' : 'memory fallback — add credentials to server/.env'}`)
-  try {
-    await bootstrapLogins()
-    await restoreSessions()
-  } catch (error) {
-    console.error('Startup restore failed', error.message)
-  }
-})
+if (!ON_VERCEL) {
+  app.listen(PORT, async () => {
+    console.log(`AI receptionist API on http://localhost:${PORT}`)
+    console.log(`Supabase: ${supabase ? 'connected' : 'memory fallback — add credentials to server/.env'}`)
+    try {
+      await ensureStarted()
+      await restoreSessions()
+    } catch (error) {
+      console.error('Startup restore failed', error.message)
+    }
+  })
+}
+
+module.exports = app

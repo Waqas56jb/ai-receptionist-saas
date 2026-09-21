@@ -1,0 +1,5 @@
+sessions
+uploads
+scripts
+.env
+*.log

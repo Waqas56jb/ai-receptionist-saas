@@ -1,8 +1,14 @@
 node_modules
 dist
 .env
+.env.local
 server/.env
+server/.env.local
 server/sessions
 server/uploads
+.vercel
 *.log
 .DS_Store
+
+.vercel
+.env*
