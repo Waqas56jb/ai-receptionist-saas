@@ -662,7 +662,44 @@ async function bootstrapLogins() {
 }
 
 const app = express()
-app.use(cors({ origin: true, credentials: true }))
+
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:4173',
+  'https://ai-receptionist-saas-nu.vercel.app',
+  'https://ai-receptionist-saas-admin-psi.vercel.app',
+]
+const allowedOrigins = [
+  ...defaultOrigins,
+  ...String(process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
+]
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true
+  if (allowedOrigins.includes(origin)) return true
+  try {
+    const host = new URL(origin).hostname
+    return host.endsWith('.vercel.app')
+  } catch {
+    return false
+  }
+}
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      callback(null, isAllowedOrigin(origin) ? origin || true : false)
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type'],
+  }),
+)
+app.options('*', cors())
 app.use(express.json({ limit: '8mb' }))
 
 let bootPromise = null
@@ -1765,12 +1802,12 @@ async function buildKpis(accountId) {
     daily: days,
     channels: [
       { name: 'Website', value: webConversations.length, color: '#60a5fa' },
-      { name: 'WhatsApp', value: whatsappConversations.length, color: '#34d399' },
-      { name: 'Voice', value: messages.filter((msg) => msg.type === 'voice').length, color: '#14b8a6' },
+      { name: 'WhatsApp', value: whatsappConversations.length, color: '#FF7A00' },
+      { name: 'Voice', value: messages.filter((msg) => msg.type === 'voice').length, color: '#0066FF' },
     ],
     handling: [
-      { name: 'Handled by AI', value: conversations.filter((row) => (row.handled_by || 'ai') === 'ai').length || 1, color: '#14b8a6' },
-      { name: 'Human handoff', value: conversations.filter((row) => row.handled_by === 'human').length, color: '#8aa39c' },
+      { name: 'Handled by AI', value: conversations.filter((row) => (row.handled_by || 'ai') === 'ai').length || 1, color: '#0066FF' },
+      { name: 'Human handoff', value: conversations.filter((row) => row.handled_by === 'human').length, color: '#8494ac' },
     ],
     channelPerformance: [
       { channel: 'Website', conversations: webConversations.length, aiResolved: 100, leads: webConversations.length, avgResponse: 'instant' },

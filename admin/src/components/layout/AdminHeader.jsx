@@ -127,7 +127,7 @@ function NotificationsMenu() {
         >
           <Bell className="h-[1.05rem] w-[1.05rem]" />
           {unread > 0 && (
-            <span className="absolute -right-1 -top-1 grid h-[1.1rem] min-w-[1.1rem] place-items-center rounded-full bg-rose-500 px-1 text-[0.6rem] font-bold text-white">
+            <span className="absolute -right-1 -top-1 grid h-[1.1rem] min-w-[1.1rem] place-items-center rounded-full bg-ember-500 px-1 text-[0.6rem] font-bold text-white">
               {unread}
             </span>
           )}
@@ -157,7 +157,7 @@ function NotificationsMenu() {
             }}
             className={cn('flex gap-2.5 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-100', !n.read && 'bg-primary-500/10')}
           >
-            <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-slate-300' : 'bg-brand-500')} aria-hidden="true" />
+            <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-slate-300' : 'bg-ember-500')} aria-hidden="true" />
             <span className="min-w-0">
               <span className="block text-[0.79rem] font-semibold text-ink-900">{n.title}</span>
               <span className="block truncate text-[0.74rem] text-slate-500">{n.body}</span>

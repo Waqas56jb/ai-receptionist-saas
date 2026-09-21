@@ -9,6 +9,7 @@ export default function AuthLayout({ title, description, children, footer }) {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-canvas">
+      <div className="brand-bar pointer-events-none absolute inset-x-0 top-0 z-20 h-1" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div className="absolute inset-0 bg-aurora" />
         <div className="absolute inset-0 bg-grid [background-size:56px_56px] opacity-50" />

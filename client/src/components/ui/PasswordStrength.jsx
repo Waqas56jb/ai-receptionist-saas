@@ -4,8 +4,8 @@ const levels = [
   { label: 'Too weak', tone: 'bg-rose-500', text: 'text-rose-600' },
   { label: 'Weak', tone: 'bg-amber-500', text: 'text-amber-600' },
   { label: 'Fair', tone: 'bg-amber-400', text: 'text-amber-600' },
-  { label: 'Strong', tone: 'bg-emerald-500', text: 'text-emerald-600' },
-  { label: 'Very strong', tone: 'bg-emerald-600', text: 'text-emerald-700' },
+  { label: 'Strong', tone: 'bg-primary-500', text: 'text-primary-500' },
+  { label: 'Very strong', tone: 'bg-ember-500', text: 'text-ember-500' },
 ]
 
 export function scorePassword(value = '') {

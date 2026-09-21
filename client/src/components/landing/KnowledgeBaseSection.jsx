@@ -83,7 +83,7 @@ export default function KnowledgeBaseSection() {
                       <p className="text-xs text-subtle">{doc.size}</p>
                     </div>
                     {doc.status === 'indexed' ? (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-400">
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-ember-400/30 bg-ember-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-ember-400">
                         <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                         Indexed
                       </span>

@@ -18,16 +18,16 @@ function transport() {
 function layout(title, body) {
   return `<!doctype html>
 <html>
-<body style="margin:0;background:#f4f7f6;font-family:Arial,sans-serif;color:#12352d;">
+<body style="margin:0;background:#f4f7fc;font-family:Arial,sans-serif;color:#0a1228;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 12px;">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #d7e4df;">
-        <tr><td style="background:#0f3d34;color:#ffffff;padding:22px 28px;font-size:20px;font-weight:700;">DEVMARK Receptionist</td></tr>
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #d6deee;">
+        <tr><td style="background:linear-gradient(90deg,#0066FF 0%,#0066FF 50%,#FF7A00 50%,#FF7A00 100%);color:#ffffff;padding:22px 28px;font-size:20px;font-weight:700;">DEVMARK Receptionist</td></tr>
         <tr><td style="padding:28px;">
           <h1 style="margin:0 0 12px;font-size:22px;">${title}</h1>
-          <div style="font-size:15px;line-height:1.6;color:#35574e;">${body}</div>
+          <div style="font-size:15px;line-height:1.6;color:#586884;">${body}</div>
         </td></tr>
-        <tr><td style="padding:16px 28px;background:#f4f7f6;font-size:12px;color:#6b817a;">This email was sent for your DEVMARK account. If you did not request it, you can ignore it.</td></tr>
+        <tr><td style="padding:16px 28px;background:#f4f7fc;font-size:12px;color:#8494ac;">This email was sent for your DEVMARK account. If you did not request it, you can ignore it.</td></tr>
       </table>
     </td></tr>
   </table>
@@ -84,7 +84,7 @@ async function sendResetLink({ to, name, link }) {
       'Reset your password',
       `<p>Hi ${name || 'there'},</p>
        <p>We received a request to reset the password for this account.</p>
-       <p><a href="${link}" style="display:inline-block;background:#0f3d34;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700;">Choose a new password</a></p>
+       <p><a href="${link}" style="display:inline-block;background:#FF7A00;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700;">Choose a new password</a></p>
        <p>This link expires in 30 minutes. If you did not ask for this, you can ignore the email.</p>`,
     ),
   })
@@ -100,7 +100,7 @@ async function sendOtp({ to, name, code, reason }) {
       'Your verification code',
       `<p>Hi ${name || 'there'},</p>
        <p>Use this code to ${reason}:</p>
-       <p style="font-size:32px;letter-spacing:8px;font-weight:700;color:#0f3d34;margin:18px 0;">${code}</p>
+       <p style="font-size:32px;letter-spacing:8px;font-weight:700;color:#0066FF;margin:18px 0;">${code}</p>
        <p>This code expires in 10 minutes. Do not share it with anyone.</p>`,
     ),
   })

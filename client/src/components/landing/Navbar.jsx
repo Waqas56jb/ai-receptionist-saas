@@ -119,6 +119,7 @@ export default function Navbar() {
 
   return (
     <div className="sticky top-0 z-50">
+      <div className="brand-bar h-1 w-full" aria-hidden="true" />
       <header
         onMouseLeave={() => setOpen(null)}
         className={`relative border-b bg-canvas/90 backdrop-blur-xl transition-all duration-300 ${
@@ -129,7 +130,7 @@ export default function Navbar() {
       >
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-primary-500 focus:px-4 focus:py-2 focus:text-sm focus:text-primary-950"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-primary-500 focus:px-4 focus:py-2 focus:text-sm focus:text-white"
         >
           Skip to content
         </a>

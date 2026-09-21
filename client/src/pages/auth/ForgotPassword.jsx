@@ -4,10 +4,13 @@ import { ArrowLeft, ArrowRight, MailCheck, Mail } from 'lucide-react'
 import AuthLayout from '../../components/layout/AuthLayout'
 import Button from '../../components/ui/Button'
 import { Input } from '../../components/ui/Field'
+import { useToast } from '../../context/ToastContext'
 import authService from '../../services/authService'
+import { authErrorMessage } from '../../config/api'
 import { emailError } from '../../lib/email'
 
 export default function ForgotPassword() {
+  const toast = useToast()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,28 +19,34 @@ export default function ForgotPassword() {
   const submit = async (e) => {
     e.preventDefault()
     const mail = emailError(email)
-    if (mail) return setError(mail)
+    if (mail) {
+      setError(mail)
+      toast.error(mail)
+      return
+    }
     setError('')
     setLoading(true)
     try {
       await authService.requestPasswordReset({ email })
       setSent(true)
-    } catch {
-      setError('We could not send the reset link. Please try again.')
+      toast.success('If that account exists, a reset link is on its way.')
+    } catch (err) {
+      const message = authErrorMessage(err, 'We could not send the reset link. Please try again.')
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
-    return undefined
   }
 
   if (sent) {
     return (
       <AuthLayout title="Check your inbox" description={`If an account exists for ${email}, a reset link is on its way.`}>
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+        <div className="rounded-2xl border border-ember-400/30 bg-ember-500/10 p-5">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-ember-500 text-white">
             <MailCheck className="h-5 w-5" aria-hidden="true" />
           </span>
-          <p className="mt-4 text-[0.875rem] leading-relaxed text-emerald-900">
+          <p className="mt-4 text-[0.875rem] leading-relaxed text-ink">
             The link expires in 30 minutes. If it does not arrive, check your spam folder or try a
             different address.
           </p>

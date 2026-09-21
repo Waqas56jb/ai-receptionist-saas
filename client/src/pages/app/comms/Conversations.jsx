@@ -178,7 +178,7 @@ export default function Conversations() {
                       <span className="flex items-center gap-2">
                         <span className="truncate text-[0.85rem] font-semibold text-ink-900">{c.customer}</span>
                         <Icon className="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true" />
-                        {c.unread && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" aria-label="Unread" />}
+                        {c.unread && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-ember-500" aria-label="Unread" />}
                       </span>
                       <span className="mt-0.5 block truncate text-[0.78rem] text-slate-500">{c.preview}</span>
                       <span className="mt-1.5 flex items-center gap-2">

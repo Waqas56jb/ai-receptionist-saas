@@ -40,11 +40,11 @@ export default function AIStatusCard({ config, channels = [], languages = [], cl
           className={cn(
             'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider',
             config.enabled
-              ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+              ? 'border-ember-400/30 bg-ember-500/10 text-ember-300'
               : 'border-white/15 bg-white/5 text-slate-300',
           )}
         >
-          <span className={cn('h-1.5 w-1.5 rounded-full', config.enabled ? 'bg-emerald-400' : 'bg-slate-400')} aria-hidden="true" />
+          <span className={cn('h-1.5 w-1.5 rounded-full', config.enabled ? 'bg-ember-400' : 'bg-slate-400')} aria-hidden="true" />
           {config.enabled ? 'Online' : 'Paused'}
         </span>
       </div>

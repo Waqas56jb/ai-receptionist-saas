@@ -23,8 +23,8 @@ export default function ChatPanel({
             {channel && <p className="truncate text-xs text-muted">{channel}</p>}
           </div>
         </div>
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-emerald-400">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-ember-400/30 bg-ember-500/10 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-ember-400">
+          <span className="h-1.5 w-1.5 rounded-full bg-ember-400" aria-hidden="true" />
           {status}
         </span>
       </div>

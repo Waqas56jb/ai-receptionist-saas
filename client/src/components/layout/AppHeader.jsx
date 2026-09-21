@@ -140,7 +140,7 @@ function NotificationsMenu() {
         >
           <Bell className="h-[1.05rem] w-[1.05rem]" />
           {unread > 0 && (
-            <span className="absolute -right-1 -top-1 grid h-[1.1rem] min-w-[1.1rem] place-items-center rounded-full bg-rose-500 px-1 text-[0.62rem] font-bold text-white">
+            <span className="absolute -right-1 -top-1 grid h-[1.1rem] min-w-[1.1rem] place-items-center rounded-full bg-ember-500 px-1 text-[0.62rem] font-bold text-white">
               {unread}
             </span>
           )}
@@ -164,7 +164,7 @@ function NotificationsMenu() {
             onClick={() => markOne(n.id)}
             className={cn('flex gap-2.5 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-100', !n.read && 'bg-primary-500/10')}
           >
-            <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-slate-300' : 'bg-brand-500')} aria-hidden="true" />
+            <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-slate-300' : 'bg-ember-500')} aria-hidden="true" />
             <span className="min-w-0">
               <span className="block text-[0.8rem] font-semibold text-ink-900">{n.title}</span>
               <span className="block truncate text-[0.75rem] text-slate-500">{n.body}</span>
@@ -252,7 +252,7 @@ export default function AppHeader({ onOpenSidebar }) {
                 <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1 truncate text-[0.8rem] font-medium text-ink-900">{business?.name}</span>
-              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+              <Check className="h-3.5 w-3.5 shrink-0 text-ember-500" aria-hidden="true" />
             </div>
             <DropdownDivider />
             <DropdownItem as={Link} to="/app/settings/profile" icon={UserRound}>

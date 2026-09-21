@@ -14,13 +14,15 @@ function NavItem({ item, onNavigate }) {
       className={({ isActive }) =>
         cn(
           'group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.83rem] font-medium transition-colors',
-          isActive ? 'bg-primary-400 text-primary-950 shadow-lg shadow-primary-500/20' : 'text-slate-600 hover:bg-surface-2 hover:text-ink',
+          isActive
+            ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25 ring-1 ring-ember-500/40'
+            : 'text-slate-600 hover:bg-surface-2 hover:text-ink',
         )
       }
     >
       {({ isActive }) => (
         <>
-          <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-primary-950' : 'text-slate-400 group-hover:text-slate-600')} aria-hidden="true" />
+          <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-white' : 'text-slate-400 group-hover:text-ember-400')} aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
         </>
       )}
@@ -43,6 +45,7 @@ export default function AppSidebar({ onNavigate, className = '' }) {
 
   return (
     <div className={cn('flex h-full flex-col bg-surface', className)}>
+      <div className="brand-bar h-1 w-full shrink-0" aria-hidden="true" />
       <div className="flex h-[4.25rem] shrink-0 items-center border-b border-line px-5">
         <NavLink to="/app/dashboard" onClick={onNavigate} className="rounded-lg" aria-label="Go to dashboard">
           <Logo size="sm" />
@@ -77,9 +80,9 @@ export default function AppSidebar({ onNavigate, className = '' }) {
       </nav>
 
       <div className="shrink-0 border-t border-line p-3">
-        <div className="rounded-xl border border-primary-400/25 bg-primary-500/10 p-3.5">
+        <div className="rounded-xl border border-ember-500/30 bg-ember-500/10 p-3.5">
           <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary-400 text-primary-950">
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-ember-500 text-white">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
             <p className="text-[0.78rem] font-semibold text-ink">Professional plan</p>
@@ -90,7 +93,7 @@ export default function AppSidebar({ onNavigate, className = '' }) {
           <NavLink
             to="/app/usage"
             onClick={onNavigate}
-            className="mt-3 inline-flex text-[0.75rem] font-semibold text-primary-400 underline-offset-4 hover:text-primary-300 hover:underline"
+            className="mt-3 inline-flex text-[0.75rem] font-semibold text-ember-400 underline-offset-4 hover:text-ember-300 hover:underline"
           >
             View usage
           </NavLink>

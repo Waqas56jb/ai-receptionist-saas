@@ -60,11 +60,11 @@ function PhoneScreen({ industry, featured }) {
   const rows = useMemo(() => rowsFor(industry), [industry])
 
   return (
-    <div className="flex h-full flex-col bg-[#070c0e] text-white">
+    <div className="flex h-full flex-col bg-[#050814] text-white">
       <StatusBar />
       <div className="relative mx-2 h-[34%] overflow-hidden rounded-xl">
         <Img src={industry.image} alt={industry.alt} className="h-full w-full object-cover" width={640} height={400} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#070c0e] via-[#070c0e]/35 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050814] via-[#050814]/35 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-3">
           <p className="text-[0.55rem] font-semibold uppercase tracking-[0.16em] text-primary-300/90">{industry.sector}</p>
           <p className="mt-1 font-display text-[1.15rem] font-bold leading-[1.1] tracking-tight">{industry.name}</p>
@@ -107,11 +107,11 @@ function Phone({ industry, featured, onSelect }) {
       aria-label={`${industry.sector}: ${industry.name}`}
       className={`relative aspect-[9/19.2] w-[220px] origin-center overflow-hidden rounded-[2.15rem] border bg-black p-[7px] text-left sm:w-[244px] lg:w-[272px] ${
         featured
-          ? 'border-primary-400 shadow-[0_0_0_2px_rgb(45_212_191_/_0.9),0_0_48px_rgb(20_184_166_/_0.45),0_28px_70px_rgb(0_0_0_/_0.55)]'
+          ? 'border-primary-400 shadow-[0_0_0_2px_rgb(255_122_0_/_0.9),0_0_48px_rgb(0_102_255_/_0.45),0_28px_70px_rgb(0_0_0_/_0.55)]'
           : 'border-white/10 shadow-[0_18px_50px_rgb(0_0_0_/_0.45)]'
       }`}
     >
-      <div className="h-full overflow-hidden rounded-[1.7rem] bg-[#070c0e]">
+      <div className="h-full overflow-hidden rounded-[1.7rem] bg-[#050814]">
         <PhoneScreen industry={industry} featured={featured} />
       </div>
     </button>
@@ -215,7 +215,7 @@ export default function DeviceShowcase() {
         <button
           type="button"
           onClick={prev}
-          className="absolute left-4 top-1/2 z-30 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/10 bg-[#0b1214]/80 text-white shadow-lift backdrop-blur-md transition hover:border-primary-400/50 hover:text-primary-300 sm:left-8"
+          className="absolute left-4 top-1/2 z-30 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/10 bg-[#080e1c]/80 text-white shadow-lift backdrop-blur-md transition hover:border-primary-400/50 hover:text-primary-300 sm:left-8"
           aria-label="Previous screen"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -223,7 +223,7 @@ export default function DeviceShowcase() {
         <button
           type="button"
           onClick={next}
-          className="absolute right-4 top-1/2 z-30 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/10 bg-[#0b1214]/80 text-white shadow-lift backdrop-blur-md transition hover:border-primary-400/50 hover:text-primary-300 sm:right-8"
+          className="absolute right-4 top-1/2 z-30 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/10 bg-[#080e1c]/80 text-white shadow-lift backdrop-blur-md transition hover:border-primary-400/50 hover:text-primary-300 sm:right-8"
           aria-label="Next screen"
         >
           <ChevronRight className="h-4 w-4" />

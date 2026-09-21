@@ -16,6 +16,7 @@ export default function AuthLayout({ title, description, children, footer, wide 
 
   return (
     <div className="relative min-h-screen bg-canvas lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+      <div className="brand-bar pointer-events-none absolute inset-x-0 top-0 z-20 h-1" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 bg-aurora lg:hidden" aria-hidden="true" />
       {/* Form side */}
       <div className="relative flex min-h-screen flex-col px-5 py-8 sm:px-8 lg:px-12">
@@ -69,9 +70,15 @@ export default function AuthLayout({ title, description, children, footer, wide 
           </p>
 
           <ul className="mt-9 space-y-3.5">
-            {highlights.map((item) => (
+            {highlights.map((item, i) => (
               <li key={item} className="flex items-start gap-3">
-                <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-500/20 text-brand-300">
+                <span
+                  className={
+                    i % 2 === 0
+                      ? 'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary-500/25 text-primary-300'
+                      : 'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ember-500/25 text-ember-300'
+                  }
+                >
                   <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
                 </span>
                 <span className="text-[0.9rem] text-slate-300">{item}</span>

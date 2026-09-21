@@ -179,7 +179,7 @@ export default function Dashboard() {
                     </span>
                     <span className="shrink-0 text-right">
                       <span className="block text-[0.7rem] text-slate-400">{timeAgo(c.lastMessageAt)}</span>
-                      {c.unread && <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-brand-500" aria-label="Unread" />}
+                      {c.unread && <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-ember-500" aria-label="Unread" />}
                     </span>
                   </Link>
                 </li>

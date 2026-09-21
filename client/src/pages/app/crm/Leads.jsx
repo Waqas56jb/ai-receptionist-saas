@@ -20,7 +20,7 @@ import { channelLabel } from '../../../lib/channels'
 const tone = { New: 'brand', Contacted: 'info', Qualified: 'success', Interested: 'info', Converted: 'success', Lost: 'danger' }
 
 function ScoreBar({ score }) {
-  const colour = score >= 75 ? 'bg-emerald-500' : score >= 50 ? 'bg-amber-500' : 'bg-slate-300'
+  const colour = score >= 75 ? 'bg-ember-500' : score >= 50 ? 'bg-primary-500' : 'bg-slate-300'
   return (
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-14 overflow-hidden rounded-full bg-slate-100">

@@ -46,7 +46,7 @@ export const analyticsService = {
   getRevenueByPlan: () => request([]),
   getChannelDistribution: () =>
     request([
-      { name: 'WhatsApp', value: 0, color: '#34d399' },
+      { name: 'WhatsApp', value: 0, color: '#FF7A00' },
       { name: 'Website', value: 0, color: '#60a5fa' },
     ]),
   getSubscriptionMovement: () => request([]),

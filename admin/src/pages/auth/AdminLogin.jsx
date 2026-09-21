@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, ArrowRight, Lock, Mail } from 'lucide-react'
+import { ArrowRight, Lock, Mail } from 'lucide-react'
 import AuthLayout from '../../components/layout/AuthLayout'
 import Button from '../../components/ui/Button'
 import { Checkbox, Input } from '../../components/ui/Field'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
+import { authErrorMessage } from '../../config/api'
 
 const EMAIL_RE =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/
@@ -16,9 +17,8 @@ export default function AdminLogin() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [form, setForm] = useState({ email: 'admin@gmail.com', password: 'admin@123!', remember: true })
+  const [form, setForm] = useState({ email: '', password: '', remember: true })
   const [errors, setErrors] = useState({})
-  const [formError, setFormError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const set = (key) => (e) => {
@@ -29,22 +29,24 @@ export default function AdminLogin() {
 
   const submit = async (e) => {
     e.preventDefault()
-    setFormError('')
 
     const next = {}
     if (!form.email.trim()) next.email = 'Enter your admin email.'
     else if (!EMAIL_RE.test(form.email.trim().toLowerCase())) next.email = 'Enter a valid email, for example name@business.com.'
     if (!form.password) next.password = 'Enter your password.'
     setErrors(next)
-    if (Object.keys(next).length) return
+    if (Object.keys(next).length) {
+      toast.error(Object.values(next)[0])
+      return
+    }
 
     setLoading(true)
     try {
-      const session = await login({ email: form.email, password: form.password })
-      toast.success(`Signed in as ${session.admin.role}.`)
+      const session = await login({ email: form.email.trim(), password: form.password })
+      toast.success(`Signed in as ${session.admin?.role || 'administrator'}.`)
       navigate(location.state?.from || '/dashboard', { replace: true })
-    } catch {
-      setFormError('Sign-in failed. Check your credentials and try again.')
+    } catch (error) {
+      toast.error(authErrorMessage(error, 'Sign-in failed. Check your credentials and try again.'))
     } finally {
       setLoading(false)
     }
@@ -57,15 +59,26 @@ export default function AdminLogin() {
       footer="Access is restricted to invited administrators — there is no public signup."
     >
       <form onSubmit={submit} noValidate className="space-y-4">
-        {formError && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3.5" role="alert">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" aria-hidden="true" />
-            <p className="text-[0.82rem] leading-relaxed text-rose-700">{formError}</p>
-          </div>
-        )}
-
-        <Input label="Admin email" type="email" autoComplete="email" icon={Mail} value={form.email} onChange={set('email')} error={errors.email} required />
-        <Input label="Password" type="password" autoComplete="current-password" icon={Lock} value={form.password} onChange={set('password')} error={errors.password} required />
+        <Input
+          label="Admin email"
+          type="email"
+          autoComplete="email"
+          icon={Mail}
+          value={form.email}
+          onChange={set('email')}
+          error={errors.email}
+          required
+        />
+        <Input
+          label="Password"
+          type="password"
+          autoComplete="current-password"
+          icon={Lock}
+          value={form.password}
+          onChange={set('password')}
+          error={errors.password}
+          required
+        />
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <Checkbox label="Remember this device" checked={form.remember} onChange={set('remember')} />
@@ -78,11 +91,6 @@ export default function AdminLogin() {
           {loading ? 'Signing in…' : 'Sign in'}
           {!loading && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
         </Button>
-
-        <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center text-[0.74rem] leading-relaxed text-slate-500">
-          Demo login: <span className="font-semibold text-ink-900">admin@gmail.com</span> /{' '}
-          <span className="font-semibold text-ink-900">admin@123!</span>
-        </p>
       </form>
     </AuthLayout>
   )

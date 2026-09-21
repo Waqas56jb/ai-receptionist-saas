@@ -1,11 +1,6 @@
-import { request } from './mockClient'
 import { api } from './api'
 import { allPermissions } from '../config/permissions'
 
-/**
- * Mock admin auth. No password is validated and no token is stored — only a
- * session marker, so nothing sensitive lives in the browser.
- */
 const SESSION_KEY = 'devmark.admin.session'
 
 function readSession() {
@@ -44,18 +39,20 @@ export const authService = {
     }
   },
 
-  logout: () =>
-    request(() => {
-      writeSession(null)
-      return { ok: true }
-    }, { latency: [120, 240] }),
+  logout: async () => {
+    writeSession(null)
+    return { ok: true }
+  },
 
-  requestPasswordReset: ({ email }) => request({ ok: true, email }),
-  resetPassword: () => request({ ok: true }),
-  changePassword: () => request({ ok: true }),
+  requestPasswordReset: ({ email }) => api('/auth/forgot-password', { method: 'POST', body: { email } }),
 
-  getSessions: () => request(() => []),
-  getLoginAttempts: () => request(() => []),
+  resetPassword: ({ password, token }) => api('/auth/reset-password', { method: 'POST', body: { password, token } }),
+
+  changePassword: ({ current, next }) => api('/auth/change-password', { method: 'POST', body: { current, next } }),
+
+  getSessions: () => api('/auth/sessions'),
+
+  getLoginAttempts: () => api('/auth/login-history'),
 }
 
 export default authService

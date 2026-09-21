@@ -15,7 +15,7 @@ import {
 import cn from '../../lib/cn'
 
 const axis = {
-  stroke: '#8aa39c',
+  stroke: '#8494ac',
   fontSize: 11,
   tickLine: false,
   axisLine: false,
@@ -140,11 +140,11 @@ export function DonutChart({ data, suffix = '', innerRadius = 58, outerRadius = 
 }
 
 export const chartColors = {
-  brand: '#14b8a6',
-  brandLight: '#2dd4bf',
-  emerald: '#34d399',
+  brand: '#0066FF',
+  brandLight: '#3D8BFF',
+  emerald: '#FF7A00',
   fuchsia: '#c084fc',
   sky: '#60a5fa',
-  slate: '#8aa39c',
+  slate: '#8494ac',
   ember: '#fbbf24',
 }

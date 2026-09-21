@@ -24,7 +24,7 @@ import { timeAgo } from '../../lib/format'
 
 const typeMeta = {
   lead: { icon: Target, tone: 'bg-primary-500/15 text-primary-400' },
-  booking: { icon: CalendarDays, tone: 'bg-emerald-50 text-emerald-600' },
+  booking: { icon: CalendarDays, tone: 'bg-ember-500/15 text-ember-500' },
   ai: { icon: Sparkles, tone: 'bg-primary-500/15 text-primary-400' },
   usage: { icon: Gauge, tone: 'bg-amber-50 text-amber-600' },
   channel: { icon: Radio, tone: 'bg-sky-50 text-sky-600' },

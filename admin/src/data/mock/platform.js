@@ -9,7 +9,7 @@ export const platformSummary = {
 export const growthSeries = []
 export const revenueByPlan = []
 export const channelDistribution = [
-  { name: 'WhatsApp', value: 0, color: '#34d399' },
+  { name: 'WhatsApp', value: 0, color: '#FF7A00' },
   { name: 'Website', value: 0, color: '#60a5fa' },
 ]
 export const subscriptionMovement = []

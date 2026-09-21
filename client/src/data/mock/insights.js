@@ -25,13 +25,13 @@ export const summary = {
 }
 
 export const channelBreakdown = [
-  { name: 'WhatsApp', value: 0, color: '#34d399' },
+  { name: 'WhatsApp', value: 0, color: '#FF7A00' },
   { name: 'Website', value: 0, color: '#60a5fa' },
 ]
 
 export const handlingBreakdown = [
-  { name: 'Handled by AI', value: 0, color: '#14b8a6' },
-  { name: 'Human handoff', value: 0, color: '#8aa39c' },
+  { name: 'Handled by AI', value: 0, color: '#0066FF' },
+  { name: 'Human handoff', value: 0, color: '#8494ac' },
 ]
 
 export const languageBreakdown = []

@@ -19,7 +19,7 @@ export default function StatCard({ label, value, delta, deltaTone = 'up', icon: 
           <span
             className={cn(
               'inline-flex items-center text-[0.72rem] font-semibold',
-              positive ? 'text-emerald-600' : 'text-rose-600',
+              positive ? 'text-ember-500' : 'text-rose-600',
             )}
           >
             {positive ? <ArrowUpRight className="h-3 w-3" aria-hidden="true" /> : <ArrowDownRight className="h-3 w-3" aria-hidden="true" />}

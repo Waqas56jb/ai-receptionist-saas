@@ -4,7 +4,7 @@ import {
 } from 'recharts'
 import { cn } from '../../lib/utils'
 
-const axis = { stroke: '#8aa39c', fontSize: 11, tickLine: false, axisLine: false }
+const axis = { stroke: '#8494ac', fontSize: 11, tickLine: false, axisLine: false }
 
 function ChartTooltip({ active, payload, label, prefix = '', suffix = '' }) {
   if (!active || !payload?.length) return null
@@ -110,13 +110,13 @@ export function DonutChart({ data, prefix = '', suffix = '' }) {
 }
 
 export const chartColors = {
-  brand: '#14b8a6',
-  brandLight: '#2dd4bf',
-  brandPale: '#5eead4',
-  emerald: '#34d399',
+  brand: '#0066FF',
+  brandLight: '#3D8BFF',
+  brandPale: '#7AABFF',
+  emerald: '#FF7A00',
   amber: '#fbbf24',
   rose: '#fb7185',
   fuchsia: '#c084fc',
   sky: '#60a5fa',
-  slate: '#8aa39c',
+  slate: '#8494ac',
 }

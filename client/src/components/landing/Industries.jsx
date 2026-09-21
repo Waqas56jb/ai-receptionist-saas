@@ -153,7 +153,7 @@ export default function Industries() {
           <button
             type="button"
             onClick={next}
-            className="absolute right-0 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 translate-x-1/2 place-items-center rounded-full bg-primary-400 text-primary-950 shadow-lg shadow-primary-500/30 transition hover:bg-primary-300"
+            className="absolute right-0 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 translate-x-1/2 place-items-center rounded-full bg-ember-500 text-white shadow-lg shadow-ember-500/30 transition hover:bg-ember-400"
             aria-label="Next industry"
           >
             <ChevronRight className="h-4 w-4" />

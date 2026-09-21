@@ -11,4 +11,7 @@ server/uploads
 .DS_Store
 
 .vercel
-.env*
+.env.local
+!.env.production
+!client/.env.production
+!admin/.env.production

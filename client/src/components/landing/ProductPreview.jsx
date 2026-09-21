@@ -68,8 +68,8 @@ export default function ProductPreview() {
             <div className="flex items-center gap-2 border-b border-line bg-surface-2/70 px-4 py-2.5">
               <span className="flex gap-1.5" aria-hidden="true">
                 <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-                <span className="h-2.5 w-2.5 rounded-full bg-accent-400/70" />
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-ember-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-primary-400/70" />
               </span>
               <div className="mx-auto flex max-w-xs flex-1 items-center gap-2 rounded-lg border border-line bg-canvas/60 px-3 py-1.5">
                 <Search className="h-3 w-3 text-subtle" aria-hidden="true" />
@@ -90,7 +90,7 @@ export default function ProductPreview() {
                     <li key={item.label}>
                       <span
                         className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[0.8rem] font-medium ${
-                          item.active ? 'bg-primary-400 text-primary-950' : 'text-muted'
+                          item.active ? 'bg-primary-500 text-white' : 'text-muted'
                         }`}
                       >
                         <item.icon className="h-4 w-4" aria-hidden="true" />
@@ -107,8 +107,8 @@ export default function ProductPreview() {
                     <h3 className="font-display text-base font-bold text-ink sm:text-lg">Overview</h3>
                     <p className="text-xs text-muted">Last 7 days</p>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-ember-400/30 bg-ember-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-ember-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-ember-400" aria-hidden="true" />
                     AI receptionist active
                   </span>
                 </div>
@@ -128,7 +128,7 @@ export default function ProductPreview() {
                         <span className="font-display text-xl font-bold tabular-nums text-ink sm:text-2xl">
                           {stat.value}
                         </span>
-                        <span className="inline-flex items-center text-[0.7rem] font-semibold text-emerald-400">
+                        <span className="inline-flex items-center text-[0.7rem] font-semibold text-ember-500">
                           <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
                           {stat.delta}
                         </span>
@@ -147,7 +147,7 @@ export default function ProductPreview() {
                           Calls
                         </span>
                         <span className="inline-flex items-center gap-1.5">
-                          <span className="h-2 w-2 rounded-sm bg-primary-700" aria-hidden="true" />
+                          <span className="h-2 w-2 rounded-sm bg-ember-500" aria-hidden="true" />
                           Messages
                         </span>
                       </div>
@@ -169,7 +169,7 @@ export default function ProductPreview() {
                                 }}
                                 style={{ height: `${(entry[series] / maxBar) * 100}%` }}
                                 className={`w-full max-w-[10px] origin-bottom rounded-t-[3px] ${
-                                  series === 'calls' ? 'bg-primary-400' : 'bg-primary-700'
+                                  series === 'calls' ? 'bg-primary-500' : 'bg-ember-500'
                                 }`}
                               />
                             ))}

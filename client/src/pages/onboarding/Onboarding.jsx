@@ -155,7 +155,7 @@ export default function Onboarding() {
                   <span
                     className={cn(
                       'grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-[0.8rem] font-bold transition-colors',
-                      done && 'border-primary-400 bg-primary-400 text-primary-950',
+                      done && 'border-primary-500 bg-primary-500 text-white',
                       active && !done && 'border-primary-400 bg-surface text-primary-400',
                       !done && !active && 'border-line bg-surface text-muted',
                     )}
@@ -170,7 +170,7 @@ export default function Onboarding() {
             })}
           </div>
           <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200">
-            <div className="h-full rounded-full bg-primary-400 transition-[width] duration-500" style={{ width: `${progress}%` }} />
+            <div className="h-full rounded-full btn-dual transition-[width] duration-500" style={{ width: `${progress}%` }} />
           </div>
         </div>
 
@@ -340,7 +340,7 @@ export default function Onboarding() {
                       const Icon = channelIcons[channel.id]
                       return (
                         <div key={channel.id} className="rounded-xl border border-slate-200 bg-white p-5">
-                          <span className={cn('grid h-10 w-10 place-items-center rounded-xl', channel.connected ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400')}>
+                          <span className={cn('grid h-10 w-10 place-items-center rounded-xl', channel.connected ? 'bg-ember-500/15 text-ember-500' : 'bg-slate-100 text-slate-400')}>
                             <Icon className="h-[1.15rem] w-[1.15rem]" aria-hidden="true" />
                           </span>
                           <p className="mt-4 text-[0.9rem] font-semibold text-ink-900">{channel.name}</p>

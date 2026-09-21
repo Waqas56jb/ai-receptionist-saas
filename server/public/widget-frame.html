@@ -6,14 +6,15 @@
     <title>Website chat</title>
     <style>
       :root {
-        --canvas: #031014;
-        --surface: #0a1c1f;
-        --line: rgba(45, 212, 191, 0.22);
-        --ink: #e8f6f2;
-        --muted: #8aa39c;
-        --mint: #2dd4bf;
-        --mint-ink: #042f2e;
-        --bubble: #123033;
+        --canvas: #040812;
+        --surface: #0a1022;
+        --line: rgba(0, 102, 255, 0.28);
+        --ink: #ecf2fc;
+        --muted: #94a2bc;
+        --blue: #0066FF;
+        --mint: #FF7A00;
+        --mint-ink: #ffffff;
+        --bubble: #121c3a;
       }
       * { box-sizing: border-box; }
       html, body {
@@ -46,6 +47,12 @@
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
         position: relative;
       }
+      #panel::before {
+        content: '';
+        display: block;
+        height: 4px;
+        background: linear-gradient(90deg, #0066FF 0%, #0066FF 50%, #FF7A00 50%, #FF7A00 100%);
+      }
       body.open #panel { display: flex; }
       body.open #launcher { display: none; }
       header {
@@ -62,8 +69,8 @@
         border-radius: 12px;
         display: grid;
         place-items: center;
-        background: rgba(45, 212, 191, 0.16);
-        color: var(--mint);
+        background: rgba(0, 102, 255, 0.2);
+        color: var(--blue);
         font-weight: 700;
       }
       header h1 { margin: 0; font-size: 15px; }
@@ -80,7 +87,7 @@
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        background: rgba(45, 212, 191, 0.16);
+        background: rgba(255, 122, 0, 0.16);
         color: var(--mint);
         display: grid;
         place-items: center;
@@ -106,7 +113,7 @@
         white-space: pre-wrap;
       }
       .row.in .bubble { background: var(--bubble); border-bottom-left-radius: 4px; }
-      .row.out .bubble { background: var(--mint); color: var(--mint-ink); border-bottom-right-radius: 4px; }
+      .row.out .bubble { background: var(--blue); color: #fff; border-bottom-right-radius: 4px; }
       form {
         display: flex;
         gap: 8px;
@@ -145,7 +152,7 @@
         display: none;
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at 50% 38%, #0a2a2c 0%, #031014 68%);
+        background: radial-gradient(circle at 50% 38%, #12204a 0%, #040812 68%);
         flex-direction: column;
         align-items: center;
         justify-content: center;
@@ -279,7 +286,7 @@
             ctx.fill()
             var sphere = ctx.createRadialGradient(cx - r * 0.32, cy - r * 0.38, r * 0.08, cx, cy, r)
             sphere.addColorStop(0, '#d7fff7')
-            sphere.addColorStop(0.4, '#2dd4bf')
+            sphere.addColorStop(0.4, '#FF7A00')
             sphere.addColorStop(1, '#115e59')
             ctx.fillStyle = sphere
             ctx.beginPath()

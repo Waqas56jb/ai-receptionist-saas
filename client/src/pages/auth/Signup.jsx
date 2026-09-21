@@ -64,7 +64,10 @@ export default function Signup() {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!validate()) return
+    if (!validate()) {
+      toast.error('Please fix the highlighted fields.')
+      return
+    }
     setLoading(true)
     try {
       await signup(form)
@@ -81,7 +84,7 @@ export default function Signup() {
     <AuthLayout
       wide
       title="Create your business account"
-      description="Set up your AI receptionist in a few minutes — no card required for this demo."
+      description="Set up your AI receptionist in a few minutes — no card required."
       footer={
         <>
           Already have an account?{' '}

@@ -1,11 +1,11 @@
+import { apiOrigin } from '../config/api'
 import { api } from './api'
 
 function fallbackWidget() {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:4000'
-  const apiOrigin = origin.includes('517') ? 'http://localhost:4000' : origin
+  const origin = apiOrigin()
   return {
     token: '',
-    scriptUrl: `${apiOrigin}/widget.js`,
+    scriptUrl: `${origin}/widget.js`,
     frameUrl: '',
     snippet: `<!-- Sign in again if this stays empty, then copy the snippet from Website Widget. -->`,
     iframe: '',

@@ -119,7 +119,7 @@ export function Toggle({ checked, onChange, label, description, disabled, size =
       aria-label={!label ? 'Toggle' : undefined}
       disabled={disabled}
       onClick={() => onChange?.(!checked)}
-      className={cn('relative inline-flex shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50', dims.track, checked ? 'bg-primary-400' : 'bg-slate-300')}
+      className={cn('relative inline-flex shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50', dims.track, checked ? 'bg-ember-500' : 'bg-slate-300')}
     >
       <span className={cn('inline-block transform rounded-full bg-white shadow transition-transform duration-200', dims.knob, checked ? dims.shift : 'translate-x-1')} />
     </button>
@@ -177,7 +177,7 @@ export function StatCard({ label, value, delta, deltaTone = 'up', icon: Icon, hi
       <div className="mt-3 flex flex-wrap items-baseline gap-2">
         <span className="font-display text-[1.55rem] font-bold tabular-nums leading-none text-ink-900">{value}</span>
         {delta && (
-          <span className={cn('inline-flex items-center text-[0.72rem] font-semibold', positive ? 'text-emerald-600' : 'text-rose-600')}>
+          <span className={cn('inline-flex items-center text-[0.72rem] font-semibold', positive ? 'text-ember-500' : 'text-rose-600')}>
             {positive ? <ArrowUpRight className="h-3 w-3" aria-hidden="true" /> : <ArrowDownRight className="h-3 w-3" aria-hidden="true" />}
             {delta}
           </span>

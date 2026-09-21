@@ -58,8 +58,8 @@ export default function HeroVisual() {
       >
         <div className="flex items-center gap-2 border-b border-line bg-surface-2/70 px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" aria-hidden="true" />
-          <span className="h-2.5 w-2.5 rounded-full bg-accent-400/70" aria-hidden="true" />
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" aria-hidden="true" />
+          <span className="h-2.5 w-2.5 rounded-full bg-ember-400/70" aria-hidden="true" />
+          <span className="h-2.5 w-2.5 rounded-full bg-primary-400/70" aria-hidden="true" />
           <span className="ms-3 truncate rounded-md bg-canvas/60 px-2.5 py-1 text-xxs text-subtle">
             app.devmark / conversations / live
           </span>
@@ -74,12 +74,12 @@ export default function HeroVisual() {
               Live Conversations
             </span>
           </div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-emerald-300 sm:text-[0.7rem]">
+          <span className="inline-flex items-center gap-2 rounded-full border border-ember-400/30 bg-ember-500/10 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider text-ember-300 sm:text-[0.7rem]">
             <span className="relative flex h-1.5 w-1.5">
               {!reduceMotion && (
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ember-400 opacity-75" />
               )}
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ember-400" />
             </span>
             AI Online
           </span>
@@ -89,7 +89,7 @@ export default function HeroVisual() {
           <div className="rounded-xl border border-line bg-canvas/40 p-4 sm:rounded-2xl sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary-400 to-primary-700 font-display text-sm font-bold text-primary-950 sm:h-11 sm:w-11">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary-500 to-ember-500 font-display text-sm font-bold text-white sm:h-11 sm:w-11">
                   DR
                 </span>
                 <div className="min-w-0">
@@ -109,7 +109,7 @@ export default function HeroVisual() {
               {WAVE.map((h, i) => (
                 <motion.span
                   key={i}
-                  className="w-full max-w-[4px] flex-1 rounded-full bg-gradient-to-t from-primary-700/40 to-primary-400"
+                  className="w-full max-w-[4px] flex-1 rounded-full bg-gradient-to-t from-primary-600/50 to-ember-400"
                   style={{ height: `${h}%` }}
                   animate={reduceMotion ? undefined : { scaleY: [1, 0.55, 1.15, 0.8, 1] }}
                   transition={{
@@ -170,9 +170,9 @@ export default function HeroVisual() {
           <p className="mt-1 flex items-center gap-2 font-display text-lg font-semibold text-ink">
             <span className="relative flex h-2 w-2">
               {!reduceMotion && (
-                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-emerald-400" />
+                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-ember-400" />
               )}
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-ember-500" />
             </span>
             28 / 30
           </p>
@@ -188,8 +188,8 @@ export default function HeroVisual() {
       </FloatingCard>
 
       <FloatingCard className="bottom-8 right-1 hidden xl:flex" delay={0.9} floatDelay="1.2s">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15">
-          <MessageSquare className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-ember-500/15">
+          <MessageSquare className="h-4 w-4 text-ember-400" aria-hidden="true" />
         </span>
         <div>
           <p className="text-[0.7rem] font-semibold text-ink">WhatsApp</p>

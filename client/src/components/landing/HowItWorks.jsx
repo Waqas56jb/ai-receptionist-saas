@@ -3,10 +3,10 @@ import Reveal from '../ui/Reveal'
 import { steps } from '../../data/landing'
 
 const palettes = [
-  { from: '#26cfa6', to: '#0f6b5e' },
-  { from: '#60a5fa', to: '#1d4ed8' },
-  { from: '#c084fc', to: '#6d28d9' },
-  { from: '#34d399', to: '#047857' },
+  { from: '#0066FF', to: '#003EB3' },
+  { from: '#FF7A00', to: '#CC5A00' },
+  { from: '#3D8BFF', to: '#0052D6' },
+  { from: '#FF9A33', to: '#E66A00' },
 ]
 
 function StepCard({ step }) {

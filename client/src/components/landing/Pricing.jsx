@@ -40,13 +40,13 @@ export default function Pricing() {
                       active ? 'border-primary-500 bg-primary-500' : 'border-line group-hover:border-primary-400'
                     }`}
                   >
-                    {active && <Check className="h-3 w-3 text-primary-950" strokeWidth={3.5} aria-hidden="true" />}
+                    {active && <Check className="h-3 w-3 text-white" strokeWidth={3.5} aria-hidden="true" />}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="font-display text-lg font-bold tracking-tight text-ink">{plan.name}</span>
                       {plan.featured && (
-                        <span className="rounded-full bg-primary-500 px-2 py-0.5 text-xxs font-semibold text-primary-950">
+                        <span className="rounded-full bg-ember-500 px-2 py-0.5 text-xxs font-semibold text-white">
                           Most Popular
                         </span>
                       )}

@@ -5,9 +5,12 @@ import AuthLayout from '../../components/layout/AuthLayout'
 import Button from '../../components/ui/Button'
 import { Input } from '../../components/ui/Field'
 import PasswordStrength, { scorePassword } from '../../components/ui/PasswordStrength'
+import { useToast } from '../../context/ToastContext'
 import authService from '../../services/authService'
+import { authErrorMessage } from '../../config/api'
 
 export default function ResetPassword() {
+  const toast = useToast()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const token = params.get('token') || ''
@@ -32,14 +35,20 @@ export default function ResetPassword() {
     if (form.confirmPassword !== form.password) next.confirmPassword = 'Passwords do not match.'
     setErrors(next)
     setFormError(next.token || '')
-    if (Object.keys(next).length) return
+    if (Object.keys(next).length) {
+      toast.error(next.token || next.password || next.confirmPassword)
+      return
+    }
 
     setLoading(true)
     try {
       await authService.resetPassword({ password: form.password, token })
       setDone(true)
+      toast.success('Password updated. You can sign in now.')
     } catch (error) {
-      setFormError(error.message || 'This reset link is invalid or has expired.')
+      const message = authErrorMessage(error, 'This reset link is invalid or has expired.')
+      setFormError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -48,11 +57,11 @@ export default function ResetPassword() {
   if (done) {
     return (
       <AuthLayout title="Password updated" description="You can now sign in with your new password.">
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+        <div className="rounded-2xl border border-ember-400/30 bg-ember-500/10 p-5">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-ember-500 text-white">
             <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
           </span>
-          <p className="mt-4 text-[0.875rem] leading-relaxed text-emerald-900">
+          <p className="mt-4 text-[0.875rem] leading-relaxed text-ink">
             For your security, every other signed-in device has been logged out.
           </p>
         </div>

@@ -51,7 +51,7 @@ export default function SecureCredentialInput({
     <div className={cn('rounded-xl border border-line bg-surface p-4', className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-lg', saved ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400')}>
+          <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-lg', saved ? 'bg-ember-500/15 text-ember-500' : 'bg-slate-100 text-slate-400')}>
             {saved ? <ShieldCheck className="h-4 w-4" aria-hidden="true" /> : <KeyRound className="h-4 w-4" aria-hidden="true" />}
           </span>
           <div className="min-w-0">
@@ -71,7 +71,7 @@ export default function SecureCredentialInput({
                 className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-ink-900"
                 aria-label={`Copy ${label}`}
               >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? <Check className="h-3.5 w-3.5 text-ember-500" /> : <Copy className="h-3.5 w-3.5" />}
               </button>
             )}
             <button

@@ -4,11 +4,14 @@ import { ArrowLeft, ArrowRight, Mail, MailCheck } from 'lucide-react'
 import AuthLayout from '../../components/layout/AuthLayout'
 import Button from '../../components/ui/Button'
 import { Input } from '../../components/ui/Field'
+import { useToast } from '../../context/ToastContext'
 import authService from '../../services/authService'
+import { authErrorMessage } from '../../config/api'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function ForgotPassword() {
+  const toast = useToast()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,27 +19,39 @@ export default function ForgotPassword() {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!email.trim()) return setError('Enter your admin email.')
-    if (!emailPattern.test(email)) return setError('That does not look like a valid email.')
+    if (!email.trim()) {
+      setError('Enter your admin email.')
+      toast.error('Enter your admin email.')
+      return
+    }
+    if (!emailPattern.test(email)) {
+      setError('That does not look like a valid email.')
+      toast.error('That does not look like a valid email.')
+      return
+    }
     setError('')
     setLoading(true)
     try {
       await authService.requestPasswordReset({ email })
       setSent(true)
+      toast.success('If that admin account exists, a reset link is on its way.')
+    } catch (err) {
+      const message = authErrorMessage(err, 'We could not send the reset link. Please try again.')
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
-    return undefined
   }
 
   if (sent) {
     return (
       <AuthLayout title="Check your inbox" description={`If an admin account exists for ${email}, a reset link is on its way.`}>
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-5">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+        <div className="rounded-xl border border-ember-400/30 bg-ember-500/10 p-5">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-ember-500 text-white">
             <MailCheck className="h-5 w-5" aria-hidden="true" />
           </span>
-          <p className="mt-4 text-[0.85rem] leading-relaxed text-emerald-900">
+          <p className="mt-4 text-[0.85rem] leading-relaxed text-ink">
             The link expires in 30 minutes. Password resets on admin accounts are recorded in the audit log.
           </p>
         </div>

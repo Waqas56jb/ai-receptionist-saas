@@ -27,6 +27,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-canvas">
+      <div className="brand-bar pointer-events-none fixed inset-x-0 top-0 z-[80] h-1" aria-hidden="true" />
       <a
         href="#app-main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[80] focus:rounded-lg focus:bg-ink-900 focus:px-4 focus:py-2 focus:text-sm focus:text-white"

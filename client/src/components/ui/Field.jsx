@@ -81,7 +81,7 @@ export function Input({
           className={cn(
             controlBase,
             controlState(shownError),
-            emailOk && 'border-emerald-400 focus:border-emerald-400 focus:ring-emerald-500/20',
+            emailOk && 'border-ember-400 focus:border-ember-400 focus:ring-ember-500/20',
             'h-11 px-3.5',
             Icon && 'pl-10',
             isPassword && 'pr-11',

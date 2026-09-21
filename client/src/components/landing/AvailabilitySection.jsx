@@ -80,9 +80,9 @@ export default function AvailabilitySection() {
                   <div className="mt-2 flex items-center gap-2.5">
                     <span className="relative flex h-2.5 w-2.5">
                       {!reduceMotion && (
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ember-400 opacity-75" />
                       )}
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-ember-400" />
                     </span>
                     <span className="font-display text-xl font-bold uppercase tracking-[0.12em] text-ink sm:text-2xl">
                       Online
@@ -139,7 +139,7 @@ export default function AvailabilitySection() {
                     <span className="font-mono text-[0.7rem] tabular-nums text-subtle">{item.time}</span>
                     <item.icon className="h-3.5 w-3.5 shrink-0 text-primary-400" aria-hidden="true" />
                     <span className="min-w-0 flex-1 truncate text-[0.8rem] text-ink">{item.text}</span>
-                    <span className="hidden shrink-0 rounded-full bg-emerald-400/10 px-2 py-0.5 text-[0.65rem] font-semibold text-emerald-400 sm:inline">
+                    <span className="hidden shrink-0 rounded-full bg-ember-500/10 px-2 py-0.5 text-[0.65rem] font-semibold text-ember-400 sm:inline">
                       {item.tag}
                     </span>
                   </motion.li>

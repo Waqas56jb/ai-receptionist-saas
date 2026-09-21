@@ -26,6 +26,7 @@ export default function AdminSidebar({ onNavigate, collapsed = false, onToggleCo
 
   return (
     <div className={cn('flex h-full flex-col bg-surface', className)}>
+      <div className="brand-bar h-1 w-full shrink-0" aria-hidden="true" />
       <div className={cn('flex h-[4.25rem] shrink-0 items-center border-b border-line', collapsed ? 'justify-center px-2' : 'justify-between px-4')}>
         {collapsed ? (
           <img src={logoIcon} alt="DEVMARK admin" className="h-8 w-8 rounded-lg" />
@@ -78,14 +79,14 @@ export default function AdminSidebar({ onNavigate, collapsed = false, onToggleCo
                             'group flex items-center gap-2.5 rounded-lg py-2 text-[0.82rem] font-medium transition-colors',
                             collapsed ? 'justify-center px-2' : 'px-3',
                             isActive
-                              ? 'bg-primary-400 text-primary-950 shadow-lg shadow-primary-500/20'
+                              ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25 ring-1 ring-ember-500/40'
                               : 'text-slate-600 hover:bg-surface-2 hover:text-ink',
                           )
                         }
                       >
                         {({ isActive }) => (
                           <>
-                            <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-primary-950' : 'text-slate-400 group-hover:text-slate-600')} aria-hidden="true" />
+                            <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-white' : 'text-slate-400 group-hover:text-ember-400')} aria-hidden="true" />
                             {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
                           </>
                         )}

@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+import { API_BASE } from '../config/api'
+
+export { API_BASE }
 
 function readToken() {
   try {

@@ -18,7 +18,7 @@ export default function Toggle({ checked, onChange, label, description, disabled
       className={cn(
         'relative inline-flex shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50',
         dims.track,
-        checked ? 'bg-primary-400' : 'bg-slate-300',
+        checked ? 'bg-ember-500' : 'bg-slate-300',
       )}
     >
       <span

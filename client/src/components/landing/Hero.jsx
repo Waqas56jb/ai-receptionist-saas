@@ -68,7 +68,7 @@ export default function Hero() {
               {...rise(0.3)}
               className="mt-3.5 flex items-center gap-2 text-xs text-muted"
             >
-              <Check className="h-4 w-4 shrink-0 text-emerald-400" strokeWidth={2.5} aria-hidden="true" />
+              <Check className="h-4 w-4 shrink-0 text-ember-400" strokeWidth={2.5} aria-hidden="true" />
               <span>Set up your business, connect a channel, go live the same day — no credit card needed.</span>
             </motion.p>
 

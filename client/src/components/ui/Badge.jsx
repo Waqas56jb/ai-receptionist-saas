@@ -2,8 +2,8 @@ import cn from '../../lib/cn'
 
 const tones = {
   neutral: 'border-line bg-surface-2 text-muted',
-  brand: 'border-primary-400/30 bg-primary-500/15 text-primary-400',
-  success: 'border-emerald-400/25 bg-emerald-400/10 text-emerald-400',
+  brand: 'border-primary-400/30 bg-primary-500/15 text-primary-300',
+  success: 'border-ember-400/30 bg-ember-500/15 text-ember-400',
   warning: 'border-amber-400/25 bg-amber-400/10 text-amber-300',
   danger: 'border-rose-400/25 bg-rose-400/10 text-rose-400',
   info: 'border-sky-400/25 bg-sky-400/10 text-sky-300',

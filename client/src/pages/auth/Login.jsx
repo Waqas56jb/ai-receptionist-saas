@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Lock, Mail, ShieldCheck } from 'lucide-react'
 import AuthLayout from '../../components/layout/AuthLayout'
 import Button from '../../components/ui/Button'
 import { Checkbox, Input } from '../../components/ui/Field'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
+import { authErrorMessage } from '../../config/api'
 import { emailError } from '../../lib/email'
 
 export default function Login() {
@@ -16,7 +17,6 @@ export default function Login() {
 
   const [form, setForm] = useState({ email: '', password: '', remember: true })
   const [errors, setErrors] = useState({})
-  const [formError, setFormError] = useState('')
   const [loading, setLoading] = useState(false)
   const [challenge, setChallenge] = useState(null)
   const [otp, setOtp] = useState('')
@@ -34,28 +34,31 @@ export default function Login() {
     if (!form.password) next.password = 'Enter your password.'
     else if (form.password.length < 6) next.password = 'Passwords are at least 6 characters.'
     setErrors(next)
-    return Object.keys(next).length === 0
+    if (Object.keys(next).length) {
+      toast.error(Object.values(next)[0])
+      return false
+    }
+    return true
   }
 
   const finish = (session) => {
-    toast.success('Welcome back!')
+    toast.success(`Welcome back${session?.user?.name ? `, ${session.user.name}` : ''}.`)
     navigate(location.state?.from || '/app/dashboard', { replace: true })
     return session
   }
 
   const submit = async (e) => {
     e.preventDefault()
-    setFormError('')
     if (challenge) {
       if (!/^\d{6}$/.test(otp.trim())) {
-        setFormError('Enter the 6-digit code sent to your email.')
+        toast.error('Enter the 6-digit code sent to your email.')
         return
       }
       setLoading(true)
       try {
         finish(await verifyLoginOtp({ challengeId: challenge.challengeId, code: otp.trim() }))
       } catch (error) {
-        setFormError(error.message || 'That code is invalid or has expired.')
+        toast.error(authErrorMessage(error, 'That code is invalid or has expired.'))
       } finally {
         setLoading(false)
       }
@@ -72,7 +75,7 @@ export default function Login() {
       }
       finish(result)
     } catch (error) {
-      setFormError(error.message || 'We could not sign you in. Please check your details and try again.')
+      toast.error(authErrorMessage(error, 'We could not sign you in. Check your details and try again.'))
     } finally {
       setLoading(false)
     }
@@ -96,13 +99,6 @@ export default function Login() {
       }
     >
       <form onSubmit={submit} noValidate className="space-y-4">
-        {formError && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3.5" role="alert">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" aria-hidden="true" />
-            <p className="text-[0.82rem] leading-relaxed text-rose-700">{formError}</p>
-          </div>
-        )}
-
         {challenge ? (
           <Input
             label="Verification code"
@@ -159,7 +155,6 @@ export default function Login() {
             onClick={() => {
               setChallenge(null)
               setOtp('')
-              setFormError('')
             }}
           >
             Use a different account
