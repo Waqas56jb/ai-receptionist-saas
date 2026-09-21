@@ -112,7 +112,10 @@ function NotificationsMenu() {
   const unread = items.filter((n) => !n.read).length
 
   useEffect(() => {
-    notificationService.list().then(setItems)
+    notificationService
+      .list()
+      .then((rows) => setItems(Array.isArray(rows) ? rows : []))
+      .catch(() => setItems([]))
   }, [])
 
   return (
@@ -175,7 +178,10 @@ function SystemStatus() {
   const [health, setHealth] = useState([])
 
   useEffect(() => {
-    analyticsService.getHealth().then(setHealth)
+    analyticsService
+      .getHealth()
+      .then((rows) => setHealth(Array.isArray(rows) ? rows : []))
+      .catch(() => setHealth([]))
   }, [])
 
   const down = health.filter((h) => h.status === 'Down').length

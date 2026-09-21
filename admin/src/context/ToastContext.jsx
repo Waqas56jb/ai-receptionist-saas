@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo } from 'react'
 import { ToastContainer, toast as toastify, Slide } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import 'react-toastify/ReactToastify.css'
 
 const ToastContext = createContext(null)
 

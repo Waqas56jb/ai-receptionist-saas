@@ -37,7 +37,7 @@ export default function Dashboard() {
   const health = useAsync(() => analyticsService.getHealth(), [])
   const activity = useAsync(() => analyticsService.getActivity(), [])
 
-  const s = summary.data
+  const s = summary.data && summary.data.businesses ? summary.data : null
 
   return (
     <>

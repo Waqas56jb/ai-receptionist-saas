@@ -50,7 +50,19 @@ export const analyticsService = {
       { name: 'Website', value: 0, color: '#60a5fa' },
     ]),
   getSubscriptionMovement: () => request([]),
-  getHealth: () => request([]),
+  getHealth: async () => {
+    try {
+      const data = await api('/health')
+      return [
+        { id: 'api', name: 'API', status: data?.ok ? 'Operational' : 'Down', detail: 'Control plane', uptime: '—' },
+        { id: 'db', name: 'Database', status: data?.supabase ? 'Operational' : 'Down', detail: 'Supabase', uptime: '—' },
+        { id: 'mail', name: 'Email', status: data?.mailer ? 'Operational' : 'Warning', detail: 'SMTP', uptime: '—' },
+        { id: 'ai', name: 'OpenAI', status: data?.openai ? 'Operational' : 'Warning', detail: 'Voice and text', uptime: '—' },
+      ]
+    } catch {
+      return []
+    }
+  },
   getActivity: () => request([]),
 
   /** Usage per business, with the plan allowance it is measured against. */
