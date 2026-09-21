@@ -4,30 +4,35 @@ import { live } from './api'
 
 function asAgent(row) {
   if (!row) return null
+  const connected = Boolean(row.connected || row.whatsappStatus === 'connected')
   return {
     id: row.id,
     businessId: row.id,
-    business: row.business_name || row.business || row.name,
+    business: row.business_name || row.business || row.name || 'Business',
     name: `${row.business_name || row.name || 'Business'} receptionist`,
     status: row.status === 'Active' ? 'Online' : 'Paused',
     knowledgeMode: 'Shared',
     promptMode: 'Shared',
-    channels: ['whatsapp', 'web'],
+    channels: connected ? ['whatsapp', 'web'] : ['web'],
     languages: ['English'],
     personality: 'Professional',
     handoff: true,
-    knowledgeItems: 0,
+    knowledgeItems: Number(row.knowledgeItems) || 0,
     aiMinutes: 0,
-    conversations: 0,
+    conversations: Number(row.conversations) || 0,
     lastActive: row.lastLogin || row.last_login || row.createdAt || row.created_at,
   }
 }
 
 export const aiService = {
-  listAgents: () =>
-    live('/admin/accounts', {}, () => request(() => store.aiAgents)).then((rows) =>
-      (Array.isArray(rows) ? rows : []).map(asAgent),
-    ),
+  listAgents: async () => {
+    try {
+      const rows = await live('/admin/accounts', {}, () => request(() => store.aiAgents))
+      return (Array.isArray(rows) ? rows : []).map(asAgent).filter(Boolean)
+    } catch {
+      return []
+    }
+  },
   getAgent: (id) =>
     live('/admin/accounts', {}, () => request(() => store.aiAgents.find((a) => a.id === id) || null)).then((rows) => {
       const list = Array.isArray(rows) ? rows : rows ? [rows] : []
@@ -73,21 +78,25 @@ export const aiService = {
 
 export const channelService = {
   listVoice: () => request(() => store.voice),
-  listWhatsApp: () =>
-    live('/admin/whatsapp', {}, () => request(() => store.whatsapp)).then((rows) =>
-      (Array.isArray(rows) ? rows : []).map((row) => ({
+  listWhatsApp: async () => {
+    try {
+      const rows = await live('/admin/whatsapp', {}, () => request(() => store.whatsapp))
+      return (Array.isArray(rows) ? rows : []).map((row) => ({
         id: row.id,
-        businessId: row.id,
-        business: row.account || row.business,
-        account: row.account,
-        number: row.identifier || row.number || '—',
+        businessId: row.id || row.businessId,
+        business: row.account || row.business || 'Business',
+        account: row.account || row.business || '',
+        number: row.identifier || row.number || row.whatsappPhone || '—',
         credential: '',
         status: row.connected || row.status === 'connected' ? 'Connected' : 'Disconnected',
         enabled: Boolean(row.connected || row.status === 'connected'),
-        messages: row.messages || 0,
+        messages: Number(row.messages) || 0,
         lastActivity: row.lastActivity || null,
-      })),
-    ),
+      }))
+    } catch {
+      return []
+    }
+  },
   listInstagram: () => request(() => store.instagram),
 
   setEnabled: (kind, id, enabled, admin) =>

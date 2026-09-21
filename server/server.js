@@ -12,6 +12,7 @@ const { createClient } = require('@supabase/supabase-js')
 const { cleanText, isValidEmail, normalizeEmail, maskEmail } = require('./lib/validate')
 const { sendWelcome, sendOtp } = require('./lib/mailer')
 const registerMailAuth = require('./mailAuth')
+const sectorKnowledge = require('./lib/sectorKnowledge')
 
 const PORT = Number(process.env.PORT || 4000)
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-change-me'
@@ -159,13 +160,63 @@ async function findAdminByEmail(email) {
 
 function publicAccount(row) {
   if (!row) return null
-  const { password_hash: _ignored, ...safe } = row
   return {
-    ...safe,
-    business: safe.business_name,
-    lastLogin: safe.last_login,
-    createdAt: safe.created_at,
+    id: row.id,
+    name: row.name || '',
+    email: row.email || '',
+    phone: row.phone || '',
+    role: row.role || 'Owner',
+    status: row.status || 'Active',
+    plan: row.plan || 'Starter',
+    business_name: row.business_name || row.name || '',
+    business: row.business_name || row.name || '',
+    industry: row.industry || '',
+    country: row.country || '',
+    lastLogin: row.last_login || row.lastLogin || null,
+    createdAt: row.created_at || row.createdAt || null,
+    knowledgeItems: Number(row.knowledgeItems) || 0,
+    conversations: Number(row.conversations) || 0,
+    whatsappStatus: row.whatsappStatus || 'disconnected',
+    whatsappPhone: row.whatsappPhone || '',
+    connected: Boolean(row.connected),
   }
+}
+
+function countByAccount(rows, key = 'account_id') {
+  const counts = {}
+  for (const row of rows || []) {
+    const id = row?.[key]
+    if (!id) continue
+    counts[id] = (counts[id] || 0) + 1
+  }
+  return counts
+}
+
+async function adminAccountRows() {
+  const [accounts, connections, knowledge, conversations] = await Promise.all([
+    dbSelect('accounts'),
+    dbSelect('whatsapp_connections').catch(() => []),
+    dbSelect('knowledge_items').catch(() => []),
+    dbSelect('conversations').catch(() => []),
+  ])
+  const connBy = {}
+  for (const row of connections || []) {
+    if (row?.account_id) connBy[row.account_id] = row
+  }
+  const knowledgeBy = countByAccount(knowledge)
+  const conversationBy = countByAccount(conversations)
+  return (accounts || []).filter(Boolean).map((row) => {
+    const conn = connBy[row.id] || {}
+    const status = conn.status || 'disconnected'
+    return publicAccount({
+      ...row,
+      knowledgeItems: knowledgeBy[row.id] || 0,
+      conversations: conversationBy[row.id] || 0,
+      whatsappStatus: status,
+      whatsappPhone: conn.phone || '',
+      connected: status === 'connected',
+    })
+  })
 }
 
 function newWidgetToken() {
@@ -334,7 +385,7 @@ async function knowledgeContext(accountId) {
   return items
     .map((item) => `# ${item.title}\n${item.body || ''}`)
     .join('\n\n')
-    .slice(0, 12000)
+    .slice(0, 20000)
 }
 
 function matchKnowledge(items, userText) {
@@ -408,17 +459,41 @@ async function OpenAIFile(buffer, filename) {
   return toFile(buffer, filename)
 }
 
+function extractPrintableText(buffer) {
+  const raw = buffer.toString('utf8').replace(/\u0000/g, ' ')
+  const chunks = raw.match(/[\t\n\r\x20-\x7E\u00A0-\u024F]{6,}/g) || []
+  return chunks.join('\n').replace(/[ \t]{2,}/g, ' ').trim()
+}
+
 async function extractUploadText(file) {
   const mime = file.mimetype || ''
   const name = file.originalname || 'upload'
-  if (mime === 'application/pdf' || name.toLowerCase().endsWith('.pdf')) {
+  const lower = name.toLowerCase()
+  if (mime === 'application/pdf' || lower.endsWith('.pdf')) {
     try {
       const pdf = require('pdf-parse')
       const parsed = await pdf(file.buffer)
-      return parsed.text || ''
+      return String(parsed.text || '').trim()
     } catch {
       return ''
     }
+  }
+  if (
+    mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    lower.endsWith('.docx')
+  ) {
+    try {
+      const mammoth = require('mammoth')
+      const parsed = await mammoth.extractRawText({ buffer: file.buffer })
+      return String(parsed.value || '').trim()
+    } catch {
+      return extractPrintableText(file.buffer)
+    }
+  }
+  if (mime === 'application/msword' || lower.endsWith('.doc')) {
+    const text = extractPrintableText(file.buffer)
+    if (text.length > 40) return text
+    return `Legacy Word document uploaded: ${name}. Convert it to PDF or DOCX if the extracted text looks incomplete.`
   }
   if (mime.startsWith('text/') || /\.(txt|csv|md)$/i.test(name)) {
     return file.buffer.toString('utf8')
@@ -441,7 +516,17 @@ async function extractUploadText(file) {
     })
     return vision.choices[0]?.message?.content || `Image uploaded: ${name}`
   }
-  return `Document uploaded: ${name}`
+  const fallback = extractPrintableText(file.buffer)
+  return fallback || `Document uploaded: ${name}`
+}
+
+function uploadKind(file) {
+  const mime = file.mimetype || ''
+  const name = String(file.originalname || '').toLowerCase()
+  if (mime.startsWith('image/')) return 'Image'
+  if (mime === 'application/pdf' || name.endsWith('.pdf')) return 'PDF'
+  if (name.endsWith('.doc') || name.endsWith('.docx') || mime.includes('word')) return 'Document'
+  return 'Document'
 }
 
 async function upsertConnection(accountId, patch) {
@@ -972,15 +1057,20 @@ app.delete('/api/knowledge/:id', auth('account'), async (req, res) => {
 
 app.post('/api/knowledge/upload', auth('account'), upload.array('files', 8), async (req, res) => {
   try {
-    for (const file of req.files || []) {
+    const files = req.files || []
+    if (!files.length) return res.status(400).json({ error: 'Choose a PDF, Word, text or image file to upload.' })
+    const sector = cleanText(req.body?.sector, 80)
+    const category = cleanText(req.body?.category, 60) || 'Documents'
+    for (const file of files) {
       const body = await extractUploadText(file)
-      const kind = file.mimetype?.startsWith('image/') ? 'Image' : file.mimetype === 'application/pdf' ? 'PDF' : 'Document'
+      const kind = uploadKind(file)
+      const extracted = String(body || '').trim()
       await dbInsert('knowledge_items', {
         id: id('kb'),
         account_id: req.actor.id,
-        title: file.originalname,
-        category: 'Documents',
-        body,
+        title: sector ? `${sector} — ${file.originalname}` : file.originalname,
+        category,
+        body: extracted || `Uploaded ${file.originalname}. Add a short summary if the file had no readable text.`,
         source: kind,
         status: 'Active',
         file_name: file.originalname,
@@ -990,6 +1080,57 @@ app.post('/api/knowledge/upload', auth('account'), upload.array('files', 8), asy
       })
     }
     res.json((await dbSelect('knowledge_items', { account_id: req.actor.id })).map(mapKnowledge))
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.get('/api/knowledge/sectors', auth('account'), async (req, res) => {
+  try {
+    const items = await dbSelect('knowledge_items', { account_id: req.actor.id })
+    const titles = new Set(items.map((item) => item.title))
+    res.json({
+      businessType: req.account?.industry || '',
+      sectors: sectorKnowledge.listSectors().map((sector) => ({
+        ...sector,
+        loaded: sectorKnowledge.packTitles(sector.id).every((title) => titles.has(title)),
+      })),
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/knowledge/sector-pack', auth('account'), async (req, res) => {
+  try {
+    const requested = cleanText(req.body?.sector, 80) || req.account?.industry || ''
+    const packs = sectorKnowledge.packFor(requested)
+    if (!packs.length) return res.status(400).json({ error: 'Choose a business sector to add.' })
+    const existing = await dbSelect('knowledge_items', { account_id: req.actor.id })
+    const titles = new Set(existing.map((item) => item.title))
+    let added = 0
+    for (const pack of packs) {
+      for (const item of pack.items) {
+        if (titles.has(item.title)) continue
+        await dbInsert('knowledge_items', {
+          id: id('kb'),
+          account_id: req.actor.id,
+          title: item.title,
+          category: item.category || 'Business Info',
+          body: item.body,
+          source: 'Sector pack',
+          status: 'Active',
+          created_at: now(),
+          updated_at: now(),
+        })
+        titles.add(item.title)
+        added += 1
+      }
+    }
+    res.json({
+      added,
+      items: (await dbSelect('knowledge_items', { account_id: req.actor.id })).map(mapKnowledge),
+    })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -1587,10 +1728,10 @@ app.get('/api/kpis', auth('account'), async (req, res) => {
 
 app.get('/api/admin/accounts', auth('admin'), async (_req, res) => {
   try {
-    const rows = await dbSelect('accounts')
-    res.json(rows.map(publicAccount))
+    res.json(await adminAccountRows())
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    console.error('admin accounts', error.message)
+    res.json([])
   }
 })
 
@@ -1612,7 +1753,7 @@ app.post('/api/admin/accounts', auth('admin'), async (req, res) => {
       widget_token: newWidgetToken(),
       created_at: now(),
     })
-    res.json((await dbSelect('accounts')).map(publicAccount))
+    res.json(await adminAccountRows())
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -1626,8 +1767,8 @@ app.patch('/api/admin/accounts/:id', auth('admin'), async (req, res) => {
     if (req.body.password) patch.password_hash = bcrypt.hashSync(req.body.password, 10)
     if (req.body.businessName) patch.business_name = req.body.businessName
     await dbUpdate('accounts', { id: req.params.id }, patch)
-    const rows = await dbSelect('accounts')
-    res.json(rows.find((row) => row.id === req.params.id) ? publicAccount(rows.find((row) => row.id === req.params.id)) : null)
+    const rows = await adminAccountRows()
+    res.json(rows.find((row) => row.id === req.params.id) || null)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -1637,8 +1778,8 @@ app.post('/api/admin/accounts/:id/status', auth('admin'), async (req, res) => {
   try {
     const { status, reason } = req.body || {}
     await dbUpdate('accounts', { id: req.params.id }, { status, blocked_reason: status === 'Active' ? null : reason || null })
-    const rows = await dbSelect('accounts')
-    res.json(publicAccount(rows.find((row) => row.id === req.params.id)))
+    const rows = await adminAccountRows()
+    res.json(rows.find((row) => row.id === req.params.id) || null)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -1663,7 +1804,7 @@ app.delete('/api/admin/accounts/:id', auth('admin'), async (req, res) => {
     await dbDelete('widget_connections', { account_id: req.params.id })
     await dbDelete('account_settings', { account_id: req.params.id })
     await dbDelete('accounts', { id: req.params.id })
-    res.json((await dbSelect('accounts')).map(publicAccount))
+    res.json(await adminAccountRows())
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -1681,52 +1822,57 @@ app.get('/api/admin/conversations', auth('admin'), async (_req, res) => {
   try {
     const accounts = await dbSelect('accounts')
     const all = []
-    for (const account of accounts) {
-      const rows = await conversationsForAccount(account.id)
-      for (const row of rows) {
-        if (row.channel !== 'whatsapp' && row.channel !== 'web') continue
-        all.push({
-          id: row.id,
-          businessId: account.id,
-          business: account.business_name || account.name,
-          customer: row.customer,
-          channel: row.channel,
-          handledBy: row.handledBy === 'human' ? 'Human' : 'AI',
-          lastMessage: row.preview,
-          status: row.status,
-          outcome: row.lead || '—',
-          at: row.lastMessageAt,
-          messages: row.messages,
-        })
+    for (const account of accounts || []) {
+      try {
+        const rows = await conversationsForAccount(account.id)
+        for (const row of rows) {
+          if (row.channel !== 'whatsapp' && row.channel !== 'web') continue
+          all.push({
+            id: row.id,
+            businessId: account.id,
+            business: account.business_name || account.name,
+            customer: row.customer,
+            channel: row.channel,
+            handledBy: row.handledBy === 'human' ? 'Human' : 'AI',
+            lastMessage: row.preview,
+            status: row.status,
+            outcome: row.lead || '—',
+            at: row.lastMessageAt,
+            messages: row.messages,
+          })
+        }
+      } catch (error) {
+        console.warn('admin conversations skipped', account.id, error.message)
       }
     }
     all.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))
     res.json(all)
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    console.error('admin conversations', error.message)
+    res.json([])
   }
 })
 
 app.get('/api/admin/whatsapp', auth('admin'), async (_req, res) => {
   try {
-    const accounts = await dbSelect('accounts')
-    const rows = await Promise.all(
-      accounts.map(async (account) => {
-        const connection = await getConnection(account.id)
-        const runtime = waRuntime.get(account.id)
+    const rows = await adminAccountRows()
+    res.json(
+      rows.map((row) => {
+        const runtime = waRuntime.get(row.id)
+        const status = runtime?.last?.status || row.whatsappStatus || 'disconnected'
         return {
-          id: account.id,
-          account: account.business_name || account.name,
-          identifier: connection.phone || '—',
-          connected: (runtime?.last?.status || connection.status) === 'connected',
-          status: runtime?.last?.status || connection.status || 'disconnected',
-          messages: (await dbSelect('messages', { account_id: account.id })).length,
+          id: row.id,
+          account: row.business || row.name,
+          identifier: runtime?.last?.phone || row.whatsappPhone || '—',
+          connected: status === 'connected',
+          status,
+          messages: row.conversations || 0,
         }
       }),
     )
-    res.json(rows)
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    console.error('admin whatsapp', error.message)
+    res.json([])
   }
 })
 

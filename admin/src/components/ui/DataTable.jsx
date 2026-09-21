@@ -25,7 +25,7 @@ export default function DataTable({
   if (error) {
     return (
       <div className={cn('rounded-2xl border border-line bg-surface', className)}>
-        <ErrorState onRetry={onRetry} />
+        <ErrorState onRetry={onRetry} error={error} />
       </div>
     )
   }

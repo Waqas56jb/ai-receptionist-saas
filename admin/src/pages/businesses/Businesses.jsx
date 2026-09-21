@@ -122,7 +122,7 @@ export default function Businesses() {
       key: 'channels',
       header: 'Channels',
       hideOnMobile: true,
-      render: (row) => (row.channels.length ? <span className="text-slate-500">{channelLabels(row.channels)}</span> : <span className="text-slate-400">None</span>),
+      render: (row) => (row.channels?.length ? <span className="text-slate-500">{channelLabels(row.channels)}</span> : <span className="text-slate-400">None</span>),
     },
     { key: 'usagePct', header: 'Usage', sortable: true, render: (row) => <ProgressBar value={row.usagePct} max={100} showValue={false} className="w-24" /> },
     { key: 'mrr', header: 'MRR', sortable: true, render: (row) => formatCurrency(row.mrr) },

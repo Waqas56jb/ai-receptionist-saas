@@ -48,7 +48,7 @@ export default function AIAgents() {
     {
       key: 'channels',
       header: 'Channels',
-      render: (row) => (row.channels.length ? <span className="text-slate-500">{channelLabels(row.channels)}</span> : <span className="text-slate-400">None</span>),
+      render: (row) => (row.channels?.length ? <span className="text-slate-500">{channelLabels(row.channels)}</span> : <span className="text-slate-400">None</span>),
     },
     { key: 'aiMinutes', header: 'AI usage', sortable: true, render: (row) => `${formatNumber(row.aiMinutes)} min` },
     { key: 'lastActive', header: 'Last active', sortable: true, render: (row) => timeAgo(row.lastActive) },

@@ -3,15 +3,19 @@ import { store, userData, writeAudit } from './store'
 import { live } from './api'
 
 export const userService = {
-  list: () =>
-    live('/admin/accounts', {}, () => request(() => store.users)).then((rows) =>
-      (Array.isArray(rows) ? rows : []).map((row) => ({
+  list: async () => {
+    try {
+      const rows = await live('/admin/accounts', {}, () => request(() => store.users))
+      return (Array.isArray(rows) ? rows : []).map((row) => ({
         ...row,
         business: row.business_name || row.business,
         lastLogin: row.lastLogin || row.last_login,
         createdAt: row.createdAt || row.created_at,
-      })),
-    ),
+      }))
+    } catch {
+      return []
+    }
+  },
 
   create: (payload) =>
     live('/admin/accounts', { method: 'POST', body: payload }, () =>

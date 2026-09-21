@@ -5,7 +5,7 @@ export { API_BASE }
 function readToken() {
   try {
     const admin = JSON.parse(localStorage.getItem('devmark.admin.session') || 'null')
-    return admin?.token || null
+    return admin?.token || admin?.admin?.token || null
   } catch {
     return null
   }
@@ -40,7 +40,8 @@ export async function live(path, options, fallback) {
   try {
     return await api(path, options)
   } catch (error) {
-    if (error.code === 'API_OFFLINE' && fallback) return fallback()
+    const recoverable = error.code === 'API_OFFLINE' || error.status >= 500 || error.status === 404
+    if (recoverable && fallback) return fallback()
     throw error
   }
 }

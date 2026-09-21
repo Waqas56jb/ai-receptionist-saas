@@ -21,14 +21,16 @@ export async function api(path, { method = 'GET', body, form } = {}) {
   const headers = {}
   const token = readToken()
   if (token) headers.Authorization = `Bearer ${token}`
-  if (!form) headers['Content-Type'] = 'application/json'
+  const payload = body instanceof FormData ? body : form instanceof FormData ? form : body
+  const isForm = payload instanceof FormData
+  if (!isForm) headers['Content-Type'] = 'application/json'
 
   let res
   try {
     res = await fetch(`${API_BASE}${path}`, {
       method,
       headers,
-      body: form ? body : body === undefined ? undefined : JSON.stringify(body),
+      body: isForm ? payload : body === undefined ? undefined : JSON.stringify(body),
     })
   } catch {
     const error = new Error('API_OFFLINE')

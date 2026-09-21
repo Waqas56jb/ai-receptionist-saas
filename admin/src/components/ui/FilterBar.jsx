@@ -28,7 +28,7 @@ export default function FilterBar({ table, filters = [], searchPlaceholder = 'Se
               value={table.filters[filter.key] || 'All'}
               onChange={(e) => table.setFilter(filter.key, e.target.value)}
               aria-label={filter.label}
-              options={['All', ...filter.options].map((o) => ({
+              options={['All', ...(filter.options || [])].map((o) => ({
                 value: o,
                 label: o === 'All' ? `All ${filter.allLabel || filter.label.toLowerCase()}` : o,
               }))}

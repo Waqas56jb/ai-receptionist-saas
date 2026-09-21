@@ -16,60 +16,48 @@ export const knowledgeService = {
       const items = await request(() => store.documents)
       return items
     }).then((rows) => {
-      if (Array.isArray(rows) && rows[0]?.fileName) {
-        return rows
-          .filter((row) => row.source === 'PDF' || row.source === 'Document' || row.source === 'Image')
-          .map((row) => ({
-            id: row.id,
-            name: row.fileName || row.title,
-            type: row.source,
-            size: 0,
-            uploadedAt: row.updatedAt,
-            status: row.status === 'Active' ? 'Indexed' : row.status,
-            pages: null,
-          }))
+      if (!Array.isArray(rows)) return rows
+      const docs = rows.filter((row) => row.source === 'PDF' || row.source === 'Document' || row.source === 'Image')
+      if (docs.length || rows.some((row) => row.fileName)) {
+        return docs.map((row) => ({
+          id: row.id,
+          name: row.fileName || row.title,
+          type: row.source,
+          size: 0,
+          uploadedAt: row.updatedAt,
+          status: row.status === 'Active' ? 'Indexed' : row.status,
+          pages: null,
+        }))
       }
       return rows
     }),
 
-  uploadDocument: async (file) => {
-    try {
-      const form = new FormData()
-      form.append('files', file)
-      const rows = await api('/knowledge/upload', { method: 'POST', form })
-      return rows
-        .filter((row) => row.source === 'PDF' || row.source === 'Document' || row.source === 'Image')
-        .map((row) => ({
-          id: row.id,
-          name: row.fileName || row.title,
-          type: row.source,
-          size: file.size,
-          uploadedAt: row.updatedAt,
-          status: 'Indexed',
-          pages: null,
-        }))
-    } catch (error) {
-      if (error.code !== 'API_OFFLINE') throw error
-      return request(
-        () => {
-          store.documents = [
-            {
-              id: makeId('doc'),
-              name: file.name,
-              type: (file.name.split('.').pop() || '').toUpperCase(),
-              size: file.size,
-              uploadedAt: new Date().toISOString(),
-              status: 'Processing',
-              pages: null,
-            },
-            ...store.documents,
-          ]
-          return store.documents
-        },
-        { latency: [800, 1400] },
-      )
-    }
+  uploadDocument: async (file, options = {}) => {
+    const rows = await knowledgeService.uploadDocuments([file], options)
+    return rows
+      .filter((row) => row.source === 'PDF' || row.source === 'Document' || row.source === 'Image')
+      .map((row) => ({
+        id: row.id,
+        name: row.fileName || row.title,
+        type: row.source,
+        size: file.size,
+        uploadedAt: row.updatedAt,
+        status: 'Indexed',
+        pages: null,
+      }))
   },
+
+  uploadDocuments: async (files, { sector, category } = {}) => {
+    const form = new FormData()
+    for (const file of files) form.append('files', file)
+    if (sector) form.append('sector', sector)
+    if (category) form.append('category', category)
+    return api('/knowledge/upload', { method: 'POST', body: form })
+  },
+
+  listSectors: () => api('/knowledge/sectors'),
+
+  loadSectorPack: (sector) => api('/knowledge/sector-pack', { method: 'POST', body: { sector } }),
 
   reprocessDocument: (id) =>
     request(() => {

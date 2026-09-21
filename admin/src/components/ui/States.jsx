@@ -17,14 +17,16 @@ export function EmptyState({ icon: Icon, title, description, action, className =
   )
 }
 
-export function ErrorState({ onRetry, title = 'Something went wrong.', description = 'We could not load this data. Please try again.', className = '' }) {
+export function ErrorState({ onRetry, title = 'Something went wrong.', description = 'We could not load this data. Please try again.', className = '', error }) {
   return (
     <div className={cn('flex flex-col items-center justify-center px-6 py-14 text-center', className)}>
       <span className="grid h-12 w-12 place-items-center rounded-2xl border border-rose-200 bg-rose-50 text-rose-500">
         <AlertTriangle className="h-5 w-5" aria-hidden="true" />
       </span>
       <h3 className="mt-4 font-display text-base font-semibold text-ink-900">{title}</h3>
-      <p className="mt-2 max-w-sm text-[0.85rem] leading-relaxed text-slate-500">{description}</p>
+      <p className="mt-2 max-w-sm text-[0.85rem] leading-relaxed text-slate-500">
+        {error?.status === 401 ? 'Your admin session expired. Sign in again, then retry.' : error?.message || description}
+      </p>
       {onRetry && (
         <Button variant="secondary" size="sm" className="mt-6" onClick={onRetry}>
           <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />

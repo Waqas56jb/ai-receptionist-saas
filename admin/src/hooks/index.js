@@ -79,6 +79,7 @@ export function useTable(rows = [], { pageSize = 10, initialSort = null, searchF
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return rows.filter((row) => {
+      if (!row) return false
       const bySearch =
         !q || searchFields.some((field) => String(row[field] ?? '').toLowerCase().includes(q))
       const byFilters = Object.entries(filters).every(([key, value]) => {

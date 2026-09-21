@@ -4,19 +4,21 @@ import { live } from './api'
 
 function asBusiness(row) {
   if (!row) return null
+  const connected = Boolean(row.connected || row.whatsappStatus === 'connected')
   return {
     id: row.id,
-    name: row.business_name || row.business || row.name,
-    owner: row.name,
-    email: row.email,
-    phone: row.phone,
+    name: row.business_name || row.business || row.name || 'Business',
+    owner: row.name || row.owner || '',
+    email: row.email || '',
+    phone: row.phone || '',
+    industry: row.industry || '',
     plan: row.plan || 'Starter',
     status: row.status || 'Active',
-    aiStatus: 'Online',
-    channels: ['whatsapp', 'web'],
+    aiStatus: row.status === 'Active' ? 'Online' : 'Paused',
+    channels: connected ? ['whatsapp', 'web'] : ['web'],
     users: 1,
     calls: 0,
-    messages: 0,
+    messages: Number(row.conversations) || 0,
     mrr: 0,
     usagePct: 0,
     createdAt: row.createdAt || row.created_at,
@@ -25,10 +27,14 @@ function asBusiness(row) {
 }
 
 export const businessService = {
-  list: () =>
-    live('/admin/accounts', {}, () => request(() => store.businesses)).then((rows) =>
-      (Array.isArray(rows) ? rows : []).map(asBusiness),
-    ),
+  list: async () => {
+    try {
+      const rows = await live('/admin/accounts', {}, () => request(() => store.businesses))
+      return (Array.isArray(rows) ? rows : []).map(asBusiness).filter(Boolean)
+    } catch {
+      return []
+    }
+  },
 
   get: (id) =>
     live('/admin/accounts', {}, () => request(() => store.businesses.find((b) => b.id === id) || null)).then((rows) => {
