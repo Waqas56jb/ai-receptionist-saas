@@ -6,12 +6,12 @@ const base =
 
 const variants = {
   primary:
-    'rounded-lg bg-primary-500 text-white shadow-lg shadow-primary-500/30 hover:bg-primary-400 hover:-translate-y-0.5 active:translate-y-0',
+    'rounded-lg bg-[#0066FF] text-white shadow-lg shadow-[#0066FF]/30 hover:bg-[#FF7A00] hover:-translate-y-0.5 active:translate-y-0',
   secondary:
-    'rounded-lg bg-surface text-ink border border-line hover:border-line-strong hover:bg-surface-2 hover:-translate-y-0.5 active:translate-y-0',
-  outline: 'rounded-lg border border-line bg-surface text-muted hover:border-line-strong hover:bg-surface-2 hover:text-ink',
-  subtle: 'rounded-lg bg-surface-2 text-muted hover:bg-line hover:text-ink',
-  ghost: 'text-muted hover:text-ink hover:bg-surface-2',
+    'rounded-lg bg-surface text-ink border border-line hover:border-[#FF7A00] hover:bg-[#FF7A00] hover:text-white hover:-translate-y-0.5 active:translate-y-0',
+  outline: 'rounded-lg border border-line bg-surface text-muted hover:border-[#FF7A00] hover:bg-[#FF7A00] hover:text-white',
+  subtle: 'rounded-lg bg-surface-2 text-muted hover:bg-[#FF7A00] hover:text-white',
+  ghost: 'text-muted hover:text-white hover:bg-[#FF7A00]',
   danger: 'rounded-lg bg-rose-600 text-white hover:bg-rose-700',
   dangerGhost: 'text-rose-500 hover:bg-rose-50',
   accent:
@@ -19,7 +19,7 @@ const variants = {
   onDark:
     'rounded-lg bg-ember-500 text-white hover:bg-ember-400 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-ember-500/30',
   outlineDark:
-    'rounded-lg border border-line-strong text-ink hover:bg-surface-2 hover:border-primary-400 hover:-translate-y-0.5 active:translate-y-0',
+    'rounded-lg border border-line-strong text-ink hover:bg-[#FF7A00] hover:border-[#FF7A00] hover:text-white hover:-translate-y-0.5 active:translate-y-0',
 }
 
 const sizes = {

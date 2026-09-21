@@ -176,7 +176,7 @@ html[data-site-theme='light'] {
   }
 
   .btn-mint {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-ember-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-ember-500/30 transition duration-200 hover:-translate-y-0.5 hover:bg-ember-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-ember-400;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-[#FF7A00] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#FF7A00]/30 transition duration-200 hover:-translate-y-0.5 hover:bg-[#0066FF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00];
   }
 
   .btn-ghost-surface {
@@ -351,10 +351,10 @@ html:not([data-site-theme='light']) .border-amber-200 {
 }
 
 html:not([data-site-theme='light']) .bg-sky-50 {
-  background-color: rgb(14 165 233 / 0.12);
+  background-color: rgb(0 102 255 / 0.14);
 }
 html:not([data-site-theme='light']) .text-sky-700 {
-  color: rgb(125 211 252);
+  color: rgb(126 176 255);
 }
 html:not([data-site-theme='light']) .border-sky-200 {
   border-color: rgb(14 165 233 / 0.28);

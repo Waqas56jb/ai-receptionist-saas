@@ -15,14 +15,14 @@ function NavItem({ item, onNavigate }) {
         cn(
           'group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.83rem] font-medium transition-colors',
           isActive
-            ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25 ring-1 ring-ember-500/40'
-            : 'text-slate-600 hover:bg-surface-2 hover:text-ink',
+            ? 'bg-[#0066FF] text-white shadow-lg shadow-[#0066FF]/25'
+            : 'text-slate-600 hover:bg-[#FF7A00] hover:text-white',
         )
       }
     >
       {({ isActive }) => (
         <>
-          <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-white' : 'text-slate-400 group-hover:text-ember-400')} aria-hidden="true" />
+          <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-white' : 'text-slate-400 group-hover:text-white')} aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate">{item.label}</span>
         </>
       )}

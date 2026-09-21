@@ -2,11 +2,11 @@ import { cn } from '../../lib/utils'
 
 const tones = {
   neutral: 'border-line bg-surface-2 text-muted',
-  brand: 'border-primary-400/30 bg-primary-500/15 text-primary-300',
-  success: 'border-ember-400/30 bg-ember-500/15 text-ember-400',
+  brand: 'border-[#0066FF]/30 bg-[#0066FF]/15 text-[#7EB0FF]',
+  success: 'border-[#FF7A00]/30 bg-[#FF7A00]/15 text-[#FF9A33]',
   warning: 'border-amber-400/25 bg-amber-400/10 text-amber-300',
   danger: 'border-rose-400/25 bg-rose-400/10 text-rose-400',
-  info: 'border-sky-400/25 bg-sky-400/10 text-sky-300',
+  info: 'border-[#0066FF]/25 bg-[#0066FF]/10 text-[#7EB0FF]',
   purple: 'border-fuchsia-400/25 bg-fuchsia-400/10 text-fuchsia-300',
   dark: 'border-line bg-ink-900 text-ink',
 }

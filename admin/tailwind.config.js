@@ -101,6 +101,22 @@ export default {
           400: '#FF9A33',
           500: '#FF7A00',
         },
+        cyan: {
+          50: '#EBF3FF',
+          100: '#D6E7FF',
+          300: '#7EB0FF',
+          400: '#3D82FF',
+          500: '#0066FF',
+          600: '#0052D6',
+        },
+        sky: {
+          50: '#EBF3FF',
+          100: '#D6E7FF',
+          300: '#7EB0FF',
+          400: '#3D82FF',
+          500: '#0066FF',
+          600: '#0052D6',
+        },
       },
       fontFamily: {
         sans: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],

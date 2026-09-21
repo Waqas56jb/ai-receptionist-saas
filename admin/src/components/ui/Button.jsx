@@ -6,11 +6,11 @@ const base =
 
 const variants = {
   primary:
-    'bg-primary-500 text-white shadow-lg shadow-primary-500/30 hover:bg-primary-400 hover:-translate-y-0.5',
-  secondary: 'bg-surface text-ink border border-line hover:border-line-strong hover:bg-surface-2',
-  outline: 'border border-line bg-surface text-muted hover:border-line-strong hover:bg-surface-2 hover:text-ink',
-  subtle: 'bg-surface-2 text-muted hover:bg-line hover:text-ink',
-  ghost: 'text-muted hover:text-ink hover:bg-surface-2',
+    'bg-[#0066FF] text-white shadow-lg shadow-[#0066FF]/30 hover:bg-[#FF7A00] hover:-translate-y-0.5',
+  secondary: 'bg-surface text-ink border border-line hover:border-[#FF7A00] hover:bg-[#FF7A00] hover:text-white',
+  outline: 'border border-line bg-surface text-muted hover:border-[#FF7A00] hover:bg-[#FF7A00] hover:text-white',
+  subtle: 'bg-surface-2 text-muted hover:bg-[#FF7A00] hover:text-white',
+  ghost: 'text-muted hover:text-white hover:bg-[#FF7A00]',
   danger: 'bg-rose-600 text-white hover:bg-rose-700',
   dangerGhost: 'text-rose-500 hover:bg-rose-50',
   accent: 'bg-ember-500 text-white shadow-lg shadow-ember-500/30 hover:bg-ember-400 hover:-translate-y-0.5',

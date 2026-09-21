@@ -27,7 +27,7 @@ const typeMeta = {
   booking: { icon: CalendarDays, tone: 'bg-ember-500/15 text-ember-500' },
   ai: { icon: Sparkles, tone: 'bg-primary-500/15 text-primary-400' },
   usage: { icon: Gauge, tone: 'bg-amber-50 text-amber-600' },
-  channel: { icon: Radio, tone: 'bg-sky-50 text-sky-600' },
+  channel: { icon: Radio, tone: 'bg-[#0066FF]/15 text-[#3D82FF]' },
   escalation: { icon: UserCheck, tone: 'bg-amber-50 text-amber-600' },
   error: { icon: AlertTriangle, tone: 'bg-rose-50 text-rose-600' },
 }

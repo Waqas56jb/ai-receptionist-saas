@@ -169,7 +169,7 @@ export function StatCard({ label, value, delta, deltaTone = 'up', icon: Icon, hi
       <div className="flex items-start justify-between gap-3">
         <p className="text-[0.7rem] font-bold uppercase tracking-wider text-slate-500">{label}</p>
         {Icon && (
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-500/15 text-primary-400">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#0066FF]/15 text-[#3D82FF]">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
         )}
