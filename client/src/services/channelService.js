@@ -1,12 +1,32 @@
 import { request } from './mockClient'
 import { store, ai } from './store'
+import { api } from './api'
 
 /**
  * Credentials are write-only from the browser's point of view: the UI can send
  * a new value and read a masked preview back, but never the stored secret.
  */
 export const channelService = {
-  list: () => request(() => store.channels),
+  list: async () => {
+    try {
+      const [wa, widget] = await Promise.all([
+        api('/whatsapp/status').catch(() => ({})),
+        api('/widget').catch(() => ({})),
+      ])
+      store.channels = store.channels.map((c) => {
+        if (c.id === 'whatsapp') {
+          return { ...c, connected: Boolean(wa.connected), identifier: wa.phone || null, provider: 'WhatsApp' }
+        }
+        if (c.id === 'web') {
+          return { ...c, connected: Boolean(widget?.token), identifier: widget?.token ? 'Website widget' : null, provider: 'Web widget' }
+        }
+        return c
+      })
+    } catch {
+      /* keep last known channels */
+    }
+    return store.channels
+  },
 
   get: (id) => request(() => store.channels.find((c) => c.id === id) || null),
 

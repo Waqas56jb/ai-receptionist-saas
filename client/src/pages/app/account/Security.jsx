@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { History, KeyRound, LogOut, Radio, ShieldCheck, Smartphone } from 'lucide-react'
 import PageHeader from '../../../components/layout/PageHeader'
@@ -5,6 +6,8 @@ import { Card, CardBody, CardHeader } from '../../../components/ui/Card'
 import Badge, { StatusBadge } from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Toggle from '../../../components/ui/Toggle'
+import Modal from '../../../components/ui/Modal'
+import { Input } from '../../../components/ui/Field'
 import { ErrorState } from '../../../components/ui/States'
 import useAsync from '../../../hooks/useAsync'
 import { useToast } from '../../../context/ToastContext'
@@ -19,6 +22,12 @@ export default function Security() {
   const sessions = useAsync(() => authService.getSessions(), [])
   const history = useAsync(() => authService.getLoginHistory(), [])
   const channels = useAsync(() => channelService.list(), [])
+  const [otpOpen, setOtpOpen] = useState(false)
+  const [disableOpen, setDisableOpen] = useState(false)
+  const [challenge, setChallenge] = useState(null)
+  const [code, setCode] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
 
   if (profile.error) {
     return (
@@ -47,17 +56,32 @@ export default function Security() {
           </Card>
 
           <Card>
-            <CardHeader icon={Smartphone} title="Two-factor authentication" description="An extra code from your phone at every sign-in." />
+            <CardHeader icon={Smartphone} title="Two-factor authentication" description="An extra email code at every sign-in." />
             <CardBody>
               {profile.data && (
                 <Toggle
-                  checked={profile.data.twoFactor}
+                  checked={Boolean(profile.data.twoFactor)}
                   onChange={async (v) => {
-                    profile.setData(await authService.setTwoFactor(v))
-                    toast.success(v ? 'Two-factor authentication enabled.' : 'Two-factor authentication disabled.')
+                    if (v) {
+                      setBusy(true)
+                      try {
+                        const next = await authService.startTwoFactor()
+                        setChallenge(next)
+                        setCode('')
+                        setOtpOpen(true)
+                        toast.info(`A verification code was sent to ${next.emailHint}.`)
+                      } catch (error) {
+                        toast.error(error.message || 'Could not send the verification code.')
+                      } finally {
+                        setBusy(false)
+                      }
+                      return
+                    }
+                    setPassword('')
+                    setDisableOpen(true)
                   }}
                   label={profile.data.twoFactor ? 'Two-factor authentication is on' : 'Two-factor authentication is off'}
-                  description="Authenticator app codes. SMS backup can be added later."
+                  description="A 6-digit code is emailed to your account address at every sign-in."
                 />
               )}
               {profile.data && !profile.data.twoFactor && (
@@ -152,6 +176,79 @@ export default function Security() {
           </Card>
         </div>
       </div>
+
+      <Modal
+        open={otpOpen}
+        onClose={() => setOtpOpen(false)}
+        title="Confirm two-factor authentication"
+        description={challenge ? `Enter the code sent to ${challenge.emailHint}.` : 'Enter the email code.'}
+        footer={
+          <Button
+            as="button"
+            size="sm"
+            loading={busy}
+            onClick={async () => {
+              if (!/^\d{6}$/.test(code.trim())) {
+                toast.error('Enter the 6-digit code.')
+                return
+              }
+              setBusy(true)
+              try {
+                profile.setData(await authService.confirmTwoFactor({ challengeId: challenge.challengeId, code: code.trim() }))
+                setOtpOpen(false)
+                toast.success('Two-factor authentication is on. The next sign-in will ask for an email code.')
+              } catch (error) {
+                toast.error(error.message || 'That code is invalid or has expired.')
+              } finally {
+                setBusy(false)
+              }
+            }}
+          >
+            Enable two-factor
+          </Button>
+        }
+      >
+        <Input
+          label="Verification code"
+          inputMode="numeric"
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+        />
+      </Modal>
+
+      <Modal
+        open={disableOpen}
+        onClose={() => setDisableOpen(false)}
+        title="Turn off two-factor authentication"
+        description="Enter your current password to confirm."
+        footer={
+          <Button
+            as="button"
+            size="sm"
+            loading={busy}
+            onClick={async () => {
+              if (!password) {
+                toast.error('Enter your current password.')
+                return
+              }
+              setBusy(true)
+              try {
+                profile.setData(await authService.disableTwoFactor({ password }))
+                setDisableOpen(false)
+                toast.success('Two-factor authentication is off.')
+              } catch (error) {
+                toast.error(error.message || 'Could not turn off two-factor authentication.')
+              } finally {
+                setBusy(false)
+              }
+            }}
+          >
+            Turn off
+          </Button>
+        }
+      >
+        <Input label="Current password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </Modal>
     </>
   )
 }

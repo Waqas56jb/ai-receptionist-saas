@@ -8,8 +8,7 @@ import PasswordStrength from '../../components/ui/PasswordStrength'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import businessService from '../../services/businessService'
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+import { emailError } from '../../lib/email'
 
 const initial = {
   fullName: '',
@@ -53,8 +52,8 @@ export default function Signup() {
     const next = {}
     if (!form.fullName.trim()) next.fullName = 'Enter your full name.'
     if (!form.businessName.trim()) next.businessName = 'Enter your business name.'
-    if (!form.email.trim()) next.email = 'Enter your email address.'
-    else if (!emailPattern.test(form.email)) next.email = 'That does not look like a valid email.'
+    const mail = emailError(form.email)
+    if (mail) next.email = mail
     if (!form.password) next.password = 'Choose a password.'
     else if (form.password.length < 8) next.password = 'Use at least 8 characters.'
     if (form.confirmPassword !== form.password) next.confirmPassword = 'Passwords do not match.'
@@ -69,10 +68,10 @@ export default function Signup() {
     setLoading(true)
     try {
       await signup(form)
-      toast.success('Account created — let us set up your business.')
+      toast.success('Account created — a congratulations email is on its way.')
       navigate('/onboarding', { replace: true })
-    } catch {
-      toast.error('We could not create your account. Please try again.')
+    } catch (error) {
+      toast.error(error.message || 'We could not create your account. Please try again.')
     } finally {
       setLoading(false)
     }

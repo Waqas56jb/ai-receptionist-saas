@@ -1,10 +1,31 @@
-import { request } from './mockClient'
+import { api } from './api'
 
 export const helpService = {
-  getArticles: () => request([]),
-  getFaqs: () => request([]),
-  getSupportChannels: () => request([]),
-  submitIssue: () => request({ ok: true, reference: `SUP-${Date.now()}` }),
+  getArticles: async () => {
+    try {
+      const data = await api('/help')
+      return data.articles || []
+    } catch {
+      return []
+    }
+  },
+  getFaqs: async () => {
+    try {
+      const data = await api('/help')
+      return data.faqs || []
+    } catch {
+      return []
+    }
+  },
+  getSupportChannels: async () => {
+    try {
+      const data = await api('/help')
+      return data.support || []
+    } catch {
+      return []
+    }
+  },
+  submitIssue: (issue) => api('/help/issue', { method: 'POST', body: issue }),
 }
 
 export default helpService

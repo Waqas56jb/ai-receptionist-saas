@@ -149,3 +149,68 @@ revoke all on table account_settings from anon, authenticated, public;
 revoke all on table widget_connections from anon, authenticated, public;
 grant all on table account_settings to service_role;
 grant all on table widget_connections to service_role;
+
+alter table accounts add column if not exists two_factor boolean default false;
+alter table account_settings add column if not exists notifications jsonb default '{}';
+alter table account_settings add column if not exists team jsonb default '[]';
+alter table account_settings add column if not exists catalog jsonb default '{}';
+
+create table if not exists email_otps (
+  id text primary key,
+  account_id text not null references accounts(id) on delete cascade,
+  purpose text not null,
+  email text not null,
+  code_hash text not null,
+  expires_at timestamptz not null,
+  used boolean default false,
+  created_at timestamptz default now()
+);
+
+create table if not exists password_resets (
+  id text primary key,
+  account_id text not null references accounts(id) on delete cascade,
+  email text not null,
+  token_hash text not null,
+  expires_at timestamptz not null,
+  used boolean default false,
+  created_at timestamptz default now()
+);
+
+create table if not exists account_sessions (
+  id text primary key,
+  account_id text not null references accounts(id) on delete cascade,
+  token_hash text not null,
+  device text,
+  location text,
+  ip text,
+  last_active timestamptz,
+  created_at timestamptz default now()
+);
+
+create table if not exists login_events (
+  id text primary key,
+  account_id text not null references accounts(id) on delete cascade,
+  device text,
+  location text,
+  ip text,
+  result text,
+  created_at timestamptz default now()
+);
+
+create index if not exists email_otps_account_idx on email_otps(account_id);
+create index if not exists password_resets_token_idx on password_resets(token_hash);
+create index if not exists account_sessions_account_idx on account_sessions(account_id);
+create index if not exists login_events_account_idx on login_events(account_id, created_at desc);
+
+alter table email_otps enable row level security;
+alter table password_resets enable row level security;
+alter table account_sessions enable row level security;
+alter table login_events enable row level security;
+revoke all on table email_otps from anon, authenticated, public;
+revoke all on table password_resets from anon, authenticated, public;
+revoke all on table account_sessions from anon, authenticated, public;
+revoke all on table login_events from anon, authenticated, public;
+grant all on table email_otps to service_role;
+grant all on table password_resets to service_role;
+grant all on table account_sessions to service_role;
+grant all on table login_events to service_role;

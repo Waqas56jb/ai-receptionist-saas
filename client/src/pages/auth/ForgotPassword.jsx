@@ -5,8 +5,7 @@ import AuthLayout from '../../components/layout/AuthLayout'
 import Button from '../../components/ui/Button'
 import { Input } from '../../components/ui/Field'
 import authService from '../../services/authService'
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+import { emailError } from '../../lib/email'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -16,8 +15,8 @@ export default function ForgotPassword() {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!email.trim()) return setError('Enter your email address.')
-    if (!emailPattern.test(email)) return setError('That does not look like a valid email.')
+    const mail = emailError(email)
+    if (mail) return setError(mail)
     setError('')
     setLoading(true)
     try {
@@ -45,8 +44,8 @@ export default function ForgotPassword() {
         </div>
 
         <div className="mt-5 flex flex-col gap-2.5">
-          <Button as={Link} to="/reset-password" size="md" className="w-full">
-            Open reset page
+          <Button as={Link} to="/login" size="md" className="w-full">
+            Back to sign in
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Button>
           <Button as="button" variant="ghost" size="md" className="w-full" onClick={() => setSent(false)}>

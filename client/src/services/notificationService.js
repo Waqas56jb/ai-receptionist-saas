@@ -1,30 +1,44 @@
-import { request } from './mockClient'
 import { store, platform } from './store'
+import { api } from './api'
 
 export const notificationService = {
-  list: () => request(() => store.notifications, { latency: [150, 320] }),
+  list: async () => {
+    try {
+      const data = await api('/notifications')
+      store.notifications = Array.isArray(data) ? data : []
+    } catch {
+      store.notifications = store.notifications || []
+    }
+    return store.notifications
+  },
 
-  markRead: (id) =>
-    request(() => {
-      store.notifications = store.notifications.map((n) => (n.id === id ? { ...n, read: true } : n))
-      return store.notifications
-    }, { latency: [80, 160] }),
+  markRead: async (id) => {
+    store.notifications = (store.notifications || []).map((n) => (n.id === id ? { ...n, read: true } : n))
+    return store.notifications
+  },
 
-  markAllRead: () =>
-    request(() => {
-      store.notifications = store.notifications.map((n) => ({ ...n, read: true }))
-      return store.notifications
-    }, { latency: [120, 240] }),
+  markAllRead: async () => {
+    store.notifications = (store.notifications || []).map((n) => ({ ...n, read: true }))
+    return store.notifications
+  },
 
-  getPreferences: () => request(() => store.notificationPreferences),
-
-  updatePreferences: (group, key, value) =>
-    request(() => {
-      store.notificationPreferences[group][key] = value
+  getPreferences: async () => {
+    try {
+      const prefs = await api('/notifications/preferences')
+      store.notificationPreferences = prefs
+      return prefs
+    } catch {
       return store.notificationPreferences
-    }),
+    }
+  },
 
-  getLabels: () => request(platform.notificationLabels),
+  updatePreferences: async (group, key, value) => {
+    const prefs = await api('/notifications/preferences', { method: 'PUT', body: { group, key, value } })
+    store.notificationPreferences = prefs
+    return prefs
+  },
+
+  getLabels: async () => platform.notificationLabels,
 }
 
 export default notificationService

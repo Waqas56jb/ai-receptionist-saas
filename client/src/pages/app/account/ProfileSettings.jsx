@@ -15,6 +15,7 @@ import { useAuth } from '../../../context/AuthContext'
 import businessService from '../../../services/businessService'
 import authService from '../../../services/authService'
 import { formatDateTime } from '../../../lib/format'
+import { emailError } from '../../../lib/email'
 
 export default function ProfileSettings() {
   const toast = useToast()
@@ -30,12 +31,23 @@ export default function ProfileSettings() {
   const setField = (key) => (e) => profile.setData((prev) => ({ ...prev, [key]: e.target.value }))
 
   const save = async () => {
+    const mail = emailError(profile.data?.email)
+    if (mail) {
+      toast.error(mail)
+      return
+    }
+    if (!String(profile.data?.name || '').trim()) {
+      toast.error('Enter your full name.')
+      return
+    }
     setSaving(true)
     try {
       const next = await businessService.updateProfile(profile.data)
       profile.setData(next)
-      updateUser({ name: next.name, email: next.email })
+      updateUser({ name: next.name, email: next.email, phone: next.phone })
       toast.success('Profile updated.')
+    } catch (error) {
+      toast.error(error.message || 'Could not save your profile.')
     } finally {
       setSaving(false)
     }
@@ -56,6 +68,8 @@ export default function ProfileSettings() {
       await authService.changePassword(passwords)
       setPasswords({ current: '', next: '', confirm: '' })
       toast.success('Password changed.')
+    } catch (error) {
+      toast.error(error.message || 'Could not change your password.')
     } finally {
       setChanging(false)
     }
@@ -83,7 +97,7 @@ export default function ProfileSettings() {
               ) : (
                 <>
                   <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                    <Avatar name={profile.data.name} size="lg" />
+                    <Avatar name={profile.data?.name || ''} size="lg" />
                     <div className="min-w-0 flex-1">
                       <p className="text-[0.85rem] font-semibold text-ink-900">Profile image</p>
                       <p className="mt-0.5 text-[0.78rem] text-slate-500">JPG or PNG, at least 200×200.</p>
@@ -95,12 +109,12 @@ export default function ProfileSettings() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Input label="Full name" value={profile.data.name} onChange={setField('name')} />
-                    <Input label="Email" type="email" value={profile.data.email} onChange={setField('email')} />
-                    <Input label="Phone" value={profile.data.phone} onChange={setField('phone')} />
+                    <Input label="Full name" value={profile.data?.name || ''} onChange={setField('name')} />
+                    <Input label="Email" type="email" value={profile.data?.email || ''} onChange={setField('email')} />
+                    <Input label="Phone" value={profile.data?.phone || ''} onChange={setField('phone')} />
                     <div>
                       <p className="mb-1.5 text-[0.8rem] font-semibold text-ink-900">Role</p>
-                      <Badge tone="brand">{profile.data.role}</Badge>
+                      <Badge tone="brand">{profile.data?.role || 'Owner'}</Badge>
                     </div>
                   </div>
                 </>

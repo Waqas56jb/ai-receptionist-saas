@@ -7,7 +7,8 @@ import { Checkbox, Input } from '../../components/ui/Field'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_RE =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/
 
 export default function AdminLogin() {
   const { login } = useAuth()
@@ -32,7 +33,7 @@ export default function AdminLogin() {
 
     const next = {}
     if (!form.email.trim()) next.email = 'Enter your admin email.'
-    else if (!emailPattern.test(form.email)) next.email = 'That does not look like a valid email.'
+    else if (!EMAIL_RE.test(form.email.trim().toLowerCase())) next.email = 'Enter a valid email, for example name@business.com.'
     if (!form.password) next.password = 'Enter your password.'
     setErrors(next)
     if (Object.keys(next).length) return

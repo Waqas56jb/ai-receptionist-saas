@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { Eye, EyeOff, ChevronDown } from 'lucide-react'
 import cn from '../../lib/cn'
+import { emailError, isValidEmail } from '../../lib/email'
 
 const controlBase =
   'w-full rounded-xl border bg-surface text-[0.9rem] text-ink placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400/30 disabled:bg-canvas-soft disabled:text-slate-400'
@@ -46,13 +47,20 @@ export function Input({
   type = 'text',
   className = '',
   id,
+  onChange,
+  onBlur,
   ...props
 }) {
   const autoId = useId()
   const inputId = id || autoId
   const [reveal, setReveal] = useState(false)
+  const [emailHint, setEmailHint] = useState('')
   const isPassword = type === 'password'
+  const isEmail = type === 'email'
   const resolvedType = isPassword && reveal ? 'text' : type
+  const shownError = error || emailHint
+  const liveValue = props.value ?? props.defaultValue ?? ''
+  const emailOk = isEmail && !shownError && isValidEmail(liveValue)
 
   return (
     <div className={className}>
@@ -68,15 +76,27 @@ export function Input({
         <input
           id={inputId}
           type={resolvedType}
-          aria-invalid={Boolean(error) || undefined}
-          aria-describedby={error ? `${inputId}-error` : undefined}
+          aria-invalid={Boolean(shownError) || undefined}
+          aria-describedby={shownError ? `${inputId}-error` : undefined}
           className={cn(
             controlBase,
-            controlState(error),
+            controlState(shownError),
+            emailOk && 'border-emerald-400 focus:border-emerald-400 focus:ring-emerald-500/20',
             'h-11 px-3.5',
             Icon && 'pl-10',
             isPassword && 'pr-11',
           )}
+          onChange={(e) => {
+            if (isEmail) {
+              const value = e.target.value
+              setEmailHint(value.trim() ? emailError(value) : '')
+            }
+            onChange?.(e)
+          }}
+          onBlur={(e) => {
+            if (isEmail) setEmailHint(emailError(e.target.value) || (required && !String(e.target.value).trim() ? 'Enter your email address.' : ''))
+            onBlur?.(e)
+          }}
           {...props}
         />
         {isPassword && (
@@ -90,7 +110,13 @@ export function Input({
           </button>
         )}
       </div>
-      {error ? <FieldError id={`${inputId}-error`}>{error}</FieldError> : <FieldHelp>{help}</FieldHelp>}
+      {shownError ? (
+        <FieldError id={`${inputId}-error`}>{shownError}</FieldError>
+      ) : emailOk ? (
+        <FieldHelp>This email looks valid.</FieldHelp>
+      ) : (
+        <FieldHelp>{help}</FieldHelp>
+      )}
     </div>
   )
 }

@@ -37,7 +37,7 @@ export const store = {
   policies: [],
   bookingRules: [],
   amenities: [],
-  user: { id: null, name: '', email: '', role: 'Owner', phone: '', avatar: null },
+  user: { id: null, name: '', email: '', role: 'Owner', phone: '', avatar: null, twoFactor: false },
   team: [],
   sessions: [],
   loginHistory: [],

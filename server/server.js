@@ -9,6 +9,9 @@ const bcrypt = require('bcryptjs')
 const multer = require('multer')
 const QRCode = require('qrcode')
 const { createClient } = require('@supabase/supabase-js')
+const { cleanText, isValidEmail, normalizeEmail, maskEmail } = require('./lib/validate')
+const { sendWelcome, sendOtp } = require('./lib/mailer')
+const registerMailAuth = require('./mailAuth')
 
 const PORT = Number(process.env.PORT || 4000)
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-change-me'
@@ -658,14 +661,24 @@ app.get('/api/health', (_req, res) => {
     ok: true,
     supabase: Boolean(supabase),
     openai: Boolean(process.env.OPENAI_API_KEY),
+    mailer: Boolean(process.env.MAIL_USER && process.env.MAIL_PASS),
     time: now(),
   })
 })
 
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { email, password, fullName, businessName, phone, businessType } = req.body || {}
-    if (!email || !password || !fullName) return res.status(400).json({ error: 'Name, email and password are required.' })
+    const email = normalizeEmail(req.body?.email)
+    const password = String(req.body?.password || '')
+    const fullName = cleanText(req.body?.fullName, 80)
+    const businessName = cleanText(req.body?.businessName, 120)
+    const phone = cleanText(req.body?.phone, 40)
+    const businessType = cleanText(req.body?.businessType, 80)
+    const website = cleanText(req.body?.website, 200)
+    const country = cleanText(req.body?.country, 80)
+    if (!fullName || !password) return res.status(400).json({ error: 'Name, email and password are required.' })
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
+    if (password.length < 8) return res.status(400).json({ error: 'Use at least 8 characters for your password.' })
     if (await findAccountByEmail(email)) return res.status(409).json({ error: 'An account already exists for that email.' })
     const row = await dbInsert('accounts', {
       id: id('acc'),
@@ -677,14 +690,20 @@ app.post('/api/auth/signup', async (req, res) => {
       business_name: businessName || fullName,
       industry: businessType || null,
       phone: phone || null,
+      website: website || null,
+      country: country || null,
       plan: 'Starter',
+      two_factor: false,
       widget_token: newWidgetToken(),
       created_at: now(),
+    })
+    sendWelcome({ to: email, name: fullName, businessName: row.business_name }).catch((error) => {
+      console.warn('Welcome email failed:', error.message)
     })
     const token = sign({ kind: 'account', id: row.id, email: row.email })
     res.json({
       token,
-      user: { id: row.id, name: row.name, email: row.email, role: row.role },
+      user: { id: row.id, name: row.name, email: row.email, role: row.role, phone: row.phone || '', twoFactor: false },
       business: { id: row.id, name: row.business_name },
       signedInAt: now(),
     })
@@ -695,20 +714,60 @@ app.post('/api/auth/signup', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body || {}
+    const email = normalizeEmail(req.body?.email)
+    const password = String(req.body?.password || '')
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
     const row = await findAccountByEmail(email)
-    if (!row || !bcrypt.compareSync(password || '', row.password_hash)) {
+    if (!row || !bcrypt.compareSync(password, row.password_hash)) {
       return res.status(401).json({ error: 'Email or password is incorrect.' })
     }
     if (row.status === 'Blocked' || row.status === 'Suspended') {
       return res.status(403).json({ error: `This account is ${row.status.toLowerCase()}.` })
     }
     await ensureWidgetToken(row)
+    if (row.two_factor) {
+      const code = String(crypto.randomInt(100000, 1000000))
+      const challenge = await dbInsert('email_otps', {
+        id: id('otp'),
+        account_id: row.id,
+        purpose: 'login',
+        email: row.email,
+        code_hash: bcrypt.hashSync(code, 8),
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        used: false,
+        created_at: now(),
+      })
+      await sendOtp({ to: row.email, name: row.name, code, reason: 'complete sign-in' })
+      return res.json({
+        requiresOtp: true,
+        challengeId: challenge.id,
+        emailHint: maskEmail(row.email),
+      })
+    }
     await dbUpdate('accounts', { id: row.id }, { last_login: now() })
     const token = sign({ kind: 'account', id: row.id, email: row.email })
+    dbInsert('account_sessions', {
+      id: id('ses'),
+      account_id: row.id,
+      token_hash: crypto.createHash('sha256').update(token).digest('hex'),
+      device: String(req.headers['user-agent'] || '').slice(0, 80) || 'Web browser',
+      location: 'Web',
+      ip: String(req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim(),
+      last_active: now(),
+      created_at: now(),
+    }).catch((error) => console.warn('session insert skipped:', error.message))
+    dbInsert('login_events', {
+      id: id('log'),
+      account_id: row.id,
+      device: 'Web',
+      location: 'Web',
+      ip: String(req.headers['x-forwarded-for'] || req.ip || 'unknown').split(',')[0].trim(),
+      result: 'Success',
+      created_at: now(),
+    }).catch((error) => console.warn('login event skipped:', error.message))
     res.json({
       token,
-      user: { id: row.id, name: row.name, email: row.email, role: row.role },
+      user: { id: row.id, name: row.name, email: row.email, role: row.role, phone: row.phone || '', twoFactor: Boolean(row.two_factor) },
       business: { id: row.id, name: row.business_name },
       signedInAt: now(),
     })
@@ -719,9 +778,11 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.post('/api/admin/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body || {}
+    const email = normalizeEmail(req.body?.email)
+    const password = String(req.body?.password || '')
+    if (!isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
     const row = await findAdminByEmail(email)
-    if (!row || !bcrypt.compareSync(password || '', row.password_hash)) {
+    if (!row || !bcrypt.compareSync(password, row.password_hash)) {
       return res.status(401).json({ error: 'Email or password is incorrect.' })
     }
     const token = sign({ kind: 'admin', id: row.id, email: row.email })
@@ -1215,6 +1276,9 @@ const defaultSettings = {
     },
   },
   web: { enabled: true },
+  notifications: registerMailAuth.defaultNotifications(),
+  team: [],
+  catalog: registerMailAuth.defaultCatalog(),
 }
 
 function mapBusiness(account) {
@@ -1257,6 +1321,9 @@ async function getSettings(accountId) {
     prompt_versions: Array.isArray(row.prompt_versions) ? row.prompt_versions : [],
     whatsapp: { ...defaultSettings.whatsapp, ...(row.whatsapp || {}) },
     web: { ...defaultSettings.web, ...(row.web || {}) },
+    notifications: { ...defaultSettings.notifications, ...(row.notifications || {}) },
+    team: Array.isArray(row.team) ? row.team : [],
+    catalog: { ...defaultSettings.catalog, ...(row.catalog || {}) },
   }
 }
 
@@ -1269,18 +1336,38 @@ async function saveSettings(accountId, patch) {
     prompt_versions: patch.prompt_versions || current.prompt_versions,
     whatsapp: { ...current.whatsapp, ...(patch.whatsapp || {}) },
     web: { ...current.web, ...(patch.web || {}) },
+    notifications: patch.notifications || current.notifications,
+    team: patch.team || current.team,
+    catalog: patch.catalog || current.catalog,
     updated_at: now(),
   }
   const existing = await dbSelect('account_settings', { account_id: accountId })
-  if (existing[0]) await dbUpdate('account_settings', { account_id: accountId }, next)
-  else await dbInsert('account_settings', next)
+  try {
+    if (existing[0]) await dbUpdate('account_settings', { account_id: accountId }, next)
+    else await dbInsert('account_settings', next)
+  } catch (error) {
+    const lean = { ...next }
+    delete lean.notifications
+    delete lean.team
+    delete lean.catalog
+    if (existing[0]) await dbUpdate('account_settings', { account_id: accountId }, lean)
+    else await dbInsert('account_settings', lean)
+    console.warn('Settings extras skipped:', error.message)
+  }
   return getSettings(accountId)
 }
 
 app.get('/api/me', auth('account'), async (req, res) => {
   try {
     res.json({
-      user: { id: req.account.id, name: req.account.name, email: req.account.email, role: req.account.role, phone: req.account.phone || '' },
+      user: {
+        id: req.account.id,
+        name: req.account.name,
+        email: req.account.email,
+        role: req.account.role,
+        phone: req.account.phone || '',
+        twoFactor: Boolean(req.account.two_factor),
+      },
       business: mapBusiness(req.account),
       hours: parseHours(req.account.hours),
     })
@@ -1333,12 +1420,26 @@ app.put('/api/me/hours', auth('account'), async (req, res) => {
 app.patch('/api/me/profile', auth('account'), async (req, res) => {
   try {
     const patch = {}
-    if (req.body.name !== undefined) patch.name = req.body.name
-    if (req.body.phone !== undefined) patch.phone = req.body.phone
+    if (req.body.name !== undefined) patch.name = cleanText(req.body.name, 80)
+    if (req.body.phone !== undefined) patch.phone = cleanText(req.body.phone, 40)
+    if (req.body.email !== undefined) {
+      const email = normalizeEmail(req.body.email)
+      if (!isValidEmail(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
+      const existing = await findAccountByEmail(email)
+      if (existing && existing.id !== req.actor.id) return res.status(409).json({ error: 'That email is already in use.' })
+      patch.email = email
+    }
     if (Object.keys(patch).length) await dbUpdate('accounts', { id: req.actor.id }, patch)
     const rows = await dbSelect('accounts', { id: req.actor.id })
     const account = rows[0] || { ...req.account, ...patch }
-    res.json({ id: account.id, name: account.name, email: account.email, role: account.role, phone: account.phone || '' })
+    res.json({
+      id: account.id,
+      name: account.name,
+      email: account.email,
+      role: account.role,
+      phone: account.phone || '',
+      twoFactor: Boolean(account.two_factor),
+    })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -1648,6 +1749,21 @@ async function buildKpis(accountId) {
     ],
   }
 }
+
+registerMailAuth({
+  app,
+  auth,
+  sign,
+  dbSelect,
+  dbInsert,
+  dbUpdate,
+  dbDelete,
+  findAccountByEmail,
+  id,
+  now,
+  getSettings,
+  saveSettings,
+})
 
 app.use((error, _req, res, _next) => {
   res.status(500).json({ error: error.message || 'Server error' })

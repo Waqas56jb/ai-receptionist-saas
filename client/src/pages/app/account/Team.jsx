@@ -13,6 +13,7 @@ import useAsync from '../../../hooks/useAsync'
 import { useToast } from '../../../context/ToastContext'
 import businessService from '../../../services/businessService'
 import { timeAgo } from '../../../lib/format'
+import { emailError } from '../../../lib/email'
 
 export default function Team() {
   const toast = useToast()
@@ -27,13 +28,23 @@ export default function Team() {
   const roles = (reference.data?.teamRoles || []).map((r) => r.value)
 
   const invite = async () => {
-    if (!draft.name.trim() || !draft.email.trim()) return
+    if (!draft.name.trim()) {
+      toast.error('Enter the teammate name.')
+      return
+    }
+    const mail = emailError(draft.email)
+    if (mail) {
+      toast.error(mail)
+      return
+    }
     setBusy(true)
     try {
       team.setData(await businessService.inviteMember(draft))
       setInviting(false)
       setDraft({ name: '', email: '', role: 'Agent / Staff' })
-      toast.success('Invitation sent.')
+      toast.success('Invitation emailed.')
+    } catch (error) {
+      toast.error(error.message || 'Could not send the invitation.')
     } finally {
       setBusy(false)
     }

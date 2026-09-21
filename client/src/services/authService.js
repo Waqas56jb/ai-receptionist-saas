@@ -1,4 +1,3 @@
-import { request, clone } from './mockClient'
 import { store } from './store'
 import { api } from './api'
 
@@ -12,6 +11,7 @@ function hydrateStore(session) {
       email: session.user.email || '',
       role: session.user.role || store.user.role,
       phone: session.user.phone || store.user.phone,
+      twoFactor: Boolean(session.user.twoFactor),
     }
   }
   if (session.business) {
@@ -24,10 +24,6 @@ function hydrateStore(session) {
   }
 }
 
-/**
- * Session is issued by the live API. Local storage keeps the JWT so the
- * portal can call authenticated endpoints.
- */
 const SESSION_KEY = 'devmark.portal.session'
 const ONBOARDING_KEY = 'devmark.portal.onboarded'
 
@@ -45,14 +41,19 @@ function writeSession(session) {
     if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session))
     else localStorage.removeItem(SESSION_KEY)
   } catch {
-    /* private browsing — the session simply does not persist */
+    /* private browsing */
   }
+}
+
+function persist(session) {
+  writeSession(session)
+  hydrateStore(session)
+  return session
 }
 
 export const authService = {
   getSession: () => readSession(),
 
-  // Existing businesses are onboarded; only a fresh signup opts out.
   isOnboarded: () => {
     try {
       return localStorage.getItem(ONBOARDING_KEY) !== 'false'
@@ -70,61 +71,52 @@ export const authService = {
   },
 
   login: async ({ email, password }) => {
-    try {
-      const session = await api('/auth/login', { method: 'POST', body: { email, password } })
-      writeSession(session)
-      hydrateStore(session)
-      return session
-    } catch (error) {
-      throw error
-    }
+    const session = await api('/auth/login', { method: 'POST', body: { email, password } })
+    if (session.requiresOtp) return session
+    return persist(session)
+  },
+
+  verifyLoginOtp: async ({ challengeId, code }) => {
+    const session = await api('/auth/login/otp', { method: 'POST', body: { challengeId, code } })
+    return persist(session)
   },
 
   signup: async (payload) => {
-    try {
-      const session = await api('/auth/signup', { method: 'POST', body: payload })
-      writeSession(session)
-      hydrateStore(session)
-      authService.setOnboarded(false)
-      return session
-    } catch (error) {
-      throw error
-    }
+    const session = await api('/auth/signup', { method: 'POST', body: payload })
+    persist(session)
+    authService.setOnboarded(false)
+    return session
   },
 
-  logout: () =>
-    request(() => {
-      writeSession(null)
-      return { ok: true }
-    }, { latency: [120, 240] }),
+  logout: async () => {
+    writeSession(null)
+    return { ok: true }
+  },
 
-  requestPasswordReset: ({ email }) => request({ ok: true, email }),
+  requestPasswordReset: ({ email }) => api('/auth/forgot-password', { method: 'POST', body: { email } }),
 
-  resetPassword: () => request({ ok: true }),
+  resetPassword: ({ password, token }) => api('/auth/reset-password', { method: 'POST', body: { password, token } }),
 
-  changePassword: () => request({ ok: true }),
+  changePassword: ({ current, next }) => api('/auth/change-password', { method: 'POST', body: { current, next } }),
 
-  getSessions: () => request(() => store.sessions),
+  getSessions: () => api('/auth/sessions'),
 
-  revokeSession: (id) =>
-    request(() => {
-      store.sessions = store.sessions.filter((s) => s.id !== id)
-      return store.sessions
-    }),
+  revokeSession: (id) => api(`/auth/sessions/${id}`, { method: 'DELETE' }),
 
-  revokeAllSessions: () =>
-    request(() => {
-      store.sessions = store.sessions.filter((s) => s.current)
-      return store.sessions
-    }),
+  revokeAllSessions: () => api('/auth/sessions/revoke-others', { method: 'POST' }),
 
-  getLoginHistory: () => request(() => store.loginHistory),
+  getLoginHistory: () => api('/auth/login-history'),
 
-  setTwoFactor: (enabled) =>
-    request(() => {
-      store.user.twoFactor = enabled
-      return clone(store.user)
-    }),
+  startTwoFactor: () => api('/auth/2fa/start', { method: 'POST' }),
+
+  confirmTwoFactor: ({ challengeId, code }) => api('/auth/2fa/confirm', { method: 'POST', body: { challengeId, code } }),
+
+  disableTwoFactor: ({ password }) => api('/auth/2fa/disable', { method: 'POST', body: { password } }),
+
+  setTwoFactor: async (enabled, extra = {}) => {
+    if (enabled) return authService.startTwoFactor()
+    return authService.disableTwoFactor(extra)
+  },
 }
 
 hydrateStore(readSession())

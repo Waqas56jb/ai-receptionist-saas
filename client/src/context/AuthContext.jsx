@@ -9,6 +9,15 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (credentials) => {
     const next = await authService.login(credentials)
+    if (next.requiresOtp) return next
+    authService.setOnboarded(true)
+    setSession(next)
+    setOnboardedState(true)
+    return next
+  }, [])
+
+  const verifyLoginOtp = useCallback(async (payload) => {
+    const next = await authService.verifyLoginOtp(payload)
     authService.setOnboarded(true)
     setSession(next)
     setOnboardedState(true)
@@ -48,13 +57,14 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(session),
       onboarded,
       login,
+      verifyLoginOtp,
       signup,
       logout,
       completeOnboarding,
       updateUser,
       updateBusiness,
     }),
-    [session, onboarded, login, signup, logout, completeOnboarding, updateUser, updateBusiness],
+    [session, onboarded, login, verifyLoginOtp, signup, logout, completeOnboarding, updateUser, updateBusiness],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

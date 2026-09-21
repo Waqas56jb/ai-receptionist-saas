@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CheckCircle2, Lock } from 'lucide-react'
 import AuthLayout from '../../components/layout/AuthLayout'
 import Button from '../../components/ui/Button'
@@ -9,8 +9,11 @@ import authService from '../../services/authService'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const token = params.get('token') || ''
   const [form, setForm] = useState({ password: '', confirmPassword: '' })
   const [errors, setErrors] = useState({})
+  const [formError, setFormError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
 
@@ -22,17 +25,21 @@ export default function ResetPassword() {
   const submit = async (e) => {
     e.preventDefault()
     const next = {}
+    if (!token) next.token = 'Open the reset link from your email.'
     if (!form.password) next.password = 'Choose a new password.'
     else if (form.password.length < 8) next.password = 'Use at least 8 characters.'
     else if (scorePassword(form.password) < 2) next.password = 'Add numbers or symbols to strengthen it.'
     if (form.confirmPassword !== form.password) next.confirmPassword = 'Passwords do not match.'
     setErrors(next)
+    setFormError(next.token || '')
     if (Object.keys(next).length) return
 
     setLoading(true)
     try {
-      await authService.resetPassword(form)
+      await authService.resetPassword({ password: form.password, token })
       setDone(true)
+    } catch (error) {
+      setFormError(error.message || 'This reset link is invalid or has expired.')
     } finally {
       setLoading(false)
     }
@@ -67,6 +74,12 @@ export default function ResetPassword() {
       }
     >
       <form onSubmit={submit} noValidate className="space-y-4">
+        {formError && <p className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-[0.82rem] text-rose-700">{formError}</p>}
+        {!token && (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[0.82rem] text-amber-900">
+            Open the reset link from your email. This page needs the token from that link.
+          </p>
+        )}
         <div>
           <Input label="New password" type="password" icon={Lock} autoComplete="new-password" value={form.password} onChange={set('password')} error={errors.password} required />
           <PasswordStrength value={form.password} className="mt-2" />

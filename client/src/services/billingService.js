@@ -1,9 +1,17 @@
 import { request } from './mockClient'
 import { store, insights } from './store'
+import { api } from './api'
 
-/** Stripe is not wired up in this milestone — these are UI-only operations. */
 export const billingService = {
-  getSubscription: () => request(() => store.subscription),
+  getSubscription: async () => {
+    try {
+      const sub = await api('/billing')
+      store.subscription = { ...store.subscription, ...sub }
+    } catch {
+      /* keep last known local plan if billing is unavailable */
+    }
+    return store.subscription
+  },
 
   getPlans: () => request(insights.plans),
 

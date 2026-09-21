@@ -1,6 +1,7 @@
 import { request, makeId } from './mockClient'
 import { store, biz } from './store'
 import { api } from './api'
+import authService from './authService'
 
 const collections = {
   services: 'services',
@@ -11,11 +12,20 @@ const collections = {
 
 export const businessService = {
   getBusiness: async () => {
-    const me = await api('/me')
-    store.business = { ...store.business, ...me.business }
-    if (Array.isArray(me.hours) && me.hours.length) store.businessHours = me.hours
-    if (me.user) store.user = { ...store.user, ...me.user }
-    return store.business
+    try {
+      const me = await api('/me')
+      store.business = { ...store.business, ...me.business }
+      if (Array.isArray(me.hours) && me.hours.length) store.businessHours = me.hours
+      if (me.user) store.user = { ...store.user, ...me.user }
+      return store.business
+    } catch (error) {
+      const session = authService.getSession()
+      if (session?.business) {
+        store.business = { ...store.business, ...session.business }
+        return store.business
+      }
+      throw error
+    }
   },
 
   updateBusiness: async (patch) => {
@@ -36,9 +46,18 @@ export const businessService = {
   },
 
   getProfile: async () => {
-    const me = await api('/me')
-    store.user = { ...store.user, ...me.user }
-    return store.user
+    try {
+      const me = await api('/me')
+      store.user = { ...store.user, ...me.user }
+      return store.user
+    } catch (error) {
+      const session = authService.getSession()
+      if (session?.user) {
+        store.user = { ...store.user, ...session.user }
+        return store.user
+      }
+      throw error
+    }
   },
 
   updateProfile: async (patch) => {
@@ -47,49 +66,65 @@ export const businessService = {
     return store.user
   },
 
-  getTeam: () => request(() => store.team),
+  getTeam: async () => {
+    try {
+      store.team = await api('/team')
+    } catch {
+      store.team = store.team || []
+    }
+    return store.team
+  },
 
-  inviteMember: (member) =>
-    request(() => {
-      store.team = [...store.team, { id: makeId('usr'), status: 'Invited', lastActive: null, ...member }]
-      return store.team
-    }),
+  inviteMember: async (member) => {
+    store.team = await api('/team', { method: 'POST', body: member })
+    return store.team
+  },
 
-  updateMember: (id, patch) =>
-    request(() => {
-      store.team = store.team.map((m) => (m.id === id ? { ...m, ...patch } : m))
-      return store.team
-    }),
+  updateMember: async (id, patch) => {
+    store.team = await api(`/team/${id}`, { method: 'PATCH', body: patch })
+    return store.team
+  },
 
-  removeMember: (id) =>
-    request(() => {
-      store.team = store.team.filter((m) => m.id !== id)
-      return store.team
-    }),
+  removeMember: async (id) => {
+    store.team = await api(`/team/${id}`, { method: 'DELETE' })
+    return store.team
+  },
 
-  /** Generic CRUD used by Services / Products / Policies / Booking rules. */
-  list: (collection) => request(() => store[collections[collection]]),
+  list: async (collection) => {
+    const key = collections[collection]
+    store[key] = await api(`/catalog/${key}`)
+    return store[key]
+  },
 
-  create: (collection, item) =>
-    request(() => {
-      const key = collections[collection]
-      store[key] = [...store[key], { id: makeId(collection.slice(0, 3)), active: true, ...item }]
-      return store[key]
-    }),
+  create: async (collection, item) => {
+    const key = collections[collection]
+    const current = await businessService.list(collection)
+    store[key] = await api(`/catalog/${key}`, {
+      method: 'PUT',
+      body: [...current, { id: makeId(collection.slice(0, 3)), active: true, ...item }],
+    })
+    return store[key]
+  },
 
-  update: (collection, id, patch) =>
-    request(() => {
-      const key = collections[collection]
-      store[key] = store[key].map((row) => (row.id === id ? { ...row, ...patch } : row))
-      return store[key]
-    }),
+  update: async (collection, id, patch) => {
+    const key = collections[collection]
+    const current = await businessService.list(collection)
+    store[key] = await api(`/catalog/${key}`, {
+      method: 'PUT',
+      body: current.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+    })
+    return store[key]
+  },
 
-  remove: (collection, id) =>
-    request(() => {
-      const key = collections[collection]
-      store[key] = store[key].filter((row) => row.id !== id)
-      return store[key]
-    }),
+  remove: async (collection, id) => {
+    const key = collections[collection]
+    const current = await businessService.list(collection)
+    store[key] = await api(`/catalog/${key}`, {
+      method: 'PUT',
+      body: current.filter((row) => row.id !== id),
+    })
+    return store[key]
+  },
 
   getReferenceData: () =>
     request({
