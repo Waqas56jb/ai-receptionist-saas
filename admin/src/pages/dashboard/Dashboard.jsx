@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom'
 import {
-  Bot, Building2, CreditCard, MessageSquare, MessagesSquare,
-  TrendingUp, Users, Globe,
+  Activity,
+  Bot,
+  Building2,
+  CreditCard,
+  Globe,
+  MessageSquare,
+  MessagesSquare,
+  TrendingUp,
+  Users,
 } from 'lucide-react'
 import { cn, formatCompactCurrency, formatCurrency, formatNumber, formatPercent, timeAgo } from '../../lib/utils'
 import PageHeader from '../../components/layout/PageHeader'
@@ -192,7 +199,7 @@ export default function Dashboard() {
             <ul className="divide-y divide-slate-100">
               {(activity.data || []).map((a) => {
                 const Icon = activityIcon[a.type] || Activity
-                const danger = a.type.includes('suspended') || a.type.includes('cancelled')
+                const danger = String(a.type || '').includes('suspended') || String(a.type || '').includes('cancelled')
                 return (
                   <li key={a.id} className="flex items-start gap-3 px-5 py-3">
                     <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-lg', danger ? 'bg-rose-50 text-rose-600' : 'bg-primary-500/15 text-primary-400')}>
