@@ -373,19 +373,109 @@ async function saveMessage(accountId, conversationId, direction, body, extra = {
   })
 }
 
+function publicApiUrl() {
+  return String(process.env.PUBLIC_API_URL || process.env.API_PUBLIC_URL || 'https://ai-receptionist-saas-server.vercel.app').replace(/\/$/, '')
+}
+
+function whatsappVerifyToken() {
+  return process.env.WHATSAPP_VERIFY_TOKEN || 'devmark-whatsapp'
+}
+
+function maskSecret(value) {
+  const raw = String(value || '')
+  if (raw.length < 8) return raw ? '••••' : ''
+  return `${raw.slice(0, 4)}••••${raw.slice(-4)}`
+}
+
 async function openaiClient() {
   if (!process.env.OPENAI_API_KEY) return null
   const OpenAI = require('openai')
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 }
 
+function formatCatalogLines(label, rows, line) {
+  if (!Array.isArray(rows) || !rows.length) return ''
+  return `${label}:\n${rows.map(line).filter(Boolean).join('\n')}`
+}
+
 async function knowledgeContext(accountId) {
-  const items = (await dbSelect('knowledge_items', { account_id: accountId })).filter((item) => item.status === 'Active')
-  if (!items.length) return 'No business knowledge has been added yet.'
-  return items
-    .map((item) => `# ${item.title}\n${item.body || ''}`)
-    .join('\n\n')
-    .slice(0, 20000)
+  const [itemRows, settings, accounts] = await Promise.all([
+    dbSelect('knowledge_items', { account_id: accountId }).catch(() => []),
+    getSettings(accountId).catch(() => defaultSettings),
+    dbSelect('accounts', { id: accountId }).catch(() => []),
+  ])
+  const account = accounts[0] || {}
+  const catalog = settings.catalog || {}
+  const prompts = settings.prompts || {}
+  const items = itemRows.filter((item) => String(item.status || 'Active') !== 'Disabled' && String(item.status || '') !== 'Draft')
+  const titles = new Set(items.map((item) => item.title))
+  const parts = []
+
+  parts.push(
+    [
+      `Business name: ${account.business_name || account.name || 'this business'}`,
+      account.industry ? `Sector: ${account.industry}` : '',
+      account.description ? `About: ${account.description}` : '',
+      account.phone ? `Phone: ${account.phone}` : '',
+      account.email ? `Email: ${account.email}` : '',
+      account.website ? `Website: ${account.website}` : '',
+      account.address ? `Address: ${account.address}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
+  )
+
+  const hours = parseHours(account.hours)
+  if (hours.length) {
+    parts.push(
+      `Opening hours:\n${hours
+        .map((row) => `${row.day || row.label || ''}: ${row.closed ? 'Closed' : `${row.open || ''}–${row.close || ''}`}`)
+        .join('\n')}`,
+    )
+  }
+
+  const services = formatCatalogLines('Services and prices', catalog.services, (row) =>
+    row?.name ? `- ${row.name}${row.price ? ` (${row.price}${row.unit ? ` ${row.unit}` : ''})` : ''}${row.description ? `: ${row.description}` : ''}` : '',
+  )
+  const products = formatCatalogLines('Products', catalog.products, (row) =>
+    row?.name ? `- ${row.name}${row.price ? ` (${row.price})` : ''}${row.description ? `: ${row.description}` : ''}` : '',
+  )
+  const policies = formatCatalogLines('Policies', catalog.policies, (row) =>
+    row?.title || row?.name ? `- ${row.title || row.name}: ${row.body || row.description || ''}` : '',
+  )
+  const rules = formatCatalogLines('Booking rules', catalog.bookingRules, (row) =>
+    row?.title || row?.name ? `- ${row.title || row.name}: ${row.body || row.description || ''}` : '',
+  )
+  ;[services, products, policies, rules].forEach((block) => block && parts.push(block))
+
+  if (prompts.system || prompts.businessRules || prompts.restrictions) {
+    parts.push(
+      [
+        prompts.system ? `Owner instructions: ${prompts.system}` : '',
+        prompts.businessRules ? `Business rules: ${prompts.businessRules}` : '',
+        prompts.restrictions ? `Restrictions: ${prompts.restrictions}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    )
+  }
+
+  if (account.industry) {
+    const packs = sectorKnowledge.packFor(account.industry)
+    for (const pack of packs) {
+      for (const item of pack.items) {
+        if (titles.has(item.title)) continue
+        parts.push(`# Sector pack — ${item.title}\n${item.body || ''}`)
+      }
+    }
+  }
+
+  if (items.length) {
+    parts.push(items.map((item) => `# ${item.title}\n${item.body || ''}`).join('\n\n'))
+  }
+
+  const text = parts.filter(Boolean).join('\n\n').trim()
+  return text ? text.slice(0, 60000) : 'No business knowledge has been added yet.'
 }
 
 function matchKnowledge(items, userText) {
@@ -402,8 +492,26 @@ function matchKnowledge(items, userText) {
     .sort((a, b) => b.score - a.score)[0]?.item
 }
 
+function receptionistPrompt(accountName, context) {
+  return `You are the AI receptionist for ${accountName || 'this business'} on WhatsApp, website chat and voice.
+
+PRIVATE BUSINESS KNOWLEDGE (sector packs, uploaded files, services, policies and hours):
+${context}
+
+Rules:
+1. If the knowledge answers the question, use it. Never contradict it.
+2. If the question is not covered by the knowledge, answer it with ChatGPT general knowledge. Stay in a helpful receptionist voice.
+3. Never invent this specific business's prices, hours, staff names, bookings, account numbers or private policies. If those are missing from knowledge, say you will confirm with the team, then still help with any general part of the question.
+4. Keep replies short and suitable for WhatsApp.
+5. Reply in the customer's language (English, French, Arabic or Somali).`
+}
+
 async function replyFromKnowledge(accountId, userText) {
-  const context = await knowledgeContext(accountId)
+  const [context, accounts] = await Promise.all([
+    knowledgeContext(accountId),
+    dbSelect('accounts', { id: accountId }).catch(() => []),
+  ])
+  const name = accounts[0]?.business_name || accounts[0]?.name || 'this business'
   const client = await openaiClient()
   if (!client) {
     const items = await dbSelect('knowledge_items', { account_id: accountId })
@@ -411,13 +519,10 @@ async function replyFromKnowledge(accountId, userText) {
     return hit?.body || 'Thank you for your message. A team member will follow up shortly.'
   }
   const completion = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
-    temperature: 0.4,
+    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    temperature: 0.5,
     messages: [
-      {
-        role: 'system',
-        content: `You are this business's AI receptionist on WhatsApp and the website chat widget. Answer only from the knowledge below. If it is missing, say you will pass it to the team. Keep replies short.\n\n${context}`,
-      },
+      { role: 'system', content: receptionistPrompt(name, context) },
       { role: 'user', content: userText },
     ],
   })
@@ -471,7 +576,12 @@ async function extractUploadText(file) {
   const lower = name.toLowerCase()
   if (mime === 'application/pdf' || lower.endsWith('.pdf')) {
     try {
-      const pdf = require('pdf-parse')
+      let pdf
+      try {
+        pdf = require('pdf-parse/lib/pdf-parse.js')
+      } catch {
+        pdf = require('pdf-parse')
+      }
       const parsed = await pdf(file.buffer)
       return String(parsed.text || '').trim()
     } catch {
@@ -548,6 +658,97 @@ async function getConnection(accountId) {
   return memory.connections[accountId] || { account_id: accountId, status: 'disconnected' }
 }
 
+function cloudFromSettings(whatsapp = {}) {
+  return {
+    phoneNumberId: String(whatsapp.cloudPhoneId || '').trim(),
+    token: String(whatsapp.cloudToken || '').trim(),
+    displayPhone: String(whatsapp.displayPhone || whatsapp.businessNumber || '').trim(),
+    connected: Boolean(whatsapp.cloudConnected && whatsapp.cloudPhoneId && whatsapp.cloudToken),
+  }
+}
+
+async function getWhatsAppCloud(accountId) {
+  const settings = await getSettings(accountId).catch(() => defaultSettings)
+  return cloudFromSettings(settings.whatsapp)
+}
+
+async function findAccountByCloudPhone(phoneNumberId) {
+  const idValue = String(phoneNumberId || '').trim()
+  if (!idValue) return null
+  if (supabase) {
+    const { data, error } = await supabase.from('account_settings').select('account_id, whatsapp')
+    if (error) throw error
+    const row = (data || []).find((item) => String(item.whatsapp?.cloudPhoneId || '').trim() === idValue)
+    if (!row) return null
+    const accounts = await dbSelect('accounts', { id: row.account_id })
+    return { account: accounts[0], cloud: cloudFromSettings(row.whatsapp) }
+  }
+  return null
+}
+
+async function sendWhatsAppCloud(cloud, to, payload) {
+  const res = await fetch(`https://graph.facebook.com/v21.0/${cloud.phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${cloud.token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ messaging_product: 'whatsapp', to, ...payload }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error?.message || 'WhatsApp Cloud API send failed.')
+  return data
+}
+
+async function downloadWhatsAppCloudMedia(cloud, mediaId) {
+  const metaRes = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
+    headers: { Authorization: `Bearer ${cloud.token}` },
+  })
+  const meta = await metaRes.json().catch(() => ({}))
+  if (!metaRes.ok || !meta.url) return null
+  const fileRes = await fetch(meta.url, { headers: { Authorization: `Bearer ${cloud.token}` } })
+  if (!fileRes.ok) return null
+  return Buffer.from(await fileRes.arrayBuffer())
+}
+
+async function handleCloudIncoming(account, cloud, message) {
+  if (!message || message.type === 'status') return
+  const from = message.from
+  if (!from) return
+
+  let inbound = message.text?.body || message.image?.caption || message.button?.text || ''
+  let type = 'text'
+  if (message.type === 'audio' && message.audio?.id) {
+    type = 'voice'
+    try {
+      const buffer = await downloadWhatsAppCloudMedia(cloud, message.audio.id)
+      inbound = buffer ? (await transcribeAudio(buffer, 'voice.ogg')) || '[voice note]' : '[voice note]'
+    } catch {
+      inbound = '[voice note]'
+    }
+  }
+  if (!inbound) return
+
+  const name = message.profile?.name || from
+  const conversation = await upsertConversation(account.id, {
+    visitorKey: from,
+    name,
+    channel: 'whatsapp',
+    lastMessage: inbound,
+  })
+  await saveMessage(account.id, conversation.id, 'in', inbound, { type, channel: 'whatsapp', visitorKey: from })
+  const reply = await replyFromKnowledge(account.id, inbound)
+  await saveMessage(account.id, conversation.id, 'out', reply, {
+    type: type === 'voice' ? 'voice' : 'text',
+    handled_as: 'ai',
+    channel: 'whatsapp',
+    visitorKey: from,
+  })
+  await dbUpdate('conversations', { id: conversation.id, account_id: account.id }, { last_message: reply, last_at: now() })
+  await upsertConnection(account.id, { last_seen: now(), status: 'connected' })
+  await sendWhatsAppCloud(cloud, from, { type: 'text', text: { body: reply } })
+}
+
 function sessionDir(accountId) {
   return path.join(SESSION_ROOT, accountId)
 }
@@ -612,7 +813,9 @@ async function handleIncoming(accountId, sock, msg) {
 
 async function startWhatsApp(accountId, { forceQr = false } = {}) {
   if (ON_VERCEL) {
-    throw new Error('WhatsApp QR needs a long-running Node host. Auth, widget, knowledge and email work on this Vercel API.')
+    const err = new Error('CLOUD_REQUIRED')
+    err.code = 'CLOUD_REQUIRED'
+    throw err
   }
   let baileys
   try {
@@ -947,11 +1150,22 @@ app.get('/api/whatsapp/status', auth('account'), async (req, res) => {
   try {
     const connection = await getConnection(req.actor.id)
     const runtime = waRuntime.get(req.actor.id)
+    const cloud = await getWhatsAppCloud(req.actor.id)
+    const connected =
+      cloud.connected || connection.status === 'connected' || runtime?.last?.status === 'connected'
     res.json({
-      connected: connection.status === 'connected' || runtime?.last?.status === 'connected',
-      status: runtime?.last?.status || connection.status || 'disconnected',
-      phone: runtime?.last?.phone || connection.phone || null,
+      connected,
+      status: cloud.connected
+        ? 'connected'
+        : runtime?.last?.status || connection.status || 'disconnected',
+      phone: cloud.displayPhone || runtime?.last?.phone || connection.phone || null,
       qr: runtime?.last?.qr || null,
+      host: ON_VERCEL ? 'vercel' : 'node',
+      mode: cloud.connected ? 'cloud' : ON_VERCEL ? 'cloud' : 'qr',
+      phoneNumberId: cloud.phoneNumberId || null,
+      tokenPreview: maskSecret(cloud.token),
+      webhookUrl: `${publicApiUrl()}/api/whatsapp/webhook`,
+      verifyTokenSet: Boolean(process.env.WHATSAPP_VERIFY_TOKEN),
     })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -960,26 +1174,135 @@ app.get('/api/whatsapp/status', auth('account'), async (req, res) => {
 
 app.post('/api/whatsapp/qr', auth('account'), async (req, res) => {
   try {
+    const cloud = await getWhatsAppCloud(req.actor.id)
+    if (cloud.connected) {
+      return res.json({ connected: true, status: 'connected', phone: cloud.displayPhone, qr: null, mode: 'cloud' })
+    }
     const connection = await getConnection(req.actor.id)
     if (connection.status === 'connected' && waRuntime.get(req.actor.id)?.sock) {
-      return res.json({ connected: true, status: 'connected', phone: connection.phone, qr: null })
+      return res.json({ connected: true, status: 'connected', phone: connection.phone, qr: null, mode: 'qr' })
+    }
+    if (ON_VERCEL) {
+      return res.json({
+        connected: false,
+        status: 'cloud_required',
+        host: 'vercel',
+        mode: 'cloud',
+        qr: null,
+        webhookUrl: `${publicApiUrl()}/api/whatsapp/webhook`,
+      })
     }
     await startWhatsApp(req.actor.id)
-    res.json({ status: 'qr', message: 'Scan the WhatsApp QR code. Closing this page does not disconnect the number.' })
+    res.json({ status: 'qr', mode: 'qr', message: 'Scan the WhatsApp QR code. Closing this page does not disconnect the number.' })
+  } catch (error) {
+    if (error.code === 'CLOUD_REQUIRED') {
+      return res.json({
+        connected: false,
+        status: 'cloud_required',
+        host: 'vercel',
+        mode: 'cloud',
+        qr: null,
+        webhookUrl: `${publicApiUrl()}/api/whatsapp/webhook`,
+      })
+    }
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/whatsapp/cloud', auth('account'), async (req, res) => {
+  try {
+    const phoneNumberId = cleanText(req.body?.phoneNumberId, 80)
+    const accessToken = String(req.body?.accessToken || '').trim()
+    const displayPhone = cleanText(req.body?.displayPhone || req.body?.phone, 40)
+    if (!phoneNumberId || !accessToken) {
+      return res.status(400).json({ error: 'WhatsApp Phone Number ID and access token are required.' })
+    }
+    const check = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    const meta = await check.json().catch(() => ({}))
+    if (!check.ok) {
+      return res.status(400).json({ error: meta.error?.message || 'WhatsApp Cloud API rejected those credentials.' })
+    }
+    await saveSettings(req.actor.id, {
+      whatsapp: {
+        cloudPhoneId: phoneNumberId,
+        cloudToken: accessToken,
+        cloudConnected: true,
+        displayPhone: displayPhone || meta.display_phone_number || '',
+        businessNumber: displayPhone || meta.display_phone_number || '',
+      },
+    })
+    await upsertConnection(req.actor.id, {
+      status: 'connected',
+      phone: displayPhone || meta.display_phone_number || phoneNumberId,
+      connected_at: now(),
+      last_seen: now(),
+    })
+    res.json({
+      connected: true,
+      status: 'connected',
+      mode: 'cloud',
+      phone: displayPhone || meta.display_phone_number || phoneNumberId,
+      phoneNumberId,
+      webhookUrl: `${publicApiUrl()}/api/whatsapp/webhook`,
+    })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
 })
 
+app.get('/api/whatsapp/webhook', (req, res) => {
+  const mode = req.query['hub.mode']
+  const token = req.query['hub.verify_token']
+  const challenge = req.query['hub.challenge']
+  if (mode === 'subscribe' && token === whatsappVerifyToken()) {
+    return res.status(200).send(challenge)
+  }
+  return res.status(403).send('Forbidden')
+})
+
+app.post('/api/whatsapp/webhook', async (req, res) => {
+  try {
+    const entries = req.body?.entry || []
+    for (const entry of entries) {
+      for (const change of entry.changes || []) {
+        const value = change.value || {}
+        const phoneNumberId = value.metadata?.phone_number_id
+        const messages = value.messages || []
+        if (!phoneNumberId || !messages.length) continue
+        const found = await findAccountByCloudPhone(phoneNumberId)
+        if (!found?.account || !found.cloud?.token) continue
+        const contactName = value.contacts?.[0]?.profile?.name
+        for (const message of messages) {
+          try {
+            if (contactName && !message.profile) message.profile = { name: contactName }
+            await handleCloudIncoming(found.account, found.cloud, message)
+          } catch (error) {
+            console.error('WhatsApp Cloud inbound failed', found.account.id, error.message)
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('WhatsApp webhook failed', error.message)
+  }
+  res.status(200).json({ ok: true })
+})
+
 app.get('/api/whatsapp/events', auth('account'), async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream')
-  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Cache-Control', 'no-store')
   res.setHeader('Connection', 'keep-alive')
   res.flushHeaders?.()
   const runtime = waRuntime.get(req.actor.id) || { clients: new Set(), last: { status: 'disconnected' } }
   runtime.clients.add(res)
   waRuntime.set(req.actor.id, runtime)
-  res.write(`data: ${JSON.stringify(runtime.last)}\n\n`)
+  const cloud = await getWhatsAppCloud(req.actor.id).catch(() => ({ connected: false }))
+  const snapshot = cloud.connected
+    ? { status: 'connected', phone: cloud.displayPhone, qr: null, mode: 'cloud' }
+    : runtime.last
+  res.write(`data: ${JSON.stringify(snapshot)}\n\n`)
   req.on('close', () => runtime.clients.delete(res))
 })
 
@@ -999,6 +1322,9 @@ app.post('/api/whatsapp/disconnect', auth('account'), async (req, res) => {
     }
     waRuntime.delete(req.actor.id)
     fs.rmSync(sessionDir(req.actor.id), { recursive: true, force: true })
+    await saveSettings(req.actor.id, {
+      whatsapp: { cloudPhoneId: '', cloudToken: '', cloudConnected: false, displayPhone: '' },
+    })
     await upsertConnection(req.actor.id, { status: 'disconnected', phone: null, push_name: null })
     res.json({ connected: false, status: 'disconnected' })
   } catch (error) {
@@ -1065,19 +1391,24 @@ app.post('/api/knowledge/upload', auth('account'), upload.array('files', 8), asy
       const body = await extractUploadText(file)
       const kind = uploadKind(file)
       const extracted = String(body || '').trim()
-      await dbInsert('knowledge_items', {
+      const row = {
         id: id('kb'),
         account_id: req.actor.id,
         title: sector ? `${sector} — ${file.originalname}` : file.originalname,
         category,
-        body: extracted || `Uploaded ${file.originalname}. Add a short summary if the file had no readable text.`,
+        body:
+          extracted ||
+          `Uploaded ${file.originalname}. The file had no readable text. Add a short summary so the AI can use it.`,
         source: kind,
         status: 'Active',
-        file_name: file.originalname,
-        mime: file.mimetype,
         created_at: now(),
         updated_at: now(),
-      })
+      }
+      try {
+        await dbInsert('knowledge_items', { ...row, file_name: file.originalname, mime: file.mimetype })
+      } catch {
+        await dbInsert('knowledge_items', row)
+      }
     }
     res.json((await dbSelect('knowledge_items', { account_id: req.actor.id })).map(mapKnowledge))
   } catch (error) {
@@ -1304,7 +1635,7 @@ app.post('/api/widget/:token/realtime', async (req, res) => {
     }
     const context = await knowledgeContext(account.id)
     const name = account.business_name || account.name
-    const instructions = `You are the live voice AI receptionist for ${name} on their website. Speak naturally and keep replies short. Answer only from the knowledge below. If it is missing, say you will pass it to the team.\n\n${context}`
+    const instructions = receptionistPrompt(name, context)
     const model = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime'
     const headers = {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,

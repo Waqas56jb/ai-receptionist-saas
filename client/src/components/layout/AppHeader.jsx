@@ -23,6 +23,7 @@ import notificationService from '../../services/notificationService'
 import Avatar from '../ui/Avatar'
 import Logo from '../ui/Logo'
 import ThemeToggle from '../ui/ThemeToggle'
+import LanguageToggle from '../ui/LanguageToggle'
 import Dropdown, { DropdownDivider, DropdownItem, DropdownLabel } from '../ui/Dropdown'
 
 function GlobalSearch({ id = 'global-search' }) {
@@ -213,6 +214,7 @@ export default function AppHeader({ onOpenSidebar }) {
         </Link>
 
         <div className="flex shrink-0 items-center gap-2">
+          <LanguageToggle compact />
           <ThemeToggle className="hidden sm:inline-flex" />
           <Link
             to="/app/help"

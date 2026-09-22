@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowLeft, FileText } from 'lucide-react'
 import Logo from '../components/ui/Logo'
+import LanguageToggle from '../components/ui/LanguageToggle'
 import { brand, year } from '../config/brand'
 import { SiteThemeProvider } from '../context/SiteThemeContext'
 
@@ -13,10 +14,13 @@ export default function Legal({ title, summary }) {
             <Link to="/" className="rounded-lg" aria-label={`${brand.name} home`}>
               <Logo size="md" />
             </Link>
-            <Link to="/" className="btn-ghost-surface !px-4 !py-2 text-sm">
-              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-              Back to website
-            </Link>
+            <div className="flex items-center gap-2">
+              <LanguageToggle compact />
+              <Link to="/" className="btn-ghost-surface !px-4 !py-2 text-sm">
+                <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                Back to website
+              </Link>
+            </div>
           </div>
         </header>
 

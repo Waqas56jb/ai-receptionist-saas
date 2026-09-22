@@ -63,7 +63,7 @@ export default function WhatsAppAgent() {
     <>
       <PageHeader
         title="WhatsApp Agent"
-        description="Scan a QR code to go live. Each account keeps its own chats, knowledge and history."
+        description="Connect WhatsApp so the AI can answer from your knowledge base, uploaded files and ChatGPT."
         badge={
           channel && (
             <Badge tone={channel.connected ? 'success' : 'neutral'} dot>
@@ -164,9 +164,9 @@ export default function WhatsAppAgent() {
             <Card>
               <CardHeader title="Voice notes" />
               <CardBody className="text-[0.83rem] leading-relaxed text-muted">
-                Customers can send a WhatsApp voice note. The server transcribes it with OpenAI Whisper, answers from
-                this account&apos;s knowledge, and sends the reply back as an OpenAI voice message. Text messages stay
-                as text.
+                Customers can send a WhatsApp voice note. It is transcribed with OpenAI Whisper, answered from this
+                account&apos;s knowledge (then ChatGPT if the answer is not in the knowledge), and replied as text on
+                Cloud API or as a voice note on a live QR session.
               </CardBody>
             </Card>
           </div>

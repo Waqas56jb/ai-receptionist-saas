@@ -176,11 +176,11 @@ export default function Conversations() {
                     <Avatar name={c.customer} size="sm" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
-                        <span className="truncate text-[0.85rem] font-semibold text-ink-900">{c.customer}</span>
+                        <span className="truncate text-[0.85rem] font-semibold text-ink-900" data-no-i18n>{c.customer}</span>
                         <Icon className="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true" />
                         {c.unread && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-ember-500" aria-label="Unread" />}
                       </span>
-                      <span className="mt-0.5 block truncate text-[0.78rem] text-slate-500">{c.preview}</span>
+                      <span className="mt-0.5 block truncate text-[0.78rem] text-slate-500" data-no-i18n>{c.preview}</span>
                       <span className="mt-1.5 flex items-center gap-2">
                         <Badge tone={c.status === 'escalated' ? 'warning' : c.status === 'resolved' ? 'neutral' : 'brand'} size="sm">
                           {c.status}
@@ -272,6 +272,7 @@ export default function Conversations() {
                       )}
                       <div className={cn('max-w-[80%]', outgoing && 'text-right')}>
                         <p
+                          data-no-i18n
                           className={cn(
                             'inline-block text-left text-[0.85rem] leading-relaxed',
                             m.from === 'customer' && 'rounded-2xl rounded-tl-sm bg-slate-100 px-3.5 py-2.5 text-slate-700',
@@ -309,7 +310,7 @@ export default function Conversations() {
                   </p>
                   <ul className="mt-2 space-y-1.5">
                     {selected.notes.map((n) => (
-                      <li key={n.id} className="text-[0.8rem] text-amber-900">
+                      <li key={n.id} className="text-[0.8rem] text-amber-900" data-no-i18n>
                         {n.text}
                         <span className="ml-2 text-[0.68rem] text-amber-700/70">
                           {n.author} · {timeAgo(n.at)}

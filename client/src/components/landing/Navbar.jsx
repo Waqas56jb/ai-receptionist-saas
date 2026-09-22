@@ -6,6 +6,7 @@ import Logo from '../ui/Logo'
 import { megaNav } from '../../data/landing'
 import { brand } from '../../config/brand'
 import { useSiteTheme } from '../../context/SiteThemeContext'
+import LanguageToggle from '../ui/LanguageToggle'
 
 const menus = [
   { id: 'product', label: 'Product' },
@@ -171,6 +172,7 @@ export default function Navbar() {
           </nav>
 
           <div className="ms-auto flex items-center gap-2">
+            <LanguageToggle compact />
             <button
               type="button"
               onClick={toggle}
@@ -256,7 +258,9 @@ export default function Navbar() {
                     </ul>
                   </div>
                 ))}
-                <div className="flex gap-2 border-t border-line pt-4">
+                <div className="flex items-center justify-between gap-2 border-t border-line pt-4">
+                  <LanguageToggle compact />
+                  <div className="flex flex-1 gap-2">
                   <Link
                     to="/login"
                     onClick={closeAll}
@@ -267,6 +271,7 @@ export default function Navbar() {
                   <Link to="/signup" onClick={closeAll} className="btn-mint flex-1 !py-2.5">
                     Start for Free
                   </Link>
+                  </div>
                 </div>
               </div>
             </motion.div>

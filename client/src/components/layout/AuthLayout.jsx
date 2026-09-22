@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Check, Sparkles } from 'lucide-react'
 import Logo from '../ui/Logo'
 import ThemeToggle from '../ui/ThemeToggle'
+import LanguageToggle from '../ui/LanguageToggle'
 
 const highlights = [
   'Answer every call and message 24/7',
@@ -25,6 +26,7 @@ export default function AuthLayout({ title, description, children, footer, wide 
             <Logo size="md" />
           </Link>
           <div className="flex items-center gap-2">
+            <LanguageToggle compact />
             <ThemeToggle />
             <Link to="/" className="text-[0.8rem] font-semibold text-muted transition-colors hover:text-ink">
               Back to website

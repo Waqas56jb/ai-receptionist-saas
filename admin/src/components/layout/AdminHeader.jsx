@@ -10,6 +10,7 @@ import { notificationService, analyticsService } from '../../services/platformSe
 import Logo from '../ui/Logo'
 import Badge from '../ui/Badge'
 import ThemeToggle from '../ui/ThemeToggle'
+import LanguageToggle from '../ui/LanguageToggle'
 import { Avatar, Dropdown, DropdownDivider, DropdownItem, DropdownLabel } from '../ui/Misc'
 
 function GlobalSearch({ id = 'admin-search' }) {
@@ -252,6 +253,7 @@ export default function AdminHeader({ onOpenSidebar }) {
         </Link>
 
         <div className="flex shrink-0 items-center gap-2">
+          <LanguageToggle compact />
           <ThemeToggle className="hidden sm:inline-flex" />
           <SystemStatus />
 

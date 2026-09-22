@@ -130,8 +130,8 @@ export default function KnowledgeBase() {
       primary: true,
       render: (row) => (
         <div className="min-w-0">
-          <p className="truncate font-semibold text-ink-900">{row.title}</p>
-          <p className="mt-0.5 line-clamp-1 text-[0.78rem] text-slate-500 md:max-w-md">{row.body}</p>
+          <p className="truncate font-semibold text-ink-900" data-no-i18n>{row.title}</p>
+          <p className="mt-0.5 line-clamp-1 text-[0.78rem] text-slate-500 md:max-w-md" data-no-i18n>{row.body}</p>
         </div>
       ),
     },
@@ -194,7 +194,7 @@ export default function KnowledgeBase() {
     <>
       <PageHeader
         title="Knowledge Base"
-        description="Upload PDF, Word and other documents, then add sector facts your AI receptionist can use."
+        description="Upload PDF, Word and other documents, add sector packs, and the AI will read them. Questions outside this knowledge are answered by ChatGPT."
         actions={
           <Button as="button" size="sm" onClick={openCreate}>
             <Plus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -409,7 +409,7 @@ export default function KnowledgeBase() {
                 {viewing.source} · updated {formatDate(viewing.updatedAt)}
               </span>
             </div>
-            <p className="whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-[0.88rem] leading-relaxed text-slate-700">
+            <p className="whitespace-pre-line rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-[0.88rem] leading-relaxed text-slate-700" data-no-i18n>
               {viewing.body}
             </p>
           </div>

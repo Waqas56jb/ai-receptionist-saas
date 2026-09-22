@@ -2,14 +2,24 @@ export function cn(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
+function currentLocale() {
+  try {
+    const lang = document.documentElement.getAttribute('data-lang') || document.documentElement.lang || 'en'
+    const map = { en: 'en-GB', fr: 'fr-FR', ar: 'ar', so: 'so-SO' }
+    return map[lang] || 'en-GB'
+  } catch {
+    return 'en-GB'
+  }
+}
+
 export function formatNumber(value) {
   if (value === null || value === undefined) return '—'
-  return new Intl.NumberFormat('en-US').format(value)
+  return new Intl.NumberFormat(currentLocale()).format(value)
 }
 
 export function formatCurrency(value, currency = 'EUR') {
   if (value === null || value === undefined) return '—'
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(currentLocale(), {
     style: 'currency',
     currency,
     maximumFractionDigits: value % 1 === 0 ? 0 : 2,
@@ -18,7 +28,7 @@ export function formatCurrency(value, currency = 'EUR') {
 
 export function formatCompactCurrency(value, currency = 'EUR') {
   if (value === null || value === undefined) return '—'
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(currentLocale(), {
     style: 'currency',
     currency,
     notation: 'compact',
@@ -35,14 +45,14 @@ export function formatDate(value) {
   if (!value) return '—'
   const d = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  return d.toLocaleDateString(currentLocale(), { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export function formatTime(value) {
   if (!value) return '—'
   const d = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
 }
 
 export function formatDateTime(value) {

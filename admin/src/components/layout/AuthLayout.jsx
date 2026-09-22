@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { ShieldCheck } from 'lucide-react'
 import Logo from '../ui/Logo'
 import ThemeToggle from '../ui/ThemeToggle'
+import LanguageToggle from '../ui/LanguageToggle'
 
 /** Private console shell — deliberately sober, with a visible security notice. */
 export default function AuthLayout({ title, description, children, footer }) {
@@ -15,7 +16,8 @@ export default function AuthLayout({ title, description, children, footer }) {
         <div className="absolute inset-0 bg-grid [background-size:56px_56px] opacity-50" />
       </div>
 
-      <div className="absolute right-5 top-5 z-10">
+      <div className="absolute end-5 top-5 z-10 flex items-center gap-2">
+        <LanguageToggle compact />
         <ThemeToggle />
       </div>
 

@@ -15,9 +15,11 @@ import {
   Sparkles,
   Plus,
   X,
+  UploadCloud,
 } from 'lucide-react'
 import cn from '../../lib/cn'
 import Logo from '../../components/ui/Logo'
+import LanguageToggle from '../../components/ui/LanguageToggle'
 import Button from '../../components/ui/Button'
 import { Input, RadioCard, Select, Textarea } from '../../components/ui/Field'
 import Badge from '../../components/ui/Badge'
@@ -29,6 +31,7 @@ import { useToast } from '../../context/ToastContext'
 import businessService from '../../services/businessService'
 import aiService from '../../services/aiService'
 import channelService from '../../services/channelService'
+import knowledgeService from '../../services/knowledgeService'
 
 const steps = [
   { id: 1, label: 'Business', icon: Building2 },
@@ -56,6 +59,7 @@ export default function Onboarding() {
   const [amenities, setAmenities] = useState([])
   const [amenityDraft, setAmenityDraft] = useState('')
   const [instructions, setInstructions] = useState('')
+  const [uploading, setUploading] = useState(false)
   const [channels, setChannels] = useState([])
   const [connecting, setConnecting] = useState(null)
   const [mode, setMode] = useState('shared')
@@ -89,6 +93,29 @@ export default function Onboarding() {
       updateBusiness({ name: business.name })
     }
     if (step === 2) await businessService.updateHours(hours)
+    if (step === 3) {
+      try {
+        if (business.type) await knowledgeService.loadSectorPack(business.type)
+        if (amenities.length) {
+          await knowledgeService.createItem({
+            title: 'Amenities',
+            category: 'Business Info',
+            body: amenities.join(', '),
+            status: 'Active',
+          })
+        }
+        if (instructions.trim()) {
+          await knowledgeService.createItem({
+            title: 'AI instructions',
+            category: 'Policies',
+            body: instructions.trim(),
+            status: 'Active',
+          })
+        }
+      } catch {
+        /* knowledge extras are optional during setup */
+      }
+    }
     if (step === 5) return finish()
     setStep((s) => Math.min(steps.length, s + 1))
     return undefined
@@ -137,9 +164,12 @@ export default function Onboarding() {
       <header className="border-b border-line bg-surface/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
           <Logo size="sm" />
-          <button type="button" onClick={skip} className="text-[0.8rem] font-semibold text-slate-500 transition-colors hover:text-ink-900">
-            Skip for now
-          </button>
+          <div className="flex items-center gap-2">
+            <LanguageToggle compact />
+            <button type="button" onClick={skip} className="text-[0.8rem] font-semibold text-slate-500 transition-colors hover:text-ink-900">
+              Skip for now
+            </button>
+          </div>
         </div>
       </header>
 
@@ -226,10 +256,46 @@ export default function Onboarding() {
               <section>
                 <h1 className="font-display text-xl font-bold text-ink-900">Add your business knowledge</h1>
                 <p className="mt-1.5 text-[0.88rem] text-slate-500">
-                  Anything you add here becomes an answer the AI can give. You can add much more later.
+                  Upload documents, add a sector pack, or write services and policies. The AI reads all of this — and
+                  uses ChatGPT when a question is not in your knowledge.
                 </p>
 
                 <div className="mt-6 space-y-8">
+                  <div>
+                    <h2 className="text-[0.85rem] font-bold uppercase tracking-wider text-slate-500">Documents</h2>
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.txt,.csv,.md,image/*"
+                      className="sr-only"
+                      id="onboarding-kb-upload"
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files || [])
+                        if (!files.length) return
+                        setUploading(true)
+                        try {
+                          await knowledgeService.uploadDocuments(files, { sector: business.type })
+                          toast.success(`${files.length} file${files.length > 1 ? 's' : ''} added to the knowledge base.`)
+                        } catch (error) {
+                          toast.error(error.message || 'Upload failed.')
+                        } finally {
+                          setUploading(false)
+                          e.target.value = ''
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="onboarding-kb-upload"
+                      className="mt-3 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 px-6 py-6 text-center transition-colors hover:border-[#0066FF]/50"
+                    >
+                      <UploadCloud className="h-6 w-6 text-[#0066FF]" aria-hidden="true" />
+                      <span className="mt-2 text-[0.88rem] font-semibold text-ink-900">
+                        {uploading ? 'Uploading and extracting text…' : 'Drop PDF, Word or images here'}
+                      </span>
+                      <span className="mt-1 text-[0.78rem] text-slate-500">Extracted text is what the AI reads</span>
+                    </label>
+                  </div>
+
                   <div>
                     <h2 className="text-[0.85rem] font-bold uppercase tracking-wider text-slate-500">Services & prices</h2>
                     <CrudList
