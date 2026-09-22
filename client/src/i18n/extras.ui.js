@@ -192,6 +192,12 @@ const rows = [
   ['You do not have access to this area', 'Vous n’avez pas accès à cette zone', 'ليست لديك صلاحية الوصول إلى هذا القسم', 'Aaggan gelitaan uma lihid'],
   ['Main', 'Principal', 'رئيسي', 'Ugu weyn'],
   ['Breadcrumb', 'Fil d’Ariane', 'مسار التنقل', 'Jidka navigation-ka'],
+  ['Cannot scan? Link with phone number', 'Impossible de scanner ? Lier avec le numéro', 'تعذر المسح؟ اربط برقم الهاتف', 'Ma sawiri kartid? Ku xir lambarka'],
+  ['Same WhatsApp connection, without the camera. Use the business number with country code.', 'Même connexion WhatsApp, sans caméra. Utilisez le numéro avec l’indicatif.', 'نفس اتصال واتساب بدون الكاميرا. استخدم رقم العمل مع رمز الدولة.', 'Isla xiriirka WhatsApp, kamarad la’aan. Isticmaal lambarka ganacsiga oo waddanka ku jiro.'],
+  ['Get pairing code', 'Obtenir le code', 'الحصول على رمز الربط', 'Hel koodhka isku-xirka'],
+  ['WhatsApp number', 'Numéro WhatsApp', 'رقم واتساب', 'Lambarka WhatsApp'],
+  ['Digits only, including country code.', 'Chiffres uniquement, avec l’indicatif.', 'أرقام فقط مع رمز الدولة.', 'Lambarada kaliya, oo waddanka ku jiro.'],
+  ['If the phone says it cannot link new devices, wait a minute, tap Refresh QR, then scan the new code.', 'Si le téléphone refuse, attendez une minute, actualisez le QR, puis scannez le nouveau code.', 'إذا رفض الهاتف الربط، انتظر دقيقة ثم حدّث رمز QR وامسحه.', 'Haddii telefoonku diido, daa daqiiqad, cusboonaysii QR-ka, ka dibna sawir.'],
 ]
 
 function toDict(index) {

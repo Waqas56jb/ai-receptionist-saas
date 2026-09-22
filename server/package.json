@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",
-    "@whiskeysockets/baileys": "^6.7.16",
+    "@whiskeysockets/baileys": "6.7.23",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

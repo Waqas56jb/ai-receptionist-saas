@@ -4,7 +4,7 @@ const vars = [
   {
     project: 'ai-receptionist-saas-server',
     name: 'PUBLIC_API_URL',
-    value: 'https://ai-receptionist-saas-server.vercel.app',
+    value: 'https://ai-receptionist-saas-production-2c89.up.railway.app',
   },
   {
     project: 'ai-receptionist-saas-server',
@@ -19,12 +19,12 @@ const vars = [
   {
     project: 'ai-receptionist-saas',
     name: 'VITE_API_URL',
-    value: 'https://ai-receptionist-saas-server.vercel.app/api',
+    value: 'https://ai-receptionist-saas-production-2c89.up.railway.app/api',
   },
   {
     project: 'ai-receptionist-saas-admin',
     name: 'VITE_API_URL',
-    value: 'https://ai-receptionist-saas-server.vercel.app/api',
+    value: 'https://ai-receptionist-saas-production-2c89.up.railway.app/api',
   },
 ]
 

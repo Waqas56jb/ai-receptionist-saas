@@ -17,7 +17,11 @@ const sectorKnowledge = require('./lib/sectorKnowledge')
 const PORT = Number(process.env.PORT || 4000)
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-change-me'
 const ON_VERCEL = Boolean(process.env.VERCEL)
-const SESSION_ROOT = ON_VERCEL ? path.join('/tmp', 'devmark-sessions') : path.join(__dirname, 'sessions')
+const SESSION_ROOT =
+  process.env.SESSION_ROOT ||
+  (process.env.RAILWAY_VOLUME_MOUNT_PATH
+    ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'whatsapp-sessions')
+    : path.join(__dirname, 'sessions'))
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
 
 try {
@@ -44,6 +48,7 @@ const memory = {
 }
 
 const waRuntime = new Map()
+const waStarting = new Map()
 
 function now() {
   return new Date().toISOString()
@@ -373,20 +378,6 @@ async function saveMessage(accountId, conversationId, direction, body, extra = {
   })
 }
 
-function publicApiUrl() {
-  return String(process.env.PUBLIC_API_URL || process.env.API_PUBLIC_URL || 'https://ai-receptionist-saas-server.vercel.app').replace(/\/$/, '')
-}
-
-function whatsappVerifyToken() {
-  return process.env.WHATSAPP_VERIFY_TOKEN || 'devmark-whatsapp'
-}
-
-function maskSecret(value) {
-  const raw = String(value || '')
-  if (raw.length < 8) return raw ? '••••' : ''
-  return `${raw.slice(0, 4)}••••${raw.slice(-4)}`
-}
-
 async function openaiClient() {
   if (!process.env.OPENAI_API_KEY) return null
   const OpenAI = require('openai')
@@ -658,97 +649,6 @@ async function getConnection(accountId) {
   return memory.connections[accountId] || { account_id: accountId, status: 'disconnected' }
 }
 
-function cloudFromSettings(whatsapp = {}) {
-  return {
-    phoneNumberId: String(whatsapp.cloudPhoneId || '').trim(),
-    token: String(whatsapp.cloudToken || '').trim(),
-    displayPhone: String(whatsapp.displayPhone || whatsapp.businessNumber || '').trim(),
-    connected: Boolean(whatsapp.cloudConnected && whatsapp.cloudPhoneId && whatsapp.cloudToken),
-  }
-}
-
-async function getWhatsAppCloud(accountId) {
-  const settings = await getSettings(accountId).catch(() => defaultSettings)
-  return cloudFromSettings(settings.whatsapp)
-}
-
-async function findAccountByCloudPhone(phoneNumberId) {
-  const idValue = String(phoneNumberId || '').trim()
-  if (!idValue) return null
-  if (supabase) {
-    const { data, error } = await supabase.from('account_settings').select('account_id, whatsapp')
-    if (error) throw error
-    const row = (data || []).find((item) => String(item.whatsapp?.cloudPhoneId || '').trim() === idValue)
-    if (!row) return null
-    const accounts = await dbSelect('accounts', { id: row.account_id })
-    return { account: accounts[0], cloud: cloudFromSettings(row.whatsapp) }
-  }
-  return null
-}
-
-async function sendWhatsAppCloud(cloud, to, payload) {
-  const res = await fetch(`https://graph.facebook.com/v21.0/${cloud.phoneNumberId}/messages`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${cloud.token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ messaging_product: 'whatsapp', to, ...payload }),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error?.message || 'WhatsApp Cloud API send failed.')
-  return data
-}
-
-async function downloadWhatsAppCloudMedia(cloud, mediaId) {
-  const metaRes = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
-    headers: { Authorization: `Bearer ${cloud.token}` },
-  })
-  const meta = await metaRes.json().catch(() => ({}))
-  if (!metaRes.ok || !meta.url) return null
-  const fileRes = await fetch(meta.url, { headers: { Authorization: `Bearer ${cloud.token}` } })
-  if (!fileRes.ok) return null
-  return Buffer.from(await fileRes.arrayBuffer())
-}
-
-async function handleCloudIncoming(account, cloud, message) {
-  if (!message || message.type === 'status') return
-  const from = message.from
-  if (!from) return
-
-  let inbound = message.text?.body || message.image?.caption || message.button?.text || ''
-  let type = 'text'
-  if (message.type === 'audio' && message.audio?.id) {
-    type = 'voice'
-    try {
-      const buffer = await downloadWhatsAppCloudMedia(cloud, message.audio.id)
-      inbound = buffer ? (await transcribeAudio(buffer, 'voice.ogg')) || '[voice note]' : '[voice note]'
-    } catch {
-      inbound = '[voice note]'
-    }
-  }
-  if (!inbound) return
-
-  const name = message.profile?.name || from
-  const conversation = await upsertConversation(account.id, {
-    visitorKey: from,
-    name,
-    channel: 'whatsapp',
-    lastMessage: inbound,
-  })
-  await saveMessage(account.id, conversation.id, 'in', inbound, { type, channel: 'whatsapp', visitorKey: from })
-  const reply = await replyFromKnowledge(account.id, inbound)
-  await saveMessage(account.id, conversation.id, 'out', reply, {
-    type: type === 'voice' ? 'voice' : 'text',
-    handled_as: 'ai',
-    channel: 'whatsapp',
-    visitorKey: from,
-  })
-  await dbUpdate('conversations', { id: conversation.id, account_id: account.id }, { last_message: reply, last_at: now() })
-  await upsertConnection(account.id, { last_seen: now(), status: 'connected' })
-  await sendWhatsAppCloud(cloud, from, { type: 'text', text: { body: reply } })
-}
-
 function sessionDir(accountId) {
   return path.join(SESSION_ROOT, accountId)
 }
@@ -758,6 +658,102 @@ function emitWa(accountId, payload) {
   if (!runtime) return
   runtime.last = { ...runtime.last, ...payload }
   runtime.clients.forEach((res) => res.write(`data: ${JSON.stringify(runtime.last)}\n\n`))
+}
+
+function closeWaSocket(sock) {
+  if (!sock) return
+  try {
+    sock.ev?.removeAllListeners?.('connection.update')
+    sock.ev?.removeAllListeners?.('creds.update')
+    sock.ev?.removeAllListeners?.('messages.upsert')
+  } catch {
+    /* ignore */
+  }
+  try {
+    sock.end(undefined)
+  } catch {
+    /* already closed */
+  }
+}
+
+async function encodeWhatsAppQr(raw) {
+  return QRCode.toDataURL(String(raw), {
+    errorCorrectionLevel: 'M',
+    type: 'image/png',
+    margin: 2,
+    width: 360,
+    color: { dark: '#000000', light: '#FFFFFF' },
+  })
+}
+
+async function resolveWaVersion(baileys) {
+  try {
+    const res = await fetch('https://web.whatsapp.com/sw.js', {
+      headers: {
+        'user-agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      },
+    })
+    const text = await res.text()
+    const match = text.match(/"?client_revision"?\s*:\s*(\d+)/)
+    if (match?.[1]) {
+      const version = [2, 3000, Number(match[1])]
+      console.log('WhatsApp web version', version.join('.'), '(sw.js)')
+      return version
+    }
+  } catch (error) {
+    console.warn('WhatsApp sw.js version lookup failed:', error.message)
+  }
+  try {
+    if (typeof baileys.fetchLatestWaWebVersion === 'function') {
+      const result = await baileys.fetchLatestWaWebVersion()
+      if (result?.version) {
+        console.log('WhatsApp web version', result.version.join('.'), result.isLatest ? '(live)' : '(fallback)')
+        return result.version
+      }
+    }
+  } catch (error) {
+    console.warn('fetchLatestWaWebVersion failed:', error.message)
+  }
+  try {
+    const result = await baileys.fetchLatestBaileysVersion()
+    return result?.version
+  } catch {
+    return undefined
+  }
+}
+
+function waitForWa(accountId, predicate, timeoutMs = 20000) {
+  return new Promise((resolve) => {
+    const started = Date.now()
+    const tick = () => {
+      const runtime = waRuntime.get(accountId)
+      if (runtime && predicate(runtime)) return resolve(runtime)
+      if (Date.now() - started >= timeoutMs) return resolve(runtime || null)
+      setTimeout(tick, 150)
+    }
+    tick()
+  })
+}
+
+function waBrowser(baileys) {
+  try {
+    if (baileys.Browsers?.macOS) return baileys.Browsers.macOS('Chrome')
+  } catch {
+    /* use explicit Chrome fingerprint */
+  }
+  return ['Mac OS', 'Chrome', '14.4.1']
+}
+
+async function loadBaileys() {
+  try {
+    return require('@whiskeysockets/baileys')
+  } catch (error) {
+    if (error.code !== 'ERR_REQUIRE_ESM') {
+      throw new Error('WhatsApp engine is not installed. Run npm install inside /server.')
+    }
+  }
+  return import('@whiskeysockets/baileys')
 }
 
 async function handleIncoming(accountId, sock, msg) {
@@ -777,7 +773,8 @@ async function handleIncoming(accountId, sock, msg) {
   if (audio) {
     type = 'voice'
     try {
-      const { downloadMediaMessage } = require('@whiskeysockets/baileys')
+      const baileys = await loadBaileys()
+      const { downloadMediaMessage } = baileys
       const buffer = await downloadMediaMessage(msg, 'buffer', {})
       inbound = (await transcribeAudio(buffer, 'voice.ogg')) || '[voice note]'
     } catch {
@@ -812,90 +809,110 @@ async function handleIncoming(accountId, sock, msg) {
 }
 
 async function startWhatsApp(accountId, { forceQr = false } = {}) {
-  if (ON_VERCEL) {
-    const err = new Error('CLOUD_REQUIRED')
-    err.code = 'CLOUD_REQUIRED'
-    throw err
-  }
-  let baileys
-  try {
-    baileys = require('@whiskeysockets/baileys')
-  } catch {
-    throw new Error('WhatsApp engine is not installed. Run npm install inside /server.')
-  }
-
   const existing = waRuntime.get(accountId)
   if (existing?.sock && existing.last?.status === 'connected' && !forceQr) return existing
+  if (!forceQr && waStarting.has(accountId)) return waStarting.get(accountId)
 
-  if (existing?.sock) {
-    try {
-      existing.sock.end(undefined)
-    } catch {
-      /* already closed */
-    }
-  }
+  const job = (async () => {
+    const baileys = await loadBaileys()
 
-  const dir = sessionDir(accountId)
-  fs.mkdirSync(dir, { recursive: true })
-  const { state, saveCreds } = await baileys.useMultiFileAuthState(dir)
-  const { version } = await baileys.fetchLatestBaileysVersion()
-  const sock = baileys.default({
-    auth: state,
-    version,
-    printQRInTerminal: false,
-    browser: ['DEVMARK', 'Chrome', '121'],
-  })
+    const current = waRuntime.get(accountId)
+    if (current?.sock) {
+      current.stopping = true
+      closeWaSocket(current.sock)
+      current.sock = null
+    }
 
-  const runtime = waRuntime.get(accountId) || { clients: new Set(), last: { status: 'starting' } }
-  runtime.sock = sock
-  waRuntime.set(accountId, runtime)
-
-  sock.ev.on('creds.update', saveCreds)
-  sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect, qr } = update
-    if (qr) {
-      const qrDataUrl = await QRCode.toDataURL(qr, { width: 280, margin: 1 })
-      await upsertConnection(accountId, { status: 'qr' })
-      emitWa(accountId, { status: 'qr', qr: qrDataUrl })
-    }
-    if (connection === 'open') {
-      const phone = sock.user?.id?.split(':')[0] || sock.user?.id
-      await upsertConnection(accountId, {
-        status: 'connected',
-        phone,
-        push_name: sock.user?.name || sock.user?.verifiedName || null,
-        connected_at: now(),
-        last_seen: now(),
-      })
-      emitWa(accountId, { status: 'connected', qr: null, phone })
-    }
-    if (connection === 'close') {
-      const code = lastDisconnect?.error?.output?.statusCode
-      const loggedOut = code === baileys.DisconnectReason.loggedOut
-      if (loggedOut) {
-        await upsertConnection(accountId, { status: 'disconnected', phone: null })
-        emitWa(accountId, { status: 'disconnected', qr: null })
-        return
-      }
-      emitWa(accountId, { status: 'reconnecting' })
-      setTimeout(() => startWhatsApp(accountId).catch(() => {}), 1500)
-    }
-  })
-  sock.ev.on('messages.upsert', async ({ messages }) => {
-    for (const msg of messages || []) {
+    const dir = sessionDir(accountId)
+    if (forceQr) {
       try {
-        await handleIncoming(accountId, sock, msg)
-      } catch (error) {
-        console.error('WhatsApp inbound failed', accountId, error.message)
+        fs.rmSync(dir, { recursive: true, force: true })
+      } catch {
+        /* ignore */
       }
     }
-  })
+    fs.mkdirSync(dir, { recursive: true })
+    const { state, saveCreds } = await baileys.useMultiFileAuthState(dir)
+    const version = await resolveWaVersion(baileys)
+    const logger = require('pino')({ level: 'silent' })
+    const makeWASocket = baileys.default?.default || baileys.default || baileys.makeWASocket
+    const sock = makeWASocket({
+      auth: state,
+      version,
+      logger,
+      browser: waBrowser(baileys),
+      syncFullHistory: false,
+      markOnlineOnConnect: false,
+      connectTimeoutMs: 60_000,
+      defaultQueryTimeoutMs: 60_000,
+    })
 
-  return runtime
+    const runtime = waRuntime.get(accountId) || { clients: new Set(), last: { status: 'starting' } }
+    runtime.sock = sock
+    runtime.stopping = false
+    runtime.last = { ...runtime.last, status: 'starting', qr: forceQr ? null : runtime.last?.qr || null }
+    waRuntime.set(accountId, runtime)
+
+    sock.ev.on('creds.update', saveCreds)
+    sock.ev.on('connection.update', async (update) => {
+      const { connection, lastDisconnect, qr } = update
+      if (qr) {
+        try {
+          const qrDataUrl = await encodeWhatsAppQr(qr)
+          await upsertConnection(accountId, { status: 'qr' })
+          emitWa(accountId, { status: 'qr', qr: qrDataUrl, pairingCode: null })
+        } catch (error) {
+          console.error('WhatsApp QR encode failed', accountId, error.message)
+        }
+      }
+      if (connection === 'open') {
+        const phone = sock.user?.id?.split(':')[0] || sock.user?.id
+        await upsertConnection(accountId, {
+          status: 'connected',
+          phone,
+          push_name: sock.user?.name || sock.user?.verifiedName || null,
+          connected_at: now(),
+          last_seen: now(),
+        })
+        emitWa(accountId, { status: 'connected', qr: null, pairingCode: null, phone })
+      }
+      if (connection === 'close') {
+        if (runtime.stopping) return
+        const code = lastDisconnect?.error?.output?.statusCode
+        const loggedOut = code === baileys.DisconnectReason.loggedOut
+        if (loggedOut) {
+          await upsertConnection(accountId, { status: 'disconnected', phone: null })
+          emitWa(accountId, { status: 'disconnected', qr: null, pairingCode: null })
+          return
+        }
+        emitWa(accountId, { status: 'reconnecting' })
+        const delay = code === 428 || code === 405 ? 8000 : 2500
+        setTimeout(() => startWhatsApp(accountId).catch(() => {}), delay)
+      }
+    })
+    sock.ev.on('messages.upsert', async ({ messages }) => {
+      for (const msg of messages || []) {
+        try {
+          await handleIncoming(accountId, sock, msg)
+        } catch (error) {
+          console.error('WhatsApp inbound failed', accountId, error.message)
+        }
+      }
+    })
+
+    return runtime
+  })()
+
+  waStarting.set(accountId, job)
+  try {
+    return await job
+  } finally {
+    if (waStarting.get(accountId) === job) waStarting.delete(accountId)
+  }
 }
 
 async function restoreSessions() {
-  if (ON_VERCEL || !fs.existsSync(SESSION_ROOT)) return
+  if (!fs.existsSync(SESSION_ROOT)) return
   const dirs = fs.readdirSync(SESSION_ROOT, { withFileTypes: true }).filter((entry) => entry.isDirectory())
   for (const dir of dirs) {
     const creds = path.join(SESSION_ROOT, dir.name, 'creds.json')
@@ -957,6 +974,7 @@ const defaultOrigins = [
   'http://localhost:4173',
   'https://ai-receptionist-saas-nu.vercel.app',
   'https://ai-receptionist-saas-admin-psi.vercel.app',
+  'https://ai-receptionist-saas-production-2c89.up.railway.app',
 ]
 const allowedOrigins = [
   ...defaultOrigins,
@@ -1150,22 +1168,12 @@ app.get('/api/whatsapp/status', auth('account'), async (req, res) => {
   try {
     const connection = await getConnection(req.actor.id)
     const runtime = waRuntime.get(req.actor.id)
-    const cloud = await getWhatsAppCloud(req.actor.id)
-    const connected =
-      cloud.connected || connection.status === 'connected' || runtime?.last?.status === 'connected'
     res.json({
-      connected,
-      status: cloud.connected
-        ? 'connected'
-        : runtime?.last?.status || connection.status || 'disconnected',
-      phone: cloud.displayPhone || runtime?.last?.phone || connection.phone || null,
+      connected: connection.status === 'connected' || runtime?.last?.status === 'connected',
+      status: runtime?.last?.status || connection.status || 'disconnected',
+      phone: runtime?.last?.phone || connection.phone || null,
       qr: runtime?.last?.qr || null,
-      host: ON_VERCEL ? 'vercel' : 'node',
-      mode: cloud.connected ? 'cloud' : ON_VERCEL ? 'cloud' : 'qr',
-      phoneNumberId: cloud.phoneNumberId || null,
-      tokenPreview: maskSecret(cloud.token),
-      webhookUrl: `${publicApiUrl()}/api/whatsapp/webhook`,
-      verifyTokenSet: Boolean(process.env.WHATSAPP_VERIFY_TOKEN),
+      pairingCode: runtime?.last?.pairingCode || null,
     })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -1174,120 +1182,64 @@ app.get('/api/whatsapp/status', auth('account'), async (req, res) => {
 
 app.post('/api/whatsapp/qr', auth('account'), async (req, res) => {
   try {
-    const cloud = await getWhatsAppCloud(req.actor.id)
-    if (cloud.connected) {
-      return res.json({ connected: true, status: 'connected', phone: cloud.displayPhone, qr: null, mode: 'cloud' })
+    const connection = await getConnection(req.actor.id)
+    if (connection.status === 'connected' && waRuntime.get(req.actor.id)?.sock && !req.body?.force) {
+      return res.json({ connected: true, status: 'connected', phone: connection.phone, qr: null })
+    }
+    const runtime = await startWhatsApp(req.actor.id, { forceQr: Boolean(req.body?.force) })
+    const ready = await waitForWa(
+      req.actor.id,
+      (item) => Boolean(item.last?.qr) || item.last?.status === 'connected',
+      20000,
+    )
+    const last = ready?.last || runtime?.last || {}
+    res.json({
+      status: last.status || 'qr',
+      qr: last.qr || null,
+      pairingCode: last.pairingCode || null,
+      phone: last.phone || connection.phone || null,
+      connected: last.status === 'connected',
+      message: last.qr
+        ? 'Scan the WhatsApp QR code. Closing this page does not disconnect the number.'
+        : 'WhatsApp is preparing a new QR code. Keep this page open.',
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/whatsapp/pair', auth('account'), async (req, res) => {
+  try {
+    const phone = String(req.body?.phone || '').replace(/\D/g, '')
+    if (phone.length < 8 || phone.length > 15) {
+      return res.status(400).json({ error: 'Enter the WhatsApp number with country code, digits only.' })
     }
     const connection = await getConnection(req.actor.id)
     if (connection.status === 'connected' && waRuntime.get(req.actor.id)?.sock) {
-      return res.json({ connected: true, status: 'connected', phone: connection.phone, qr: null, mode: 'qr' })
+      return res.json({ connected: true, status: 'connected', phone: connection.phone, qr: null })
     }
-    if (ON_VERCEL) {
-      return res.json({
-        connected: false,
-        status: 'cloud_required',
-        host: 'vercel',
-        mode: 'cloud',
-        qr: null,
-        webhookUrl: `${publicApiUrl()}/api/whatsapp/webhook`,
-      })
+    const runtime = await startWhatsApp(req.actor.id, { forceQr: true })
+    await waitForWa(req.actor.id, (item) => Boolean(item.sock), 8000)
+    const sock = waRuntime.get(req.actor.id)?.sock || runtime.sock
+    if (!sock?.requestPairingCode) {
+      return res.status(500).json({ error: 'WhatsApp pairing is unavailable on this server.' })
     }
-    await startWhatsApp(req.actor.id)
-    res.json({ status: 'qr', mode: 'qr', message: 'Scan the WhatsApp QR code. Closing this page does not disconnect the number.' })
-  } catch (error) {
-    if (error.code === 'CLOUD_REQUIRED') {
-      return res.json({
-        connected: false,
-        status: 'cloud_required',
-        host: 'vercel',
-        mode: 'cloud',
-        qr: null,
-        webhookUrl: `${publicApiUrl()}/api/whatsapp/webhook`,
-      })
+    if (sock.authState?.creds?.registered) {
+      return res.json({ connected: true, status: 'connected', phone: connection.phone, qr: null })
     }
-    res.status(500).json({ error: error.message })
-  }
-})
-
-app.post('/api/whatsapp/cloud', auth('account'), async (req, res) => {
-  try {
-    const phoneNumberId = cleanText(req.body?.phoneNumberId, 80)
-    const accessToken = String(req.body?.accessToken || '').trim()
-    const displayPhone = cleanText(req.body?.displayPhone || req.body?.phone, 40)
-    if (!phoneNumberId || !accessToken) {
-      return res.status(400).json({ error: 'WhatsApp Phone Number ID and access token are required.' })
-    }
-    const check = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-    const meta = await check.json().catch(() => ({}))
-    if (!check.ok) {
-      return res.status(400).json({ error: meta.error?.message || 'WhatsApp Cloud API rejected those credentials.' })
-    }
-    await saveSettings(req.actor.id, {
-      whatsapp: {
-        cloudPhoneId: phoneNumberId,
-        cloudToken: accessToken,
-        cloudConnected: true,
-        displayPhone: displayPhone || meta.display_phone_number || '',
-        businessNumber: displayPhone || meta.display_phone_number || '',
-      },
-    })
-    await upsertConnection(req.actor.id, {
-      status: 'connected',
-      phone: displayPhone || meta.display_phone_number || phoneNumberId,
-      connected_at: now(),
-      last_seen: now(),
-    })
+    await new Promise((resolve) => setTimeout(resolve, 2500))
+    const code = await sock.requestPairingCode(phone)
+    emitWa(req.actor.id, { status: 'pairing', pairingCode: code, phone })
     res.json({
-      connected: true,
-      status: 'connected',
-      mode: 'cloud',
-      phone: displayPhone || meta.display_phone_number || phoneNumberId,
-      phoneNumberId,
-      webhookUrl: `${publicApiUrl()}/api/whatsapp/webhook`,
+      status: 'pairing',
+      pairingCode: code,
+      phone,
+      connected: false,
+      message: 'Enter this code in WhatsApp → Linked devices → Link with phone number.',
     })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
-})
-
-app.get('/api/whatsapp/webhook', (req, res) => {
-  const mode = req.query['hub.mode']
-  const token = req.query['hub.verify_token']
-  const challenge = req.query['hub.challenge']
-  if (mode === 'subscribe' && token === whatsappVerifyToken()) {
-    return res.status(200).send(challenge)
-  }
-  return res.status(403).send('Forbidden')
-})
-
-app.post('/api/whatsapp/webhook', async (req, res) => {
-  try {
-    const entries = req.body?.entry || []
-    for (const entry of entries) {
-      for (const change of entry.changes || []) {
-        const value = change.value || {}
-        const phoneNumberId = value.metadata?.phone_number_id
-        const messages = value.messages || []
-        if (!phoneNumberId || !messages.length) continue
-        const found = await findAccountByCloudPhone(phoneNumberId)
-        if (!found?.account || !found.cloud?.token) continue
-        const contactName = value.contacts?.[0]?.profile?.name
-        for (const message of messages) {
-          try {
-            if (contactName && !message.profile) message.profile = { name: contactName }
-            await handleCloudIncoming(found.account, found.cloud, message)
-          } catch (error) {
-            console.error('WhatsApp Cloud inbound failed', found.account.id, error.message)
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error('WhatsApp webhook failed', error.message)
-  }
-  res.status(200).json({ ok: true })
 })
 
 app.get('/api/whatsapp/events', auth('account'), async (req, res) => {
@@ -1298,11 +1250,7 @@ app.get('/api/whatsapp/events', auth('account'), async (req, res) => {
   const runtime = waRuntime.get(req.actor.id) || { clients: new Set(), last: { status: 'disconnected' } }
   runtime.clients.add(res)
   waRuntime.set(req.actor.id, runtime)
-  const cloud = await getWhatsAppCloud(req.actor.id).catch(() => ({ connected: false }))
-  const snapshot = cloud.connected
-    ? { status: 'connected', phone: cloud.displayPhone, qr: null, mode: 'cloud' }
-    : runtime.last
-  res.write(`data: ${JSON.stringify(snapshot)}\n\n`)
+  res.write(`data: ${JSON.stringify(runtime.last)}\n\n`)
   req.on('close', () => runtime.clients.delete(res))
 })
 
@@ -1322,9 +1270,6 @@ app.post('/api/whatsapp/disconnect', auth('account'), async (req, res) => {
     }
     waRuntime.delete(req.actor.id)
     fs.rmSync(sessionDir(req.actor.id), { recursive: true, force: true })
-    await saveSettings(req.actor.id, {
-      whatsapp: { cloudPhoneId: '', cloudToken: '', cloudConnected: false, displayPhone: '' },
-    })
     await upsertConnection(req.actor.id, { status: 'disconnected', phone: null, push_name: null })
     res.json({ connected: false, status: 'disconnected' })
   } catch (error) {
@@ -2313,9 +2258,10 @@ app.use((error, _req, res, _next) => {
 })
 
 if (!ON_VERCEL) {
-  app.listen(PORT, async () => {
-    console.log(`AI receptionist API on http://localhost:${PORT}`)
+  app.listen(PORT, '0.0.0.0', async () => {
+    console.log(`AI receptionist API on http://0.0.0.0:${PORT}`)
     console.log(`Supabase: ${supabase ? 'connected' : 'memory fallback — add credentials to server/.env'}`)
+    console.log(`WhatsApp sessions: ${SESSION_ROOT}`)
     try {
       await ensureStarted()
       await restoreSessions()

@@ -1,5 +1,5 @@
-export const DEPLOYED_API_URL = 'https://ai-receptionist-saas-server.vercel.app/api'
-export const DEPLOYED_API_ORIGIN = 'https://ai-receptionist-saas-server.vercel.app'
+export const DEPLOYED_API_URL = 'https://ai-receptionist-saas-production-2c89.up.railway.app/api'
+export const DEPLOYED_API_ORIGIN = 'https://ai-receptionist-saas-production-2c89.up.railway.app'
 
 export const API_BASE = String(import.meta.env.VITE_API_URL || DEPLOYED_API_URL).replace(/\/$/, '')
 
