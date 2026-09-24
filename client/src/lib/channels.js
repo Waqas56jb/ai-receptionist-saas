@@ -1,5 +1,5 @@
-/** Live channels only. Voice, Instagram and Twilio stay hidden until those agents go live. */
-export const liveChannelIds = ['whatsapp', 'web']
+/** Live channels only. Instagram stays hidden until that agent goes live. */
+export const liveChannelIds = ['whatsapp', 'web', 'voice']
 
 export const isLiveChannel = (id) => liveChannelIds.includes(id)
 

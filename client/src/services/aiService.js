@@ -42,12 +42,12 @@ export const aiService = {
   },
 
   getChannelSettings: async (channel) => {
-    if (channel !== 'whatsapp' && channel !== 'web') return {}
+    if (!['whatsapp', 'web', 'voice'].includes(channel)) return {}
     return api(`/settings/${channel}`)
   },
 
   updateChannelSettings: async (channel, patch) => {
-    if (channel !== 'whatsapp' && channel !== 'web') return patch
+    if (!['whatsapp', 'web', 'voice'].includes(channel)) return patch
     return api(`/settings/${channel}`, { method: 'PUT', body: patch })
   },
 
@@ -69,7 +69,7 @@ export const aiService = {
     return store.aiConfig
   },
 
-  testCall: () => request({ ok: true, message: 'Voice calling is not live on this account.' }),
+  testCall: (to) => api('/voice/outbound', { method: 'POST', body: { to } }),
 
   testMessage: (channel) => request({ ok: true, message: `Test ${channel} message will send from the live channel once connected.` }),
 }

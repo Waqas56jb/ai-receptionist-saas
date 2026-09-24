@@ -77,7 +77,25 @@ export const aiService = {
 }
 
 export const channelService = {
-  listVoice: () => request(() => store.voice),
+  listVoice: async () => {
+    try {
+      const rows = await live('/admin/voice', {}, () => request(() => store.voice))
+      return (Array.isArray(rows) ? rows : []).map((row) => ({
+        id: row.id,
+        businessId: row.id || row.businessId,
+        business: row.account || row.business || 'Business',
+        account: row.account || row.business || '',
+        number: row.identifier || row.number || '—',
+        credential: '',
+        status: row.connected ? 'Connected' : 'Disconnected',
+        enabled: Boolean(row.connected),
+        messages: Number(row.messages) || 0,
+        lastActivity: row.lastActivity || null,
+      }))
+    } catch {
+      return []
+    }
+  },
   listWhatsApp: async () => {
     try {
       const rows = await live('/admin/whatsapp', {}, () => request(() => store.whatsapp))

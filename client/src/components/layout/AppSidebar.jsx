@@ -88,7 +88,7 @@ export default function AppSidebar({ onNavigate, className = '' }) {
             <p className="text-[0.78rem] font-semibold text-ink">Professional plan</p>
           </div>
           <p className="mt-2 text-[0.72rem] leading-relaxed text-muted">
-            WhatsApp and website widget are live on this plan.
+            WhatsApp, website widget and Twilio voice are live on this plan.
           </p>
           <NavLink
             to="/app/usage"

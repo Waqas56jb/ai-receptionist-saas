@@ -9,9 +9,10 @@ import { api } from './api'
 export const channelService = {
   list: async () => {
     try {
-      const [wa, widget] = await Promise.all([
+      const [wa, widget, voice] = await Promise.all([
         api('/whatsapp/status').catch(() => ({})),
         api('/widget').catch(() => ({})),
+        api('/voice/status').catch(() => ({})),
       ])
       store.channels = store.channels.map((c) => {
         if (c.id === 'whatsapp') {
@@ -19,6 +20,17 @@ export const channelService = {
         }
         if (c.id === 'web') {
           return { ...c, connected: Boolean(widget?.token), identifier: widget?.token ? 'Website widget' : null, provider: 'Web widget' }
+        }
+        if (c.id === 'voice') {
+          return {
+            ...c,
+            connected: Boolean(voice.ready),
+            enabled: voice.enabled !== false,
+            configured: Boolean(voice.ready),
+            identifier: voice.phone || null,
+            provider: 'Twilio',
+            lastConnectedAt: voice.ready ? new Date().toISOString() : c.lastConnectedAt,
+          }
         }
         return c
       })
@@ -57,32 +69,27 @@ export const channelService = {
       return store.channels
     }),
 
-  getCredentials: (provider) => request(() => store.credentials[provider] || []),
+  getCredentials: async (provider) => {
+    if (provider === 'twilio') return api('/voice/credentials')
+    return store.credentials[provider] || []
+  },
 
-  /** The raw value is intentionally dropped — only a masked preview is kept. */
-  saveCredential: (provider, key, rawValue) =>
-    request(
-      () => {
-        const last4 = String(rawValue || '').slice(-4).padStart(4, '•')
-        store.credentials[provider] = (store.credentials[provider] || []).map((c) =>
-          c.key === key
-            ? { ...c, saved: true, preview: `${key.includes('Secret') || key.includes('Token') ? 'sk_' : ''}••••••••••${last4}`, updatedAt: new Date().toISOString() }
-            : c,
-        )
-        return store.credentials[provider]
-      },
-      { latency: [500, 900] },
-    ),
+  saveCredential: async (provider, key, rawValue) => {
+    if (provider === 'twilio') return api('/voice/credentials', { method: 'POST', body: { key, value: rawValue } })
+    return store.credentials[provider] || []
+  },
 
-  removeCredential: (provider, key) =>
-    request(() => {
-      store.credentials[provider] = (store.credentials[provider] || []).map((c) =>
-        c.key === key ? { ...c, saved: false, preview: null, updatedAt: null } : c,
-      )
-      return store.credentials[provider]
-    }),
+  removeCredential: async (provider, key) => {
+    if (provider === 'twilio') return api(`/voice/credentials/${encodeURIComponent(key)}`, { method: 'DELETE' })
+    return store.credentials[provider] || []
+  },
 
-  getWebhookUrls: () => request(ai.webhookUrls),
+  getWebhookUrls: async () => {
+    const voice = await api('/voice/status').catch(() => ({}))
+    return { ...(ai.webhookUrls || {}), voice: voice.webhooks?.voice || '' }
+  },
+
+  provisionTwilio: () => api('/voice/provision', { method: 'POST' }),
 }
 
 export default channelService

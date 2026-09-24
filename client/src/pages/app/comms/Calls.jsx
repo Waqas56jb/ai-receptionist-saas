@@ -112,7 +112,10 @@ export default function Calls() {
           <button
             type="button"
             disabled={!row.recording}
-            onClick={() => toast.info('Recording playback arrives with the backend milestone.')}
+            onClick={() => {
+              if (row.recordingUrl) window.open(`${row.recordingUrl}.mp3`, '_blank', 'noopener,noreferrer')
+              else toast.info('No recording is available for this call.')
+            }}
             className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-ink-900 disabled:opacity-30"
             aria-label={`Play recording for ${row.customer}`}
           >

@@ -6,6 +6,7 @@ import {
   CheckCheck,
   MessageSquare,
   MessagesSquare,
+  Phone,
   Radio,
   Search,
   Send,
@@ -29,12 +30,13 @@ import conversationService from '../../../services/conversationService'
 import { formatTime, timeAgo } from '../../../lib/format'
 import { channelLabel } from '../../../lib/channels'
 
-const channelIcon = { whatsapp: MessageSquare, web: Radio }
+const channelIcon = { whatsapp: MessageSquare, web: Radio, voice: Phone }
 
 const filters = [
   { id: 'all', label: 'All' },
   { id: 'whatsapp', label: 'WhatsApp' },
   { id: 'web', label: 'Website' },
+  { id: 'voice', label: 'Voice' },
   { id: 'unread', label: 'Unread' },
   { id: 'resolved', label: 'Resolved' },
 ]

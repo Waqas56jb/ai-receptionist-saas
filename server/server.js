@@ -12,6 +12,7 @@ const { createClient } = require('@supabase/supabase-js')
 const { cleanText, isValidEmail, normalizeEmail, maskEmail } = require('./lib/validate')
 const { sendWelcome, sendOtp } = require('./lib/mailer')
 const registerMailAuth = require('./mailAuth')
+const registerVoice = require('./voiceTwilio')
 const sectorKnowledge = require('./lib/sectorKnowledge')
 
 const PORT = Number(process.env.PORT || 4000)
@@ -45,6 +46,7 @@ const memory = {
   conversations: [],
   messages: [],
   connections: {},
+  voice_calls: [],
 }
 
 const waRuntime = new Map()
@@ -483,7 +485,7 @@ function matchKnowledge(items, userText) {
     .sort((a, b) => b.score - a.score)[0]?.item
 }
 
-function receptionistPrompt(accountName, context) {
+function receptionistPrompt(accountName, context, spoken = false) {
   return `You are the AI receptionist for ${accountName || 'this business'} on WhatsApp, website chat and voice.
 
 PRIVATE BUSINESS KNOWLEDGE (sector packs, uploaded files, services, policies and hours):
@@ -494,10 +496,10 @@ Rules:
 2. If the question is not covered by the knowledge, answer it with ChatGPT general knowledge. Stay in a helpful receptionist voice.
 3. Never invent this specific business's prices, hours, staff names, bookings, account numbers or private policies. If those are missing from knowledge, say you will confirm with the team, then still help with any general part of the question.
 4. Keep replies short and suitable for WhatsApp.
-5. Reply in the customer's language (English, French, Arabic or Somali).`
+5. Reply in the customer's language (English, French, Arabic or Somali).${spoken ? '\n6. You are on a live phone call. Speak in 1–3 short sentences. No markdown, lists, or URLs.' : ''}`
 }
 
-async function replyFromKnowledge(accountId, userText) {
+async function replyFromKnowledge(accountId, userText, { spoken = false, extra = '' } = {}) {
   const [context, accounts] = await Promise.all([
     knowledgeContext(accountId),
     dbSelect('accounts', { id: accountId }).catch(() => []),
@@ -513,9 +515,10 @@ async function replyFromKnowledge(accountId, userText) {
     model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     temperature: 0.5,
     messages: [
-      { role: 'system', content: receptionistPrompt(name, context) },
+      { role: 'system', content: receptionistPrompt(name, context, spoken) },
+      extra ? { role: 'system', content: extra } : null,
       { role: 'user', content: userText },
-    ],
+    ].filter(Boolean),
   })
   return completion.choices[0]?.message?.content?.trim() || 'Thanks — we will get back to you.'
 }
@@ -1006,14 +1009,69 @@ app.use(
   }),
 )
 app.options('*', cors())
+app.use(express.urlencoded({ extended: false }))
 app.use(express.json({ limit: '8mb' }))
 
 let bootPromise = null
+async function ensureVoiceTables() {
+  const url = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL
+  if (!url) return
+  const { Client } = require('pg')
+  const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } })
+  try {
+    await client.connect()
+    await client.query(`alter table account_settings add column if not exists voice jsonb default '{}'`)
+    await client.query(`
+      create table if not exists voice_calls (
+        id text primary key,
+        account_id text not null references accounts(id) on delete cascade,
+        conversation_id text,
+        twilio_sid text unique,
+        direction text not null default 'inbound',
+        from_number text,
+        to_number text,
+        status text default 'initiated',
+        duration integer default 0,
+        recording_url text,
+        recording_sid text,
+        outcome text,
+        transferred boolean default false,
+        ai_handled boolean default true,
+        started_at timestamptz,
+        ended_at timestamptz,
+        created_at timestamptz default now()
+      )
+    `)
+    await client.query(`create index if not exists voice_calls_account_idx on voice_calls(account_id, created_at desc)`)
+    await client.query(`alter table voice_calls enable row level security`)
+    await client.query(`revoke all on table voice_calls from anon, authenticated, public`)
+    await client.query(`grant all on table voice_calls to service_role`)
+  } finally {
+    await client.end().catch(() => {})
+  }
+}
+
+async function syncPlatformTwilio() {
+  const creds = require('./lib/twilioVoice').envCreds()
+  if (!require('./lib/twilioVoice').twilioReady(creds) || !process.env.PUBLIC_API_URL) return null
+  const urls = require('./lib/twilioVoice').webhookUrls(process.env.PUBLIC_API_URL)
+  return require('./lib/twilioVoice').provisionNumber(creds, urls)
+}
+
 function ensureStarted() {
   if (!bootPromise) {
-    bootPromise = bootstrapLogins().catch((error) => {
-      console.warn('Bootstrap skipped:', error.message)
-    })
+    bootPromise = (async () => {
+      try {
+        await ensureVoiceTables()
+      } catch (error) {
+        console.warn('Voice tables skipped:', error.message)
+      }
+      try {
+        await bootstrapLogins()
+      } catch (error) {
+        console.warn('Bootstrap skipped:', error.message)
+      }
+    })()
   }
   return bootPromise
 }
@@ -1025,6 +1083,11 @@ function healthPayload() {
     openai: Boolean(process.env.OPENAI_API_KEY),
     mailer: Boolean(process.env.MAIL_USER && process.env.MAIL_PASS),
     vercel: ON_VERCEL,
+    twilio: Boolean(
+      (process.env.TWILIO_ACCOUNT_SID || process.env.TWILIO_SID) &&
+        (process.env.TWILIO_AUTH_TOKEN || process.env.TWILIO_TOKEN || (process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET)) &&
+        (process.env.TWILIO_PHONE_NUMBER || process.env.TWILIO_FROM),
+    ),
     time: now(),
   }
 }
@@ -1759,6 +1822,7 @@ const defaultSettings = {
     },
   },
   web: { enabled: true },
+  voice: require('./voiceTwilio').defaultVoice,
   notifications: registerMailAuth.defaultNotifications(),
   team: [],
   catalog: registerMailAuth.defaultCatalog(),
@@ -1804,6 +1868,7 @@ async function getSettings(accountId) {
     prompt_versions: Array.isArray(row.prompt_versions) ? row.prompt_versions : [],
     whatsapp: { ...defaultSettings.whatsapp, ...(row.whatsapp || {}) },
     web: { ...defaultSettings.web, ...(row.web || {}) },
+    voice: { ...defaultSettings.voice, ...(row.voice || {}) },
     notifications: { ...defaultSettings.notifications, ...(row.notifications || {}) },
     team: Array.isArray(row.team) ? row.team : [],
     catalog: { ...defaultSettings.catalog, ...(row.catalog || {}) },
@@ -1819,6 +1884,7 @@ async function saveSettings(accountId, patch) {
     prompt_versions: patch.prompt_versions || current.prompt_versions,
     whatsapp: { ...current.whatsapp, ...(patch.whatsapp || {}) },
     web: { ...current.web, ...(patch.web || {}) },
+    voice: { ...current.voice, ...(patch.voice || {}) },
     notifications: patch.notifications || current.notifications,
     team: patch.team || current.team,
     catalog: patch.catalog || current.catalog,
@@ -1833,6 +1899,7 @@ async function saveSettings(accountId, patch) {
     delete lean.notifications
     delete lean.team
     delete lean.catalog
+    delete lean.voice
     if (existing[0]) await dbUpdate('account_settings', { account_id: accountId }, lean)
     else await dbInsert('account_settings', lean)
     console.warn('Settings extras skipped:', error.message)
@@ -1949,6 +2016,10 @@ app.get('/api/settings/:channel', auth('account'), async (req, res) => {
     const settings = await getSettings(req.actor.id)
     if (req.params.channel === 'whatsapp') return res.json(settings.whatsapp)
     if (req.params.channel === 'web') return res.json(settings.web)
+    if (req.params.channel === 'voice') {
+      const { credentials, ...safeVoice } = settings.voice || {}
+      return res.json(safeVoice)
+    }
     return res.status(404).json({ error: 'Unknown channel.' })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -1957,10 +2028,16 @@ app.get('/api/settings/:channel', auth('account'), async (req, res) => {
 
 app.put('/api/settings/:channel', auth('account'), async (req, res) => {
   try {
-    if (req.params.channel !== 'whatsapp' && req.params.channel !== 'web') {
+    if (!['whatsapp', 'web', 'voice'].includes(req.params.channel)) {
       return res.status(404).json({ error: 'Unknown channel.' })
     }
-    const saved = await saveSettings(req.actor.id, { [req.params.channel]: req.body || {} })
+    const body = { ...(req.body || {}) }
+    if (req.params.channel === 'voice') delete body.credentials
+    const saved = await saveSettings(req.actor.id, { [req.params.channel]: body })
+    if (req.params.channel === 'voice') {
+      const { credentials, ...safeVoice } = saved.voice || {}
+      return res.json(safeVoice)
+    }
     res.json(saved[req.params.channel])
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -2102,7 +2179,7 @@ app.get('/api/admin/conversations', auth('admin'), async (_req, res) => {
       try {
         const rows = await conversationsForAccount(account.id)
         for (const row of rows) {
-          if (row.channel !== 'whatsapp' && row.channel !== 'web') continue
+          if (row.channel !== 'whatsapp' && row.channel !== 'web' && row.channel !== 'voice') continue
           all.push({
             id: row.id,
             businessId: account.id,
@@ -2125,6 +2202,29 @@ app.get('/api/admin/conversations', auth('admin'), async (_req, res) => {
     res.json(all)
   } catch (error) {
     console.error('admin conversations', error.message)
+    res.json([])
+  }
+})
+
+app.get('/api/admin/voice', auth('admin'), async (_req, res) => {
+  try {
+    const rows = await adminAccountRows()
+    const calls = await dbSelect('voice_calls').catch(() => [])
+    res.json(
+      rows.map((row) => {
+        const accountCalls = (calls || []).filter((item) => item.account_id === row.id)
+        return {
+          id: row.id,
+          account: row.business || row.name,
+          identifier: row.phone || '—',
+          connected: accountCalls.some((item) => item.status === 'in-progress' || item.status === 'completed'),
+          status: accountCalls[0]?.status || 'idle',
+          messages: accountCalls.length,
+        }
+      }),
+    )
+  } catch (error) {
+    console.error('admin voice', error.message)
     res.json([])
   }
 })
@@ -2238,6 +2338,23 @@ async function buildKpis(accountId) {
   }
 }
 
+registerVoice(app, {
+  auth,
+  dbSelect,
+  dbInsert,
+  dbUpdate,
+  getSettings,
+  saveSettings,
+  replyFromKnowledge,
+  speakReply,
+  transcribeAudio,
+  upsertConversation,
+  saveMessage,
+  publicBase,
+  now,
+  id,
+})
+
 registerMailAuth({
   app,
   auth,
@@ -2265,6 +2382,9 @@ if (!ON_VERCEL) {
     try {
       await ensureStarted()
       await restoreSessions()
+      const provisioned = await syncPlatformTwilio()
+      if (provisioned) console.log(`Twilio voice webhook: ${provisioned.voiceUrl} (${provisioned.phone})`)
+      else console.log('Twilio: add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER to enable calls')
     } catch (error) {
       console.error('Startup restore failed', error.message)
     }

@@ -1,0 +1,65 @@
+require('dotenv').config()
+const { Client } = require('pg')
+const { createClient } = require('@supabase/supabase-js')
+
+const OWNER = process.env.TWILIO_OWNER_NUMBER || '+923107443144'
+
+async function main() {
+  const pg = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  })
+  await pg.connect()
+  await pg.query("alter table account_settings add column if not exists voice jsonb default '{}'::jsonb")
+  await pg.end()
+
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  })
+
+  await supabase.from('accounts').update({ phone: '+253 77000000' }).eq('id', 'acc_demo_client')
+  await supabase.from('accounts').update({ phone: '+25377492748' }).eq('id', 'acc_muc8evmomfe36h')
+
+  const { data: accounts, error: accountError } = await supabase.from('accounts').select('id, email')
+  if (accountError) throw accountError
+
+  for (const account of accounts || []) {
+    const { data: rows } = await supabase.from('account_settings').select('account_id, voice').eq('account_id', account.id)
+    const current = rows?.[0]?.voice || {}
+    const voice = { ...current, businessNumber: OWNER, callerId: OWNER, enabled: true }
+    if (rows?.[0]) {
+      const { error } = await supabase
+        .from('account_settings')
+        .update({ voice, updated_at: new Date().toISOString() })
+        .eq('account_id', account.id)
+      if (error) throw error
+      console.log('updated', account.email)
+    } else {
+      const { error } = await supabase.from('account_settings').insert({
+        account_id: account.id,
+        voice,
+        updated_at: new Date().toISOString(),
+      })
+      if (error) throw error
+      console.log('inserted', account.email)
+    }
+  }
+
+  const { data: check } = await supabase.from('account_settings').select('account_id, voice')
+  console.log(
+    JSON.stringify(
+      (check || []).map((row) => ({
+        id: row.account_id,
+        businessNumber: row.voice?.businessNumber,
+        callerId: row.voice?.callerId,
+      })),
+      null,
+      2,
+    ),
+  )
+}
+
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})

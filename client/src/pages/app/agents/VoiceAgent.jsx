@@ -15,6 +15,7 @@ import { useToast } from '../../../context/ToastContext'
 import aiService from '../../../services/aiService'
 import channelService from '../../../services/channelService'
 import businessService from '../../../services/businessService'
+import { api } from '../../../services/api'
 
 export default function VoiceAgent() {
   const toast = useToast()
@@ -27,7 +28,9 @@ export default function VoiceAgent() {
   const channels = useAsync(() => channelService.list(), [])
   const credentials = useAsync(() => channelService.getCredentials('twilio'), [])
   const webhooks = useAsync(() => channelService.getWebhookUrls(), [])
+  const twilio = useAsync(() => api('/voice/status'), [])
   const reference = useAsync(() => businessService.getReferenceData(), [])
+  const [testTo, setTestTo] = useState('')
 
   const channel = (channels.data || []).find((c) => c.id === 'voice')
   const set = (key) => (value) => settings.setData((prev) => ({ ...prev, [key]: value }))
@@ -46,10 +49,27 @@ export default function VoiceAgent() {
   const testCall = async () => {
     setTesting(true)
     try {
-      const res = await aiService.testCall()
+      const res = await aiService.testCall(testTo || settings.data?.businessNumber)
       toast.success(res.message)
+    } catch (error) {
+      toast.error(error.message)
     } finally {
       setTesting(false)
+    }
+  }
+
+  const applyTwilio = async () => {
+    setSaving(true)
+    try {
+      const result = await channelService.provisionTwilio()
+      toast.success(result.message)
+      settings.reload?.()
+      twilio.reload?.()
+      webhooks.reload?.()
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -98,7 +118,7 @@ export default function VoiceAgent() {
         }
       />
 
-      {settings.loading ? (
+      {settings.loading || !s ? (
         <div className="h-96 animate-pulse rounded-2xl bg-slate-100" />
       ) : (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -119,8 +139,8 @@ export default function VoiceAgent() {
               <CardHeader title="Phone numbers" description="The number customers dial, and the number the platform answers on." />
               <CardBody>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Input label="Business phone number" value={s.businessNumber} onChange={setField('businessNumber')} help="Forward this number to the platform number." />
-                  <Input label="Platform (Twilio) number" value={s.twilioNumber} onChange={setField('twilioNumber')} />
+                  <Input label="Business phone number" value={s.businessNumber} onChange={setField('businessNumber')} help="Your number — used for test calls and human transfer." />
+                  <Input label="Platform (Twilio) number" value={s.twilioNumber} onChange={setField('twilioNumber')} help="Bought Twilio number for inbound. Empty until Trust Hub approves." />
                   <Input label="Caller ID" value={s.callerId} onChange={setField('callerId')} className="sm:col-span-2" />
                 </div>
               </CardBody>
@@ -175,7 +195,19 @@ export default function VoiceAgent() {
                       Copy
                     </Button>
                   </div>
-                  <p className="mt-1.5 text-[0.72rem] text-slate-500">Paste this into your Twilio number's voice configuration.</p>
+                  <p className="mt-1.5 text-[0.72rem] text-slate-500">
+                    This URL is applied automatically when you click Apply Twilio webhooks. Status callback is set at the same time.
+                  </p>
+                  <Button as="button" variant="secondary" size="sm" className="mt-3" loading={saving} onClick={applyTwilio}>
+                    Apply Twilio webhooks
+                  </Button>
+                  {twilio.data?.ready ? (
+                    <p className="mt-3 text-[0.78rem] text-emerald-700">Twilio is connected{twilio.data.phone ? ` · ${twilio.data.phone}` : ''}.</p>
+                  ) : (
+                    <p className="mt-3 text-[0.78rem] text-amber-800">
+                      Add Account SID, Auth Token and the Twilio number, then apply webhooks. You can also set them on the Railway server as TWILIO_* env vars.
+                    </p>
+                  )}
                 </div>
               </CardBody>
             </Card>
@@ -194,7 +226,7 @@ export default function VoiceAgent() {
                   <Select label="Voice style" options={options.data?.voiceStyles || []} value={s.voiceStyle} onChange={setField('voiceStyle')} />
                   <div>
                     <label htmlFor="speed" className="mb-1.5 block text-[0.8rem] font-semibold text-ink-900">
-                      Speaking speed · {s.speakingSpeed.toFixed(1)}×
+                      Speaking speed · {Number(s.speakingSpeed || 1).toFixed(1)}×
                     </label>
                     <input
                       id="speed"
@@ -202,7 +234,7 @@ export default function VoiceAgent() {
                       min="0.6"
                       max="1.4"
                       step="0.1"
-                      value={s.speakingSpeed}
+                      value={Number(s.speakingSpeed || 1)}
                       onChange={(e) => set('speakingSpeed')(Number(e.target.value))}
                       className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-600"
                     />
@@ -285,8 +317,16 @@ export default function VoiceAgent() {
               <CardHeader icon={PhoneCall} title="Test your voice agent" />
               <CardBody>
                 <p className="text-[0.83rem] leading-relaxed text-slate-600">
-                  Place a test call to your own number and hear exactly what a customer hears.
+                  Place an outbound call from the Twilio number. Answer it to hear the AI receptionist.
                 </p>
+                <Input
+                  className="mt-3"
+                  label="Call this number"
+                  value={testTo}
+                  onChange={(e) => setTestTo(e.target.value)}
+                  placeholder={s.businessNumber || twilio.data?.ownerNumber || '+923107443144'}
+                  help="Include the country code."
+                />
                 <Button as="button" variant="secondary" size="sm" className="mt-4 w-full" loading={testing} onClick={testCall}>
                   <PhoneCall className="h-3.5 w-3.5" aria-hidden="true" />
                   Test Call
@@ -299,8 +339,8 @@ export default function VoiceAgent() {
               <CardBody>
                 <ul className="space-y-2.5 text-[0.82rem]">
                   {[
-                    ['Twilio credentials saved', (credentials.data || []).some((c) => c.saved)],
-                    ['Platform number configured', Boolean(s.twilioNumber)],
+                    ['Twilio credentials saved', Boolean(twilio.data?.ready) || (credentials.data || []).some((c) => c.saved)],
+                    ['Platform number configured', Boolean(s.twilioNumber || twilio.data?.phone)],
                     ['Greeting written', Boolean(s.greeting)],
                     ['Voice agent enabled', s.enabled],
                   ].map(([label, done]) => (

@@ -70,10 +70,10 @@ export const conversationService = {
     }
   },
 
-  listCalls: () => request(() => []),
+  listCalls: () => api('/voice/calls'),
   listMessages: () => request(() => []),
-  listTranscripts: () => request(() => []),
-  getTranscript: () => request(() => null),
+  listTranscripts: () => api('/voice/transcripts'),
+  getTranscript: (id) => api('/voice/transcripts').then((rows) => (rows || []).find((row) => row.id === id) || null),
 }
 
 export default conversationService

@@ -18,6 +18,7 @@ import {
   LifeBuoy,
   FlaskConical,
   Globe,
+  Phone,
 } from 'lucide-react'
 
 /** Sidebar structure for the business portal. Groups are collapsible. */
@@ -37,6 +38,7 @@ export const navigation = [
       { label: 'Prompt Configuration', to: '/app/ai-training/prompts', icon: SlidersHorizontal },
       { label: 'Configuration Mode', to: '/app/ai-config', icon: FlaskConical },
       { label: 'WhatsApp Agent', to: '/app/whatsapp-agent', icon: MessageSquare },
+      { label: 'Voice Agent', to: '/app/voice-agent', icon: Phone },
       { label: 'Website Widget', to: '/app/website-widget', icon: Globe },
       { label: 'AI Playground', to: '/app/ai-test', icon: FlaskConical },
     ],
@@ -44,7 +46,10 @@ export const navigation = [
   {
     id: 'communication',
     label: 'Communication',
-    items: [{ label: 'Conversations', to: '/app/conversations', icon: MessagesSquare }],
+    items: [
+      { label: 'Conversations', to: '/app/conversations', icon: MessagesSquare },
+      { label: 'Calls', to: '/app/calls', icon: Phone },
+    ],
   },
   {
     id: 'analytics',
@@ -60,6 +65,7 @@ export const navigation = [
     items: [
       { label: 'Channels', to: '/app/channels', icon: Radio },
       { label: 'WhatsApp', to: '/app/integrations/whatsapp', icon: MessageSquare },
+      { label: 'Phone / Twilio', to: '/app/integrations/phone', icon: Phone },
       { label: 'Website Widget', to: '/app/website-widget', icon: Globe },
     ],
   },

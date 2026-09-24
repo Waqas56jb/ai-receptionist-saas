@@ -214,3 +214,31 @@ grant all on table email_otps to service_role;
 grant all on table password_resets to service_role;
 grant all on table account_sessions to service_role;
 grant all on table login_events to service_role;
+
+alter table account_settings add column if not exists voice jsonb default '{}';
+
+create table if not exists voice_calls (
+  id text primary key,
+  account_id text not null references accounts(id) on delete cascade,
+  conversation_id text,
+  twilio_sid text unique,
+  direction text not null default 'inbound',
+  from_number text,
+  to_number text,
+  status text default 'initiated',
+  duration integer default 0,
+  recording_url text,
+  recording_sid text,
+  outcome text,
+  transferred boolean default false,
+  ai_handled boolean default true,
+  started_at timestamptz,
+  ended_at timestamptz,
+  created_at timestamptz default now()
+);
+
+create index if not exists voice_calls_account_idx on voice_calls(account_id, created_at desc);
+
+alter table voice_calls enable row level security;
+revoke all on table voice_calls from anon, authenticated, public;
+grant all on table voice_calls to service_role;
