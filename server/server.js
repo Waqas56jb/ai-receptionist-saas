@@ -500,27 +500,35 @@ Rules:
 }
 
 async function replyFromKnowledge(accountId, userText, { spoken = false, extra = '' } = {}) {
-  const [context, accounts] = await Promise.all([
-    knowledgeContext(accountId),
-    dbSelect('accounts', { id: accountId }).catch(() => []),
-  ])
-  const name = accounts[0]?.business_name || accounts[0]?.name || 'this business'
-  const client = await openaiClient()
-  if (!client) {
-    const items = await dbSelect('knowledge_items', { account_id: accountId })
-    const hit = matchKnowledge(items, userText)
-    return hit?.body || 'Thank you for your message. A team member will follow up shortly.'
+  try {
+    const [context, accounts] = await Promise.all([
+      knowledgeContext(accountId),
+      dbSelect('accounts', { id: accountId }).catch(() => []),
+    ])
+    const name = accounts[0]?.business_name || accounts[0]?.name || 'this business'
+    const client = await openaiClient()
+    if (!client) {
+      const items = await dbSelect('knowledge_items', { account_id: accountId })
+      const hit = matchKnowledge(items, userText)
+      return hit?.body || 'Thank you for your message. A team member will follow up shortly.'
+    }
+    const completion = await Promise.race([
+      client.chat.completions.create({
+        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        temperature: 0.5,
+        messages: [
+          { role: 'system', content: receptionistPrompt(name, context, spoken) },
+          extra ? { role: 'system', content: extra } : null,
+          { role: 'user', content: userText },
+        ].filter(Boolean),
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 25000)),
+    ])
+    return completion.choices[0]?.message?.content?.trim() || 'Thanks — we will get back to you.'
+  } catch (error) {
+    console.error('replyFromKnowledge failed', error.message)
+    return 'Sorry, I am having a little trouble right now. Please send that again in a moment.'
   }
-  const completion = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-    temperature: 0.5,
-    messages: [
-      { role: 'system', content: receptionistPrompt(name, context, spoken) },
-      extra ? { role: 'system', content: extra } : null,
-      { role: 'user', content: userText },
-    ].filter(Boolean),
-  })
-  return completion.choices[0]?.message?.content?.trim() || 'Thanks — we will get back to you.'
 }
 
 async function transcribeAudio(buffer, filename = 'audio.ogg') {
@@ -759,16 +767,48 @@ async function loadBaileys() {
   return import('@whiskeysockets/baileys')
 }
 
-async function handleIncoming(accountId, sock, msg) {
-  if (!msg.message || msg.key.fromMe) return
-  const from = msg.key.remoteJid
-  if (!from || from.endsWith('@g.us')) return
+function unwrapWaMessage(message) {
+  if (!message) return null
+  return (
+    message.ephemeralMessage?.message ||
+    message.viewOnceMessage?.message ||
+    message.viewOnceMessageV2?.message ||
+    message.documentWithCaptionMessage?.message ||
+    message.editedMessage?.message ||
+    message
+  )
+}
 
-  const audio = msg.message.audioMessage || msg.message.pttMessage
+async function sendWhatsAppReply(sock, msg, payload) {
+  const targets = [msg.key.remoteJid, msg.key.remoteJidAlt, msg.key.participant, msg.key.participantAlt].filter(Boolean)
+  let lastError
+  for (const jid of [...new Set(targets)]) {
+    if (jid.endsWith('@g.us') || jid === 'status@broadcast') continue
+    try {
+      await sock.sendMessage(jid, payload)
+      return jid
+    } catch (error) {
+      lastError = error
+      console.warn('WhatsApp send failed', jid, error.message)
+    }
+  }
+  if (lastError) throw lastError
+}
+
+async function handleIncoming(accountId, sock, msg) {
+  const inner = unwrapWaMessage(msg.message)
+  if (!inner || msg.key.fromMe) return
+  const from = msg.key.remoteJid
+  if (!from || from.endsWith('@g.us') || from === 'status@broadcast') return
+
+  const audio = inner.audioMessage || inner.pttMessage
   const text =
-    msg.message.conversation ||
-    msg.message.extendedTextMessage?.text ||
-    msg.message.imageMessage?.caption ||
+    inner.conversation ||
+    inner.extendedTextMessage?.text ||
+    inner.imageMessage?.caption ||
+    inner.videoMessage?.caption ||
+    inner.buttonsResponseMessage?.selectedDisplayText ||
+    inner.listResponseMessage?.singleSelectReply?.selectedRowId ||
     ''
 
   let inbound = text
@@ -802,13 +842,17 @@ async function handleIncoming(accountId, sock, msg) {
   await upsertConnection(accountId, { last_seen: now() })
 
   if (type === 'voice') {
-    const spoken = await speakReply(reply)
-    if (spoken) {
-      await sock.sendMessage(from, { audio: spoken, ptt: true, mimetype: 'audio/ogg; codecs=opus' })
-      return
+    try {
+      const spoken = await speakReply(reply)
+      if (spoken) {
+        await sendWhatsAppReply(sock, msg, { audio: spoken, ptt: true, mimetype: 'audio/ogg; codecs=opus' })
+        return
+      }
+    } catch (error) {
+      console.warn('WhatsApp voice reply failed, sending text', error.message)
     }
   }
-  await sock.sendMessage(from, { text: reply })
+  await sendWhatsAppReply(sock, msg, { text: reply })
 }
 
 async function startWhatsApp(accountId, { forceQr = false } = {}) {
@@ -893,7 +937,8 @@ async function startWhatsApp(accountId, { forceQr = false } = {}) {
         setTimeout(() => startWhatsApp(accountId).catch(() => {}), delay)
       }
     })
-    sock.ev.on('messages.upsert', async ({ messages }) => {
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      if (type && type !== 'notify') return
       for (const msg of messages || []) {
         try {
           await handleIncoming(accountId, sock, msg)

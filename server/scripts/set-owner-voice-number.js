@@ -3,6 +3,7 @@ const { Client } = require('pg')
 const { createClient } = require('@supabase/supabase-js')
 
 const OWNER = process.env.TWILIO_OWNER_NUMBER || '+923107443144'
+const BUSINESS = process.env.TWILIO_BUSINESS_NUMBER || '+25377492748'
 
 async function main() {
   const pg = new Client({
@@ -17,8 +18,7 @@ async function main() {
     auth: { persistSession: false },
   })
 
-  await supabase.from('accounts').update({ phone: '+253 77000000' }).eq('id', 'acc_demo_client')
-  await supabase.from('accounts').update({ phone: '+25377492748' }).eq('id', 'acc_muc8evmomfe36h')
+  await supabase.from('accounts').update({ phone: BUSINESS }).eq('id', 'acc_muc8evmomfe36h')
 
   const { data: accounts, error: accountError } = await supabase.from('accounts').select('id, email')
   if (accountError) throw accountError
@@ -26,14 +26,14 @@ async function main() {
   for (const account of accounts || []) {
     const { data: rows } = await supabase.from('account_settings').select('account_id, voice').eq('account_id', account.id)
     const current = rows?.[0]?.voice || {}
-    const voice = { ...current, businessNumber: OWNER, callerId: OWNER, enabled: true }
+    const businessNumber = account.email === 'abdiqadirxassano@gmail.com' ? BUSINESS : current.businessNumber || OWNER
+    const voice = { ...current, businessNumber, callerId: OWNER, enabled: true }
     if (rows?.[0]) {
       const { error } = await supabase
         .from('account_settings')
         .update({ voice, updated_at: new Date().toISOString() })
         .eq('account_id', account.id)
       if (error) throw error
-      console.log('updated', account.email)
     } else {
       const { error } = await supabase.from('account_settings').insert({
         account_id: account.id,
@@ -41,22 +41,9 @@ async function main() {
         updated_at: new Date().toISOString(),
       })
       if (error) throw error
-      console.log('inserted', account.email)
     }
+    console.log('saved', account.email, businessNumber)
   }
-
-  const { data: check } = await supabase.from('account_settings').select('account_id, voice')
-  console.log(
-    JSON.stringify(
-      (check || []).map((row) => ({
-        id: row.account_id,
-        businessNumber: row.voice?.businessNumber,
-        callerId: row.voice?.callerId,
-      })),
-      null,
-      2,
-    ),
-  )
 }
 
 main().catch((error) => {
