@@ -606,32 +606,55 @@ async function replyFromKnowledge(accountId, userText, { spoken = false, extra =
   }
 }
 
+const TRANSCRIBE_PROMPT =
+  "The speaker may use English, Arabic, Somali, Amharic, Afar, French or any other language. Transcribe exactly what is said in the original language and its own script (Amharic in Ge'ez letters, Arabic in Arabic letters). Do not translate."
+
+/**
+ * Speech to text in the caller's own language. gpt-4o-transcribe recognises Somali
+ * and Amharic far better than whisper-1 (which hears them as Swahili / English), so
+ * it is tried first; whisper-1 stays as the fallback.
+ */
 async function transcribeAudio(buffer, filename = 'audio.ogg', language = null) {
   const client = await openaiClient()
   if (!client) return ''
-  const file = await OpenAIFile(buffer, filename)
-  const meta = language ? i18n.LANGUAGES[i18n.normalizeLanguage(language)] : null
-  const params = { file, model: 'whisper-1' }
-  // Whisper auto-detects well-resourced languages; Somali and Amharic are often misheard
-  // as another language, so a line configured for them passes an explicit hint.
-  if (meta?.lowResource && meta.whisper) params.language = meta.whisper
-  const result = await client.audio.transcriptions.create(params)
-  return result.text || ''
+  const meta = language ? i18n.LANGUAGES[i18n.normalizeLanguage(language, '')] : null
+  // A line configured for Somali or Amharic passes an explicit hint; otherwise the model detects.
+  const hint = meta?.lowResource && meta.whisper ? meta.whisper : null
+  const models = [process.env.OPENAI_TRANSCRIBE_MODEL || 'gpt-4o-transcribe', 'whisper-1']
+  let lastError
+  for (const model of [...new Set(models)]) {
+    try {
+      const params = { file: await OpenAIFile(buffer, filename), model, prompt: TRANSCRIBE_PROMPT }
+      if (hint) params.language = hint
+      const result = await client.audio.transcriptions.create(params)
+      return String(result.text || '').trim()
+    } catch (error) {
+      lastError = error
+      console.warn(`Transcription with ${model} failed:`, error.message)
+    }
+  }
+  if (lastError) throw lastError
+  return ''
 }
 
-async function speakReply(text, format = 'opus') {
+async function speakReply(text, format = 'opus', language = null) {
   const client = await openaiClient()
   if (!client) return null
-  const models = format === 'mp3' ? ['gpt-4o-mini-tts', 'tts-1'] : ['tts-1']
+  // gpt-4o-mini-tts takes a delivery instruction, so the voice speaks the reply's language natively.
+  const models = [process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts', 'tts-1']
+  // The customer's language wins: short replies can look like another language to the word-list detector.
+  const lang = language || i18n.detectLanguage(text)
   let lastError
-  for (const model of models) {
+  for (const model of [...new Set(models)]) {
     try {
-      const speech = await client.audio.speech.create({
+      const params = {
         model,
         voice: 'nova',
         input: text,
         response_format: format,
-      })
+      }
+      if (model !== 'tts-1' && model !== 'tts-1-hd') params.instructions = i18n.speechInstructions(lang)
+      const speech = await client.audio.speech.create(params)
       return Buffer.from(await speech.arrayBuffer())
     } catch (error) {
       lastError = error
@@ -916,15 +939,19 @@ async function handleIncoming(accountId, sock, msg) {
 
   await saveMessage(accountId, conversation.id, 'in', inbound, { type, channel: 'whatsapp', visitorKey: from })
   const language = (await rememberLanguage(accountId, conversation.id, inbound)) || conversation.language || null
+  const voiceNote =
+    type === 'voice'
+      ? 'The customer sent a WhatsApp voice note and your reply will be sent back as a voice note. Reply in the exact language the customer spoke. Use short, natural spoken sentences: no markdown, lists, emojis or links.'
+      : ''
 
-  const reply = await replyFromKnowledge(accountId, inbound, { language })
+  const reply = await replyFromKnowledge(accountId, inbound, { language, extra: voiceNote })
   await saveMessage(accountId, conversation.id, 'out', reply, { type: type === 'voice' ? 'voice' : 'text', handled_as: 'ai', channel: 'whatsapp', visitorKey: from })
   await dbUpdate('conversations', { id: conversation.id, account_id: accountId }, { last_message: reply, last_at: now() })
   await upsertConnection(accountId, { last_seen: now() })
 
   if (type === 'voice') {
     try {
-      const spoken = await speakReply(reply)
+      const spoken = await speakReply(reply, 'opus', language)
       if (spoken) {
         await sendWhatsAppReply(sock, msg, { audio: spoken, ptt: true, mimetype: 'audio/ogg; codecs=opus' })
         return

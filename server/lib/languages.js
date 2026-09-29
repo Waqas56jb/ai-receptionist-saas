@@ -43,7 +43,7 @@ function languageName(code) {
 
 const WORDS = {
   so: ['waxaan', 'waxa', 'maxaa', 'fadlan', 'mahadsanid', 'mahadsan', 'haa', 'maya', 'waa', 'iyo', 'ayaan', 'ayuu', 'sidee', 'immisa', 'xagee', 'goorma', 'salaan', 'nabad', 'ballan', 'qiimaha', 'subax', 'wanaagsan', 'caawin', 'rabaa', 'doonayaa', 'ahay', 'tahay', 'hadda', 'berri', 'maanta', 'ma', 'aan', 'ka', 'ku', 'soo', 'kala', 'waan', 'xafiiska', 'lacag', 'isku'],
-  aa: ['qafar', 'nagay', 'maaqo', 'maaqoonu', 'mahaa', 'macaay', 'macaa', 'yoo', 'kaa', 'atu', 'anu', 'nanu', 'isin', 'usuk', 'tet', 'kee', 'elle', 'edde', 'abe', 'abinaan', 'akkele', 'sinni', 'gexe', 'gexxa', 'faxa', 'faxxa', 'iyya', 'ittam', 'yeexege', 'xiqe', 'gadda', 'meqe', 'meqeh', 'qaxa', 'baaxo', 'ellecabo'],
+  aa: ['qafar', 'nagay', 'nagai', 'makai', 'makay', 'maaqo', 'maaqoonu', 'mahaa', 'macaay', 'macaa', 'yoo', 'kaa', 'atu', 'anu', 'nanu', 'isin', 'usuk', 'tet', 'kee', 'elle', 'edde', 'abe', 'abinaan', 'akkele', 'sinni', 'gexe', 'gexxa', 'faxa', 'faxxa', 'iyya', 'ittam', 'yeexege', 'xiqe', 'gadda', 'meqe', 'meqeh', 'qaxa', 'baaxo', 'ellecabo'],
   fr: ['bonjour', 'bonsoir', 'merci', 'je', 'vous', 'nous', 'est', 'pour', 'avec', 'rendez-vous', 'svp', 'combien', 'quand', 'où', 'oui', 'le', 'la', 'les', 'des', 'une', 'suis', 'voudrais', 'pouvez', "c'est", 'aujourd’hui', 'demain'],
   en: ['the', 'is', 'are', 'what', 'when', 'where', 'how', 'can', 'i', 'you', 'my', 'please', 'thanks', 'thank', 'hello', 'hi', 'book', 'appointment', 'price', 'open', 'want', 'need', 'do', 'have', 'today', 'tomorrow'],
 }
@@ -56,6 +56,8 @@ function detectLanguage(text) {
   const value = String(text || '')
   if (!value.trim()) return null
   if (/[ሀ-፿ᎀ-᎟ⶀ-⷟]/.test(value)) return 'am'
+  // Urdu / Persian letters share the Arabic block — let the model pick the language instead of forcing Arabic.
+  if (/[ٹڈڑںےۓہھپچژگکی]/.test(value)) return null
   if (/[؀-ۿݐ-ݿ]/.test(value)) return 'ar'
   const tokens = value.toLowerCase().normalize('NFC').split(/[^a-zà-ÿ’'-]+/).filter(Boolean)
   if (!tokens.length) return null
@@ -69,6 +71,13 @@ function detectLanguage(text) {
   if (bestScore === 0) return null
   if (ranked[1] && ranked[1][1] === bestScore) return null
   return bestCode
+}
+
+/** Delivery hint for the text-to-speech voice. */
+function speechInstructions(lang) {
+  const code = lang && LANGUAGES[normalizeLanguage(lang, '')] ? normalizeLanguage(lang) : null
+  const target = code ? `${LANGUAGES[code].name} (${LANGUAGES[code].native})` : 'the same language as the text'
+  return `Speak in ${target} with natural, native pronunciation. Warm, friendly and clear, like a helpful receptionist. Read numbers, prices and times the way a native speaker says them.`
 }
 
 /** Chat model for a reply language: Somali, Amharic and Afar need a stronger model to stay in-language. */
@@ -92,6 +101,7 @@ function languageRules({ defaultLanguage = DEFAULT_LANGUAGE, detected = null, sp
     `- Somali: standard Latin Somali orthography (c, x, q, doubled long vowels).`,
     `- Arabic: Modern Standard Arabic unless the customer clearly writes in a dialect.`,
     `- The business knowledge may be written in English or another language. Translate the facts faithfully into the customer's language; keep prices, numbers, names, phone numbers, emails and links exactly as written.`,
+    `- Any other language works the same way: if the customer writes or speaks Urdu, Hindi, Oromo, Tigrinya, Swahili, Turkish or anything else, reply in that language.`,
     `- If the message has no clear language (only a number, emoji or a name), reply in ${fallback}.`,
   ]
   if (detected && LANGUAGES[detected]) {
@@ -327,6 +337,7 @@ module.exports = {
   detectLanguage,
   languageRules,
   chatModelFor,
+  speechInstructions,
   phrase,
   isStockPhrase,
   wantsHumanAny,
