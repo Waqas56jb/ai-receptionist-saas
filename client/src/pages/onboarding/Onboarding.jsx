@@ -31,7 +31,7 @@ import { useToast } from '../../context/ToastContext'
 import businessService from '../../services/businessService'
 import aiService from '../../services/aiService'
 import channelService from '../../services/channelService'
-import knowledgeService from '../../services/knowledgeService'
+import knowledgeService, { describeUploadFailures } from '../../services/knowledgeService'
 
 const steps = [
   { id: 1, label: 'Business', icon: Building2 },
@@ -274,8 +274,9 @@ export default function Onboarding() {
                         if (!files.length) return
                         setUploading(true)
                         try {
-                          await knowledgeService.uploadDocuments(files, { sector: business.type })
-                          toast.success(`${files.length} file${files.length > 1 ? 's' : ''} added to the knowledge base.`)
+                          const result = await knowledgeService.uploadDocuments(files, { sector: business.type })
+                          if (result.uploaded) toast.success(`${result.uploaded} file${result.uploaded > 1 ? 's' : ''} added to the knowledge base.`)
+                          if (result.failed.length) toast.error(describeUploadFailures(result.failed))
                         } catch (error) {
                           toast.error(error.message || 'Upload failed.')
                         } finally {

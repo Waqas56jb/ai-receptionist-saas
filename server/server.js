@@ -1821,7 +1821,14 @@ app.post('/api/knowledge/upload', auth('account'), upload.array('files', 8), asy
     if (!files.length) return res.status(400).json({ error: 'Choose a PDF, Word, text or image file to upload.' })
     const sector = cleanText(req.body?.sector, 80)
     const category = cleanText(req.body?.category, 60) || 'Documents'
+    const existing = await dbSelect('knowledge_items', { account_id: req.actor.id }).catch(() => [])
+    const recentCutoff = Date.now() - 3 * 60 * 1000
     for (const file of files) {
+      // The phone client retries an upload whose connection dropped; skip the copy if the first one landed.
+      const repeat = existing.some(
+        (row) => row.file_name === file.originalname && new Date(row.created_at).getTime() > recentCutoff,
+      )
+      if (repeat) continue
       // One unreadable file (e.g. a HEIC phone photo the vision model rejects) must not fail the whole upload.
       const body = await extractUploadText(file).catch((error) => {
         console.warn('Upload text extraction failed:', file.originalname, error.message)
@@ -2400,11 +2407,17 @@ function parseHours(value) {
   return []
 }
 
+/** The AI always answers English, French, Arabic, Somali, Amharic and Afar; extra languages stay as saved. */
+function withCoreLanguages(aiConfig) {
+  const saved = Array.isArray(aiConfig.supportedLanguages) ? aiConfig.supportedLanguages : []
+  return { ...aiConfig, supportedLanguages: [...new Set([...i18n.ALL_CODES, ...saved])] }
+}
+
 async function getSettings(accountId) {
   const rows = await dbSelect('account_settings', { account_id: accountId })
   const row = rows[0] || {}
   return {
-    ai_config: { ...defaultSettings.ai_config, ...(row.ai_config || {}) },
+    ai_config: withCoreLanguages({ ...defaultSettings.ai_config, ...(row.ai_config || {}) }),
     prompts: { ...defaultSettings.prompts, ...(row.prompts || {}) },
     prompt_versions: Array.isArray(row.prompt_versions) ? row.prompt_versions : [],
     whatsapp: { ...defaultSettings.whatsapp, ...(row.whatsapp || {}) },
@@ -2420,7 +2433,7 @@ async function saveSettings(accountId, patch) {
   const current = await getSettings(accountId)
   const next = {
     account_id: accountId,
-    ai_config: { ...current.ai_config, ...(patch.ai_config || {}) },
+    ai_config: withCoreLanguages({ ...current.ai_config, ...(patch.ai_config || {}) }),
     prompts: { ...current.prompts, ...(patch.prompts || {}) },
     prompt_versions: patch.prompt_versions || current.prompt_versions,
     whatsapp: { ...current.whatsapp, ...(patch.whatsapp || {}) },
@@ -2914,6 +2927,10 @@ registerMailAuth({
 })
 
 app.use((error, _req, res, _next) => {
+  if (error?.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'This file is larger than 20 MB. Upload a smaller file.' })
+  if (error?.code === 'LIMIT_FILE_COUNT' || error?.code === 'LIMIT_UNEXPECTED_FILE') {
+    return res.status(400).json({ error: 'Upload up to 8 files at a time.' })
+  }
   res.status(500).json({ error: error.message || 'Server error' })
 })
 

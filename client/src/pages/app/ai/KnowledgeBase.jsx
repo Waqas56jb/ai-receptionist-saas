@@ -12,7 +12,7 @@ import { Input, Select, Textarea } from '../../../components/ui/Field'
 import { EmptyState } from '../../../components/ui/States'
 import useAsync from '../../../hooks/useAsync'
 import { useToast } from '../../../context/ToastContext'
-import knowledgeService from '../../../services/knowledgeService'
+import knowledgeService, { describeUploadFailures } from '../../../services/knowledgeService'
 import { knowledgeCategories } from '../../../data/mock/ai'
 import { businessTypes } from '../../../data/mock/business'
 import { formatDate } from '../../../lib/format'
@@ -94,13 +94,15 @@ export default function KnowledgeBase() {
     if (!files.length) return
     setUploading(true)
     try {
-      applyItems(
-        await knowledgeService.uploadDocuments(files, {
-          sector: uploadSector === null ? businessType : uploadSector,
-        }),
-      )
-      toast.success(`${files.length} document${files.length > 1 ? 's' : ''} uploaded. Text is now in the knowledge base.`)
-      setTab('Documents')
+      const result = await knowledgeService.uploadDocuments(files, {
+        sector: uploadSector === null ? businessType : uploadSector,
+      })
+      if (result.items) applyItems(result.items)
+      if (result.uploaded) {
+        toast.success(`${result.uploaded} document${result.uploaded > 1 ? 's' : ''} uploaded. Text is now in the knowledge base.`)
+        setTab('Documents')
+      }
+      if (result.failed.length) toast.error(describeUploadFailures(result.failed))
     } catch (error) {
       toast.error(error.message || 'Upload failed. Use PDF, Word, text or an image under 20 MB.')
     } finally {

@@ -25,6 +25,9 @@ const behaviours = [
 
 const styles = ['Short', 'Balanced', 'Detailed']
 
+
+// Languages the AI always answers in (server/lib/languages.js); they cannot be switched off.
+const CORE_LANGUAGES = ['en', 'fr', 'ar', 'so', 'am', 'aa']
 export default function AIOverview() {
   const toast = useToast()
   const config = useAsync(() => aiService.getConfig(), [])
@@ -39,6 +42,7 @@ export default function AIOverview() {
 
   const toggleLanguage = (code) => {
     const current = config.data.supportedLanguages
+    if (CORE_LANGUAGES.includes(code) && current.includes(code)) return
     const next = current.includes(code) ? current.filter((c) => c !== code) : [...current, code]
     if (!next.length) return
     update({ supportedLanguages: next })
@@ -146,6 +150,7 @@ export default function AIOverview() {
                             type="button"
                             onClick={() => toggleLanguage(lang.code)}
                             aria-pressed={active}
+                            title={CORE_LANGUAGES.includes(lang.code) ? 'Always on' : undefined}
                             className={
                               active
                                 ? 'rounded-lg border border-primary-400/40 bg-primary-500/15 px-3 py-1.5 text-[0.78rem] font-semibold text-primary-400'
@@ -158,7 +163,7 @@ export default function AIOverview() {
                       })}
                     </div>
                     <p className="mt-2 text-[0.75rem] text-slate-500">
-                      The AI detects the customer's language automatically and replies in it.
+                      The AI detects the customer's language automatically and replies in it. English, French, Arabic, Somali, Amharic and Afar are always on.
                     </p>
                   </div>
 

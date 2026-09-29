@@ -1765,3 +1765,11 @@ am[HAND_BACK] = 'ለAI መልስ'
 am[HANDED_BACK] = 'የAI እንግዳ ተቀባዩ እንደገና እየመለሰ ነው።'
 aa[HAND_BACK] = 'AI-l gacsi'
 aa[HANDED_BACK] = 'AI marih-geyyeena qagitak gaba haa.'
+
+// Knowledge uploads and core languages.
+const ALWAYS_ON = 'Always on'
+hornNames.fr[ALWAYS_ON] = 'Toujours activé'
+hornNames.ar[ALWAYS_ON] = 'مفعّل دائمًا'
+hornNames.so[ALWAYS_ON] = 'Had iyo jeer shaqeynaya'
+am[ALWAYS_ON] = 'ሁልጊዜ በርቷል'
+aa[ALWAYS_ON] = 'Inkih wakti fakkimeh'
