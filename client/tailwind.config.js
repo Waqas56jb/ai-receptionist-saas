@@ -119,8 +119,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Poppins', 'Noto Sans Ethiopic', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Poppins', 'Noto Sans Ethiopic', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         xxs: ['0.6875rem', { lineHeight: '1rem', letterSpacing: '0.01em' }],

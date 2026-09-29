@@ -90,7 +90,7 @@ export function PlatformSettings() {
         <Card>
           <CardHeader icon={Bot} title="AI defaults" description="Applied to new businesses; each can override them in their own portal." />
           <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Select label="Default language" options={['English', 'French', 'German', 'Spanish', 'Arabic']} value={s.ai.defaultLanguage} onChange={setField('ai', 'defaultLanguage')} />
+            <Select label="Default language" options={['English', 'French', 'German', 'Spanish', 'Arabic', 'Somali', 'Amharic', 'Afar']} value={s.ai.defaultLanguage} onChange={setField('ai', 'defaultLanguage')} />
             <Select label="Default personality" options={['Professional', 'Friendly', 'Formal', 'Hospitality', 'Healthcare']} value={s.ai.defaultPersonality} onChange={setField('ai', 'defaultPersonality')} />
             <Input label="Max AI minutes per call" type="number" value={s.ai.maxAiMinutesPerCall} onChange={setField('ai', 'maxAiMinutesPerCall')} />
             <Input label="Max knowledge documents" type="number" value={s.ai.maxKnowledgeDocs} onChange={setField('ai', 'maxKnowledgeDocs')} />

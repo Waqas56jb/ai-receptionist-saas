@@ -11,7 +11,9 @@
   }
 
   var iframe = document.createElement('iframe')
-  iframe.src = origin + '/widget/' + encodeURIComponent(token)
+  // Widget language: data-lang on the script tag, else the host page's <html lang>, else the business default.
+  var lang = (script.getAttribute('data-lang') || document.documentElement.lang || '').toLowerCase().slice(0, 2)
+  iframe.src = origin + '/widget/' + encodeURIComponent(token) + (lang ? '?lang=' + encodeURIComponent(lang) : '')
   iframe.title = 'Website chat'
   iframe.setAttribute('allow', 'microphone; autoplay; clipboard-write')
   iframe.style.cssText =

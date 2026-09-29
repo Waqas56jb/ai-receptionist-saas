@@ -15,6 +15,7 @@ import { useToast } from '../../context/ToastContext'
 import aiService from '../../services/aiService'
 import channelService from '../../services/channelService'
 import businessService from '../../services/businessService'
+import { languageLabels } from '../../data/mock/business'
 
 /**
  * Shared configuration screen for the WhatsApp and Instagram agents — the two
@@ -285,7 +286,7 @@ export default function MessagingAgentPage({
           </div>
 
           <div className="space-y-4">
-            <AIStatusCard config={config.data} channels={channels.data || []} languages={['English', 'French', 'German']} compact />
+            <AIStatusCard config={config.data} channels={channels.data || []} languages={languageLabels(config.data?.supportedLanguages)} compact />
 
             <Card>
               <CardHeader icon={Send} title="Test this channel" />

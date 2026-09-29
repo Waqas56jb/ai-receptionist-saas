@@ -61,6 +61,9 @@ export const languages = [
   { code: 'it', label: 'Italian' },
   { code: 'nl', label: 'Dutch' },
   { code: 'ar', label: 'Arabic' },
+  { code: 'so', label: 'Somali' },
+  { code: 'am', label: 'Amharic' },
+  { code: 'aa', label: 'Afar' },
   { code: 'ur', label: 'Urdu' },
 ]
 
@@ -123,3 +126,8 @@ export const teamRoles = [
 
 export const sessions = []
 export const loginHistory = []
+
+/** Display names for a list of AI language codes, in the order of `languages`. */
+export function languageLabels(codes = []) {
+  return languages.filter((item) => codes.includes(item.code)).map((item) => item.label)
+}

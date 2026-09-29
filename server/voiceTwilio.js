@@ -1,4 +1,5 @@
 const twilioVoice = require('./lib/twilioVoice')
+const i18n = require('./lib/languages')
 
 const OWNER_NUMBER = process.env.TWILIO_OWNER_NUMBER || '+923107443144'
 
@@ -36,6 +37,8 @@ function registerVoice(app, deps) {
     replyFromKnowledge,
     speakReply,
     transcribeAudio,
+    localizePhrase,
+    rememberLanguage,
     upsertConversation,
     saveMessage,
     publicBase,
@@ -50,6 +53,33 @@ function registerVoice(app, deps) {
   async function voiceSettings(accountId) {
     const settings = await getSettings(accountId).catch(() => ({ voice: {} }))
     return { ...defaultVoice, ...(settings.voice || {}) }
+  }
+
+  function callLanguage(voice) {
+    return i18n.normalizeLanguage(voice.language)
+  }
+
+  // Twilio speech recognition has no Somali, Amharic or Afar, so those calls
+  // record each caller turn and transcribe it with Whisper instead of <Gather speech>.
+  function usesRecordMode(voice) {
+    return !i18n.LANGUAGES[callLanguage(voice)].twilio
+  }
+
+  function say(key, voice, custom) {
+    return localizePhrase(key, callLanguage(voice), custom)
+  }
+
+  async function fetchRecording(url, voice) {
+    const creds = twilioVoice.resolveCreds(voice)
+    const user = creds.apiKey && creds.apiSecret ? creds.apiKey : creds.accountSid
+    const pass = creds.apiKey && creds.apiSecret ? creds.apiSecret : creds.authToken
+    const headers = user && pass ? { Authorization: `Basic ${Buffer.from(`${user}:${pass}`).toString('base64')}` } : {}
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await fetch(url, { headers })
+      if (response.ok) return Buffer.from(await response.arrayBuffer())
+      await new Promise((resolve) => setTimeout(resolve, 600))
+    }
+    throw new Error('Recording not available')
   }
 
   async function findAccountForNumber(called) {
@@ -131,7 +161,7 @@ function registerVoice(app, deps) {
     } catch (error) {
       console.warn('Voice TTS fallback to Say:', error.message)
     }
-    return `<Say language="${twilioVoice.speechLanguage(voice.language)}" voice="Polly.Joanna">${twilioVoice.xml(text)}</Say>`
+    return `<Say language="${twilioVoice.speechLanguage(callLanguage(voice))}" voice="Polly.Joanna">${twilioVoice.xml(text)}</Say>`
   }
 
   function publicUrlForAudio(accountId, token) {
@@ -168,9 +198,17 @@ function registerVoice(app, deps) {
     const promptXml = prompt ? await audioOrSay(account.id, prompt, voice) : ''
     const timeout = Math.max(2, Number(voice.silenceTimeout || 4))
     const action = `${hooks.gather}?account=${encodeURIComponent(account.id)}&turns=${Number(extras.turns || 0)}`
+    if (usesRecordMode(voice)) {
+      return [
+        extras.recordHeader || '',
+        promptXml,
+        `<Record action="${twilioVoice.xml(action)}" method="POST" maxLength="30" timeout="${timeout}" playBeep="false" trim="trim-silence" finishOnKey="0#"/>`,
+        `<Redirect method="POST">${twilioVoice.xml(`${hooks.inbound}?account=${encodeURIComponent(account.id)}&idle=1`)}</Redirect>`,
+      ].join('')
+    }
     return [
       extras.recordHeader || '',
-      `<Gather input="speech dtmf" action="${twilioVoice.xml(action)}" method="POST" speechTimeout="auto" timeout="${timeout}" language="${twilioVoice.speechLanguage(voice.language)}" hints="appointment, booking, hours, price, transfer, agent">`,
+      `<Gather input="speech dtmf" action="${twilioVoice.xml(action)}" method="POST" speechTimeout="auto" timeout="${timeout}" language="${twilioVoice.speechLanguage(callLanguage(voice))}" hints="appointment, booking, hours, price, transfer, agent">`,
       promptXml,
       '</Gather>',
       `<Redirect method="POST">${twilioVoice.xml(`${hooks.inbound}?account=${encodeURIComponent(account.id)}&idle=1`)}</Redirect>`,
@@ -198,7 +236,7 @@ function registerVoice(app, deps) {
       })
 
       if (req.query.idle === '1') {
-        const goodbye = voice.goodbye || defaultVoice.goodbye
+        const goodbye = await say('goodbye', voice, voice.goodbye)
         return sendTwiml(res, `${await audioOrSay(account.id, goodbye, voice)}<Hangup/>`)
       }
 
@@ -206,19 +244,19 @@ function registerVoice(app, deps) {
         if (voice.voicemailFallback) {
           return sendTwiml(
             res,
-            `${await audioOrSay(account.id, 'Please leave a message after the tone.', voice)}<Record action="${twilioVoice.xml(hooks.voicemail + `?account=${account.id}`)}" method="POST" maxLength="90" playBeep="true" transcribe="true"/>`,
+            `${await audioOrSay(account.id, await say('leaveMessage', voice), voice)}<Record action="${twilioVoice.xml(hooks.voicemail + `?account=${account.id}`)}" method="POST" maxLength="90" playBeep="true" transcribe="true"/>`,
           )
         }
         const transfer = twilioVoice.e164(voice.businessNumber || voice.callerId)
         if (transfer) return sendTwiml(res, `<Dial callerId="${twilioVoice.xml(voice.callerId || called)}">${twilioVoice.xml(transfer)}</Dial>`)
-        return sendTwiml(res, '<Say>The receptionist is unavailable right now. Please try again later.</Say><Hangup/>')
+        return sendTwiml(res, `${await audioOrSay(account.id, await say('unavailable', voice), voice)}<Hangup/>`)
       }
 
       startRecording(account.id, req.body.CallSid, voice).catch(() => {})
       const greeting =
         req.body.Direction === 'outbound-api'
-          ? voice.greeting || 'Hello, this is the AI receptionist calling. How can I help?'
-          : voice.greeting || defaultVoice.greeting
+          ? await say('outboundGreeting', voice, voice.greeting)
+          : await say('greeting', voice, voice.greeting)
       sendTwiml(res, await gatherTwiml(req, account, voice, greeting, { turns: 0 }))
     } catch (error) {
       console.error('Twilio inbound failed', error.message)
@@ -238,37 +276,46 @@ function registerVoice(app, deps) {
       const account = (await dbSelect('accounts', { id: accountId }).catch(() => []))[0]
       if (!account) return sendTwiml(res, '<Say>Session expired.</Say><Hangup/>')
       const voice = await voiceSettings(account.id)
-      const speech = String(req.body.SpeechResult || '').trim()
-      const digits = String(req.body.Digits || '').trim()
+      const lang = callLanguage(voice)
+      let speech = String(req.body.SpeechResult || '').trim()
+      const digits = String(req.body.Digits || '').replace(/[^\d*]/g, '')
+      if (!speech && req.body.RecordingUrl) {
+        try {
+          const buffer = await fetchRecording(req.body.RecordingUrl, voice)
+          speech = String((await transcribeAudio(buffer, 'turn.wav', lang)) || '').trim()
+        } catch (error) {
+          console.warn('Voice turn transcription failed:', error.message)
+        }
+      }
       const turns = Number(req.query.turns || 0) + 1
       const from = req.body.From || req.body.Caller
       const called = req.body.Called || req.body.To
 
-      if (digits === '0' || wantsHuman(speech)) {
+      if (digits === '0' || twilioVoice.wantsHuman(speech) || i18n.wantsHumanAny(speech)) {
         const transfer = twilioVoice.e164(voice.businessNumber || voice.callerId)
         await upsertCall(account.id, { twilio_sid: req.body.CallSid, transferred: true, outcome: 'Transferred', ai_handled: true })
         if (voice.humanTransfer && transfer) {
-          const line = 'Please hold while I connect you to the team.'
+          const line = await say('hold', voice)
           await logTurn(account.id, from, from, speech || '0', line)
           return sendTwiml(
             res,
             `${await audioOrSay(account.id, line, voice)}<Dial callerId="${twilioVoice.xml(voice.callerId || called)}">${twilioVoice.xml(transfer)}</Dial>`,
           )
         }
-        const fallback = 'I cannot transfer this call right now. I will ask the team to call you back.'
+        const fallback = await say('cannotTransfer', voice)
         await logTurn(account.id, from, from, speech || '0', fallback)
         return sendTwiml(res, `${await audioOrSay(account.id, fallback, voice)}<Hangup/>`)
       }
 
       if (!speech && !digits) {
         if (turns >= 2) {
-          return sendTwiml(res, `${await audioOrSay(account.id, voice.goodbye || defaultVoice.goodbye, voice)}<Hangup/>`)
+          return sendTwiml(res, `${await audioOrSay(account.id, await say('goodbye', voice, voice.goodbye), voice)}<Hangup/>`)
         }
-        return sendTwiml(res, await gatherTwiml(req, account, voice, 'Sorry, I did not catch that. How can I help?', { turns }))
+        return sendTwiml(res, await gatherTwiml(req, account, voice, await say('didNotCatch', voice), { turns }))
       }
 
-      if (wantsHangup(speech) || turns >= 12) {
-        const goodbye = voice.goodbye || defaultVoice.goodbye
+      if (twilioVoice.wantsHangup(speech) || i18n.wantsHangupAny(speech) || turns >= 12) {
+        const goodbye = await say('goodbye', voice, voice.goodbye)
         await logTurn(account.id, from, from, speech, goodbye)
         await upsertCall(account.id, { twilio_sid: req.body.CallSid, status: 'completed', outcome: 'Completed' })
         return sendTwiml(res, `${await audioOrSay(account.id, goodbye, voice)}<Hangup/>`)
@@ -277,13 +324,14 @@ function registerVoice(app, deps) {
       const extra = [voice.voiceInstructions, voice.emergencyInstructions ? `Emergency instructions: ${voice.emergencyInstructions}` : '']
         .filter(Boolean)
         .join('\n')
-      const reply = await replyFromKnowledge(account.id, speech || digits, { spoken: true, extra })
+      const reply = await replyFromKnowledge(account.id, speech || digits, { spoken: true, extra, language: lang })
       const conversation = await logTurn(account.id, from, from, speech || digits, reply)
+      await rememberLanguage(account.id, conversation.id, speech)
       await upsertCall(account.id, { twilio_sid: req.body.CallSid, conversation_id: conversation.id, status: 'in-progress' })
       sendTwiml(res, await gatherTwiml(req, account, voice, reply, { turns }))
     } catch (error) {
       console.error('Twilio gather failed', error.message)
-      sendTwiml(res, '<Say>Let me try that again. How can I help?</Say>')
+      sendTwiml(res, `<Say>${twilioVoice.xml(i18n.phrase('tryAgain', 'en'))}</Say>`)
     }
   })
 
@@ -335,7 +383,7 @@ function registerVoice(app, deps) {
             try {
               const audio = await fetch(`${req.body.RecordingUrl}.mp3`)
               const buffer = Buffer.from(await audio.arrayBuffer())
-              const text = await transcribeAudio(buffer, 'call.mp3')
+              const text = await transcribeAudio(buffer, 'call.mp3', voice.language)
               if (text) {
                 await logTurn(rows[0].account_id, rows[0].from_number, rows[0].from_number, `[recording] ${text}`, '')
               }
@@ -368,7 +416,17 @@ function registerVoice(app, deps) {
     } catch (error) {
       console.warn('Voicemail callback:', error.message)
     }
-    sendTwiml(res, '<Say>Thank you. Goodbye.</Say><Hangup/>')
+    let bye = i18n.phrase('thankYouGoodbye', 'en')
+    let voice = null
+    try {
+      if (req.query.account) {
+        voice = await voiceSettings(req.query.account)
+        bye = await say('thankYouGoodbye', voice)
+      }
+    } catch {
+      /* keep English */
+    }
+    sendTwiml(res, voice && req.query.account ? `${await audioOrSay(req.query.account, bye, voice)}<Hangup/>` : `<Say>${twilioVoice.xml(bye)}</Say><Hangup/>`)
   })
 
   app.get('/api/twilio/media/:token', (req, res) => {

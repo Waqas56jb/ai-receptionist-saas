@@ -45,7 +45,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@400;500;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <script>
@@ -56,7 +56,7 @@
           var stored = window.localStorage.getItem('site-theme')
           if (stored === 'light' || stored === 'dark') theme = stored
           var storedLang = window.localStorage.getItem('devmark.ui.language')
-          if (storedLang === 'en' || storedLang === 'fr' || storedLang === 'ar' || storedLang === 'so') lang = storedLang
+          if (storedLang === 'en' || storedLang === 'fr' || storedLang === 'ar' || storedLang === 'so' || storedLang === 'am' || storedLang === 'aa') lang = storedLang
         } catch (e) {}
         document.documentElement.setAttribute('data-site-theme', theme)
         document.documentElement.lang = lang

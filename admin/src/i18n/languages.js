@@ -5,6 +5,8 @@ export const LANGUAGES = [
   { id: 'fr', name: 'French', native: 'Français', dir: 'ltr', locale: 'fr-FR' },
   { id: 'ar', name: 'Arabic', native: 'العربية', dir: 'rtl', locale: 'ar' },
   { id: 'so', name: 'Somali', native: 'Soomaali', dir: 'ltr', locale: 'so-SO' },
+  { id: 'am', name: 'Amharic', native: 'አማርኛ', dir: 'ltr', locale: 'am-ET' },
+  { id: 'aa', name: 'Afar', native: 'Qafar af', dir: 'ltr', locale: 'aa-ET' },
 ]
 
 export function normalizeLang(value) {

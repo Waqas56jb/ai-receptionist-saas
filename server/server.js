@@ -14,6 +14,7 @@ const { sendWelcome, sendOtp } = require('./lib/mailer')
 const registerMailAuth = require('./mailAuth')
 const registerVoice = require('./voiceTwilio')
 const sectorKnowledge = require('./lib/sectorKnowledge')
+const i18n = require('./lib/languages')
 
 const PORT = Number(process.env.PORT || 4000)
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-change-me'
@@ -303,7 +304,7 @@ function mapConversation(row, messages = []) {
     status: row.status || 'open',
     unread: Boolean(row.unread),
     lead: row.lead || 'New',
-    language: row.language || 'English',
+    language: row.language ? i18n.languageName(row.language) : 'English',
     handledBy: row.handled_by || 'ai',
     startedAt: row.created_at,
     lastMessageAt: row.last_at || row.created_at,
@@ -485,7 +486,7 @@ function matchKnowledge(items, userText) {
     .sort((a, b) => b.score - a.score)[0]?.item
 }
 
-function receptionistPrompt(accountName, context, spoken = false) {
+function receptionistPrompt(accountName, context, spoken = false, language = {}) {
   return `You are the AI receptionist for ${accountName || 'this business'} on WhatsApp, website chat and voice.
 
 PRIVATE BUSINESS KNOWLEDGE (sector packs, uploaded files, services, policies and hours):
@@ -496,46 +497,125 @@ Rules:
 2. If the question is not covered by the knowledge, answer it with ChatGPT general knowledge. Stay in a helpful receptionist voice.
 3. Never invent this specific business's prices, hours, staff names, bookings, account numbers or private policies. If those are missing from knowledge, say you will confirm with the team, then still help with any general part of the question.
 4. Keep replies short and suitable for WhatsApp.
-5. Reply in the customer's language (English, French, Arabic or Somali).${spoken ? '\n6. You are on a live phone call. Speak in 1–3 short sentences. No markdown, lists, or URLs.' : ''}`
+5. Reply in the customer's language (English, Arabic, Somali, Amharic, Afar or French) — see the language rules below.${spoken ? '\n6. You are on a live phone call. Speak in 1–3 short sentences. No markdown, lists, or URLs.' : ''}
+
+${i18n.languageRules({ ...language, spoken })}`
 }
 
-async function replyFromKnowledge(accountId, userText, { spoken = false, extra = '' } = {}) {
+async function aiLanguageSettings(accountId) {
+  const settings = await getSettings(accountId).catch(() => null)
+  return { defaultLanguage: i18n.normalizeLanguage(settings?.ai_config?.defaultLanguage) }
+}
+
+const phraseCache = new Map()
+
+/**
+ * Fixed system phrases in the customer's language, as { key: text }. Bundled
+ * translations are used first; anything else (Afar, or an owner's custom
+ * English greeting) is translated by the model in one call and cached.
+ * `custom` maps a key to owner-written text that replaces the stock phrase.
+ */
+async function localizePhrases(keys, lang, custom = {}) {
+  const code = i18n.normalizeLanguage(lang)
+  const result = {}
+  const missing = {}
+  for (const key of keys) {
+    const stock = i18n.phrase(key, 'en') || ''
+    const english = custom[key] || stock
+    if (code === 'en' || i18n.detectLanguage(english) === code) result[key] = english
+    else if (english === stock && i18n.phrase(key, code)) result[key] = i18n.phrase(key, code)
+    else if (phraseCache.has(`${code}:${english}`)) result[key] = phraseCache.get(`${code}:${english}`)
+    else missing[key] = english
+  }
+  if (!Object.keys(missing).length) return result
+  Object.assign(result, missing)
   try {
-    const [context, accounts] = await Promise.all([
+    const client = await openaiClient()
+    if (!client) return result
+    const completion = await client.chat.completions.create({
+      model: i18n.chatModelFor(code),
+      temperature: 0,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `Translate every value of the JSON object into ${i18n.languageName(code)} (${i18n.LANGUAGES[code].native}) using ${i18n.LANGUAGES[code].script} script. The text is said by a business receptionist to customers. Keep the keys, placeholders like {name}, names and numbers unchanged. Return only the JSON object.`,
+        },
+        { role: 'user', content: JSON.stringify(missing) },
+      ],
+    })
+    const translated = JSON.parse(completion.choices[0]?.message?.content || '{}')
+    for (const [key, english] of Object.entries(missing)) {
+      const text = typeof translated[key] === 'string' ? translated[key].trim() : ''
+      if (!text) continue
+      phraseCache.set(`${code}:${english}`, text)
+      result[key] = text
+    }
+  } catch (error) {
+    console.warn('Phrase translation skipped:', error.message)
+  }
+  return result
+}
+
+async function localizePhrase(key, lang, customText) {
+  const result = await localizePhrases([key], lang, customText ? { [key]: customText } : {})
+  return result[key]
+}
+
+/** Store the detected customer language on a conversation (ignored if the column is missing). */
+async function rememberLanguage(accountId, conversationId, text) {
+  const lang = i18n.detectLanguage(text)
+  if (!lang || !conversationId) return lang
+  await dbUpdate('conversations', { id: conversationId, account_id: accountId }, { language: lang }).catch(() => {})
+  return lang
+}
+
+async function replyFromKnowledge(accountId, userText, { spoken = false, extra = '', language = null } = {}) {
+  const detected = i18n.detectLanguage(userText) || (language ? i18n.normalizeLanguage(language) : null)
+  let fallbackLang = detected || 'en'
+  try {
+    const [context, accounts, langSettings] = await Promise.all([
       knowledgeContext(accountId),
       dbSelect('accounts', { id: accountId }).catch(() => []),
+      aiLanguageSettings(accountId),
     ])
+    fallbackLang = detected || langSettings.defaultLanguage
     const name = accounts[0]?.business_name || accounts[0]?.name || 'this business'
     const client = await openaiClient()
     if (!client) {
       const items = await dbSelect('knowledge_items', { account_id: accountId })
       const hit = matchKnowledge(items, userText)
-      return hit?.body || 'Thank you for your message. A team member will follow up shortly.'
+      return hit?.body || i18n.phrase('followUp', fallbackLang) || i18n.phrase('followUp', 'en')
     }
     const completion = await Promise.race([
       client.chat.completions.create({
-        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        model: i18n.chatModelFor(fallbackLang),
         temperature: 0.5,
         messages: [
-          { role: 'system', content: receptionistPrompt(name, context, spoken) },
+          { role: 'system', content: receptionistPrompt(name, context, spoken, { ...langSettings, detected }) },
           extra ? { role: 'system', content: extra } : null,
           { role: 'user', content: userText },
         ].filter(Boolean),
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 25000)),
     ])
-    return completion.choices[0]?.message?.content?.trim() || 'Thanks — we will get back to you.'
+    return completion.choices[0]?.message?.content?.trim() || i18n.phrase('thanks', fallbackLang) || i18n.phrase('thanks', 'en')
   } catch (error) {
     console.error('replyFromKnowledge failed', error.message)
-    return 'Sorry, I am having a little trouble right now. Please send that again in a moment.'
+    return i18n.phrase('trouble', fallbackLang) || i18n.phrase('trouble', 'en')
   }
 }
 
-async function transcribeAudio(buffer, filename = 'audio.ogg') {
+async function transcribeAudio(buffer, filename = 'audio.ogg', language = null) {
   const client = await openaiClient()
   if (!client) return ''
   const file = await OpenAIFile(buffer, filename)
-  const result = await client.audio.transcriptions.create({ file, model: 'whisper-1' })
+  const meta = language ? i18n.LANGUAGES[i18n.normalizeLanguage(language)] : null
+  const params = { file, model: 'whisper-1' }
+  // Whisper auto-detects well-resourced languages; Somali and Amharic are often misheard
+  // as another language, so a line configured for them passes an explicit hint.
+  if (meta?.lowResource && meta.whisper) params.language = meta.whisper
+  const result = await client.audio.transcriptions.create(params)
   return result.text || ''
 }
 
@@ -835,8 +915,9 @@ async function handleIncoming(accountId, sock, msg) {
   })
 
   await saveMessage(accountId, conversation.id, 'in', inbound, { type, channel: 'whatsapp', visitorKey: from })
+  const language = (await rememberLanguage(accountId, conversation.id, inbound)) || conversation.language || null
 
-  const reply = await replyFromKnowledge(accountId, inbound)
+  const reply = await replyFromKnowledge(accountId, inbound, { language })
   await saveMessage(accountId, conversation.id, 'out', reply, { type: type === 'voice' ? 'voice' : 'text', handled_as: 'ai', channel: 'whatsapp', visitorKey: from })
   await dbUpdate('conversations', { id: conversation.id, account_id: accountId }, { last_message: reply, last_at: now() })
   await upsertConnection(accountId, { last_seen: now() })
@@ -1620,13 +1701,22 @@ app.get('/api/widget/:token/config', async (req, res) => {
     }
     const trained = (await dbSelect('knowledge_items', { account_id: account.id })).some((item) => item.status === 'Active')
     await touchWidget(account.id)
+    const businessName = account.business_name || account.name
+    const requested = String(req.query.lang || '').trim()
+    const language = requested
+      ? i18n.normalizeLanguage(requested, (await aiLanguageSettings(account.id)).defaultLanguage)
+      : (await aiLanguageSettings(account.id)).defaultLanguage
+    const greetingKey = trained ? 'widgetGreeting' : 'widgetGreetingOpen'
+    const uiKeys = ['widgetSubtitle', 'widgetPlaceholder', 'widgetSend', 'widgetConnecting', 'widgetVoiceHint', 'widgetEndVoice', 'widgetListening', 'widgetThinking', 'widgetSpeechTurns', 'widgetMicUnavailable', 'widgetHello', 'thanks']
+    const text = await localizePhrases([greetingKey, ...uiKeys], language)
     res.json({
-      businessName: account.business_name || account.name,
-      greeting: trained
-        ? `Hi — I am the AI receptionist for ${account.business_name || account.name}. How can I help?`
-        : `Hi — I am the AI receptionist for ${account.business_name || account.name}. Ask me anything and I will pass it to the team if I do not know.`,
+      businessName,
+      greeting: text[greetingKey].replace('{name}', businessName),
       trained,
       voice: Boolean(process.env.OPENAI_API_KEY),
+      language,
+      dir: language === 'ar' ? 'rtl' : 'ltr',
+      ui: Object.fromEntries(uiKeys.map((key) => [key, text[key]])),
     })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -1688,7 +1778,7 @@ app.post('/api/widget/:token/realtime', async (req, res) => {
     }
     const context = await knowledgeContext(account.id)
     const name = account.business_name || account.name
-    const instructions = receptionistPrompt(name, context)
+    const instructions = receptionistPrompt(name, context, true, await aiLanguageSettings(account.id))
     const model = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime'
     const headers = {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -1747,9 +1837,10 @@ app.post('/api/widget/:token/voice', upload.single('audio'), async (req, res) =>
     if (!req.file?.buffer) return res.status(400).json({ error: 'Audio is required.' })
     const visitorId = String(req.body.visitorId || '').trim() || id('vis')
     const visitorName = String(req.body.visitorName || '').trim() || 'Website visitor'
+    const visitorLang = req.body.lang ? i18n.normalizeLanguage(req.body.lang) : null
     const transcript = (await transcribeAudio(req.file.buffer, req.file.originalname || 'voice.webm')) || ''
-    if (!transcript) return res.status(422).json({ error: 'I could not hear that. Please try again.' })
-    const reply = await replyFromKnowledge(account.id, transcript)
+    if (!transcript) return res.status(422).json({ error: await localizePhrase('couldNotHear', visitorLang || 'en') })
+    const reply = await replyFromKnowledge(account.id, transcript, { language: visitorLang })
     await persistWidgetMessages(account, { visitorId, visitorName, inbound: transcript, outbound: reply, type: 'voice' })
     const spoken = await speakReply(reply, 'mp3')
     res.json({
@@ -1800,7 +1891,8 @@ app.post('/api/widget/:token/chat', async (req, res) => {
       lastMessage: text,
     })
     await saveMessage(account.id, conversation.id, 'in', text, { channel: 'web', visitorKey: `web:${visitorId}` })
-    const reply = await replyFromKnowledge(account.id, text)
+    const language = (await rememberLanguage(account.id, conversation.id, text)) || conversation.language || req.body.lang || null
+    const reply = await replyFromKnowledge(account.id, text, { language })
     await saveMessage(account.id, conversation.id, 'out', reply, { handled_as: 'ai', channel: 'web', visitorKey: `web:${visitorId}` })
     await dbUpdate('conversations', { id: conversation.id, account_id: account.id }, { last_message: reply, last_at: now() })
     await touchWidget(account.id, visitorId)
@@ -1825,7 +1917,7 @@ const defaultSettings = {
     knowledgeMode: 'shared',
     promptMode: 'shared',
     defaultLanguage: 'en',
-    supportedLanguages: ['en'],
+    supportedLanguages: [...i18n.ALL_CODES],
     responseStyle: 'Balanced',
     personality: 'Professional',
     tone: 'Professional',
@@ -2393,6 +2485,8 @@ registerVoice(app, {
   replyFromKnowledge,
   speakReply,
   transcribeAudio,
+  localizePhrase,
+  rememberLanguage,
   upsertConversation,
   saveMessage,
   publicBase,

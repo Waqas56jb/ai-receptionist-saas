@@ -92,6 +92,7 @@ alter table conversations add column if not exists unread boolean default true;
 alter table conversations add column if not exists lead text default 'New';
 alter table conversations add column if not exists handled_by text default 'ai';
 alter table conversations add column if not exists notes jsonb default '[]';
+alter table conversations add column if not exists language text;
 
 alter table accounts enable row level security;
 alter table admins enable row level security;

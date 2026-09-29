@@ -5,12 +5,15 @@ import { createTranslator, translateDom } from './engine'
 import { ar, fr, so } from './dictionaries'
 import { arMore, frMore, soMore } from './extras'
 import { arUi, frUi, soUi } from './extras.ui'
+import { aa, am, hornNames } from './horn'
 
 const DICTS = {
   en: {},
-  fr: { ...fr, ...frMore, ...frUi },
-  ar: { ...ar, ...arMore, ...arUi },
-  so: { ...so, ...soMore, ...soUi },
+  fr: { ...fr, ...frMore, ...frUi, ...hornNames.fr },
+  ar: { ...ar, ...arMore, ...arUi, ...hornNames.ar },
+  so: { ...so, ...soMore, ...soUi, ...hornNames.so },
+  am,
+  aa,
 }
 
 const LanguageContext = createContext(null)

@@ -15,6 +15,7 @@ import { useToast } from '../../../context/ToastContext'
 import aiService from '../../../services/aiService'
 import channelService from '../../../services/channelService'
 import businessService from '../../../services/businessService'
+import { languageLabels } from '../../../data/mock/business'
 
 const automationLabels = {
   autoReply: { label: 'Auto reply', description: 'Answer incoming messages without waiting for your team.' },
@@ -160,7 +161,7 @@ export default function WhatsAppAgent() {
           </div>
 
           <div className="space-y-4">
-            <AIStatusCard config={config.data} channels={channels.data || []} languages={['English', 'French', 'German']} compact />
+            <AIStatusCard config={config.data} channels={channels.data || []} languages={languageLabels(config.data?.supportedLanguages)} compact />
             <Card>
               <CardHeader title="Voice notes" />
               <CardBody className="text-[0.83rem] leading-relaxed text-muted">

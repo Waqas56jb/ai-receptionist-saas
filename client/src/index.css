@@ -391,7 +391,7 @@ html:not([data-site-theme='light']) .border-purple-200 {
 
 .Toastify__toast {
   border-radius: 12px !important;
-  font-family: Poppins, ui-sans-serif, system-ui, sans-serif !important;
+  font-family: Poppins, 'Noto Sans Ethiopic', ui-sans-serif, system-ui, sans-serif !important;
   font-size: 0.875rem !important;
   box-shadow: 0 16px 40px -20px rgba(4, 8, 18, 0.45) !important;
 }
@@ -444,6 +444,10 @@ html[dir='rtl'] .pl-10 {
 html[data-lang='ar'] body,
 html[data-lang='ar'] .Toastify__toast {
   font-family: Tajawal, Poppins, ui-sans-serif, system-ui, sans-serif;
+}
+html[data-lang='am'] body,
+html[data-lang='am'] .Toastify__toast {
+  font-family: Poppins, 'Noto Sans Ethiopic', Nyala, Ebrima, ui-sans-serif, system-ui, sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {

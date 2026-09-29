@@ -6,7 +6,7 @@ export const aiConfig = {
   knowledgeMode: 'shared',
   promptMode: 'shared',
   defaultLanguage: 'en',
-  supportedLanguages: ['en'],
+  supportedLanguages: ['en', 'fr', 'ar', 'so', 'am', 'aa'],
   responseStyle: 'Balanced',
   personality: 'Professional',
   tone: 'Professional',

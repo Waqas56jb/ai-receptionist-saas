@@ -16,6 +16,7 @@ import aiService from '../../../services/aiService'
 import channelService from '../../../services/channelService'
 import businessService from '../../../services/businessService'
 import { api } from '../../../services/api'
+import { languageLabels } from '../../../data/mock/business'
 
 export default function VoiceAgent() {
   const toast = useToast()
@@ -311,7 +312,7 @@ export default function VoiceAgent() {
           </div>
 
           <div className="space-y-4">
-            <AIStatusCard config={config.data} channels={channels.data || []} languages={['English', 'French', 'German']} compact />
+            <AIStatusCard config={config.data} channels={channels.data || []} languages={languageLabels(config.data?.supportedLanguages)} compact />
 
             <Card>
               <CardHeader icon={PhoneCall} title="Test your voice agent" />

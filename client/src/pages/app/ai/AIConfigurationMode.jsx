@@ -11,6 +11,7 @@ import useAsync from '../../../hooks/useAsync'
 import { useToast } from '../../../context/ToastContext'
 import aiService from '../../../services/aiService'
 import channelService from '../../../services/channelService'
+import { languageLabels } from '../../../data/mock/business'
 
 export default function AIConfigurationMode() {
   const toast = useToast()
@@ -107,7 +108,7 @@ export default function AIConfigurationMode() {
         </div>
 
         <div className="space-y-4">
-          <AIStatusCard config={config.data} channels={channels.data || []} languages={['English', 'French', 'German']} compact />
+          <AIStatusCard config={config.data} channels={channels.data || []} languages={languageLabels(config.data?.supportedLanguages)} compact />
 
           <Card>
             <CardHeader title="Which should I choose?" />

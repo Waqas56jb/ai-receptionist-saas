@@ -6,6 +6,62 @@ import ChatPanel from '../ui/ChatPanel'
 
 const conversations = [
   {
+    code: 'so',
+    language: 'Somali',
+    native: 'Soomaali',
+    detected: 'Somali detected automatically',
+    messages: [
+      { from: 'customer', label: 'Customer', text: 'Salaan, ma haysaan qol bannaan caawa?' },
+      {
+        from: 'ai',
+        label: 'AI Receptionist',
+        text: 'Haa, waxaan haynaa qol Deluxe ah oo caawa bannaan, qiimihiisu waa $180. Ma rabtaa inaan kuu qabsado?',
+      },
+    ],
+  },
+  {
+    code: 'am',
+    language: 'Amharic',
+    native: 'አማርኛ',
+    detected: 'Amharic detected automatically',
+    messages: [
+      { from: 'customer', label: 'Customer', text: 'ሰላም፣ ዛሬ ማታ ባዶ ክፍል አላችሁ?' },
+      {
+        from: 'ai',
+        label: 'AI Receptionist',
+        text: 'አዎ፣ ዛሬ ማታ በ$180 የዴሉክስ ክፍል አለን። እንዳስይዝልዎት ይፈልጋሉ?',
+      },
+    ],
+  },
+  {
+    code: 'aa',
+    language: 'Afar',
+    native: 'Qafar af',
+    detected: 'Afar detected automatically',
+    messages: [
+      { from: 'customer', label: 'Customer', text: 'Nagay, ah bar kaxxa qari litoonuu?' },
+      {
+        from: 'ai',
+        label: 'AI Receptionist',
+        text: 'Yeey, ah bar Deluxe qari $180 lih nanu. Sinnih nabbaxsima?',
+      },
+    ],
+  },
+  {
+    code: 'ar',
+    language: 'Arabic',
+    native: 'العربية',
+    detected: 'Arabic detected automatically',
+    messages: [
+      { from: 'customer', label: 'Customer', text: 'مرحبًا، هل لديكم غرفة متاحة الليلة؟' },
+      {
+        from: 'ai',
+        label: 'AI Receptionist',
+        text: 'نعم، لدينا غرفة ديلوكس متاحة الليلة بسعر 180 دولارًا. هل تود أن أحجزها لك؟',
+      },
+    ],
+  },
+  {
     code: 'fr',
     language: 'French',
     native: 'Français',

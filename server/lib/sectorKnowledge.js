@@ -37,7 +37,7 @@ A: National ID or passport, proof of address, and any extra KYC listed in upload
         title: 'Bank — Services and intake',
         body: `Services a receptionist can explain: account opening, cards, domestic and international transfers, loans, and appointments with a relationship officer.
 
-Capture: full name, phone, preferred branch, product of interest, and preferred meeting time. Language: French, Arabic or English as the customer writes.`,
+Capture: full name, phone, preferred branch, product of interest, and preferred meeting time. Language: reply in the language the customer writes (English, Arabic, Somali, Amharic, Afar or French).`,
       },
       {
         category: 'Policies',

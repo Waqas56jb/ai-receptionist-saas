@@ -21,7 +21,7 @@
         margin: 0;
         height: 100%;
         background: transparent;
-        font-family: 'Segoe UI', system-ui, sans-serif;
+        font-family: 'Segoe UI', system-ui, 'Noto Sans Ethiopic', Ebrima, Nyala, sans-serif;
         color: var(--ink);
       }
       #launcher {
@@ -225,6 +225,36 @@
         var form = document.getElementById('form')
         var input = document.getElementById('input')
         var statusEl = document.getElementById('voiceStatus')
+        var query = new URLSearchParams(location.search)
+        var lang = (query.get('lang') || '').toLowerCase()
+        var LANG_NAMES = { en: 'English', fr: 'French', ar: 'Arabic', so: 'Somali', am: 'Amharic', aa: 'Afar' }
+        var ui = {
+          widgetSubtitle: 'Chat or talk — trained on this business',
+          widgetPlaceholder: 'Type a message…',
+          widgetSend: 'Send',
+          widgetConnecting: 'Connecting voice…',
+          widgetVoiceHint: 'Speak naturally. The 3D agent listens and replies in real time.',
+          widgetEndVoice: 'End voice',
+          widgetListening: 'Listening…',
+          widgetThinking: 'Thinking…',
+          widgetSpeechTurns: 'Hold on — using speech turns',
+          widgetMicUnavailable: 'Microphone or voice is unavailable',
+          widgetHello: 'Hello — how can I help you today?',
+          thanks: 'Thanks — we will get back to you.',
+        }
+        function T(key) { return ui[key] || key }
+        function applyLanguage(config) {
+          if (config.ui) Object.keys(config.ui).forEach(function (key) { if (config.ui[key]) ui[key] = config.ui[key] })
+          if (config.language) lang = config.language
+          document.documentElement.lang = lang || 'en'
+          document.documentElement.dir = config.dir || 'ltr'
+          document.getElementById('subtitle').textContent = T('widgetSubtitle')
+          input.placeholder = T('widgetPlaceholder')
+          form.querySelector('button[type="submit"]').textContent = T('widgetSend')
+          document.getElementById('voiceHint').textContent = T('widgetVoiceHint')
+          document.getElementById('hangup').textContent = T('widgetEndVoice')
+          if (!voiceOn) statusEl.textContent = T('widgetConnecting')
+        }
         var open = false
         var voiceOn = false
         var session = null
@@ -249,6 +279,7 @@
           row.className = 'row ' + (from === 'customer' ? 'out' : 'in')
           var bubble = document.createElement('div')
           bubble.className = 'bubble'
+          bubble.dir = 'auto'
           bubble.textContent = text
           row.appendChild(bubble)
           thread.appendChild(row)
@@ -329,7 +360,7 @@
         function stopVoice() {
           voiceOn = false
           document.body.classList.remove('voice')
-          statusEl.textContent = 'Connecting voice…'
+          statusEl.textContent = T('widgetConnecting')
           if (session) {
             try { if (session.pc) session.pc.close() } catch (e) {}
             try { if (session.stream) session.stream.getTracks().forEach(function (t) { t.stop() }) } catch (e) {}
@@ -366,11 +397,11 @@
           }
           if (type === 'response.created' || type.indexOf('output_audio.delta') !== -1) big.setMode('speak')
           if (type === 'input_audio_buffer.speech_started') {
-            statusEl.textContent = 'Listening…'
+            statusEl.textContent = T('widgetListening')
             big.setMode('listen')
           }
           if (type === 'response.done') {
-            statusEl.textContent = 'Listening…'
+            statusEl.textContent = T('widgetListening')
             big.setMode('listen')
           }
         }
@@ -388,10 +419,14 @@
           var dc = pc.createDataChannel('oai-events')
           dc.onmessage = function (ev) { handleRealtimeEvent(ev.data) }
           dc.onopen = function () {
-            statusEl.textContent = 'Listening…'
+            statusEl.textContent = T('widgetListening')
             dc.send(JSON.stringify({
               type: 'response.create',
-              response: { instructions: 'Greet the visitor briefly as this business voice receptionist.' },
+              response: {
+                instructions:
+                  'Greet the visitor briefly as this business voice receptionist' +
+                  (lang && LANG_NAMES[lang] ? ', speaking ' + LANG_NAMES[lang] + '. If the visitor answers in another language, switch to it.' : '.'),
+              },
             }))
           }
           var offer = await pc.createOffer()
@@ -425,7 +460,7 @@
         }
 
         async function connectFallback() {
-          statusEl.textContent = 'Hold on — using speech turns'
+          statusEl.textContent = T('widgetSpeechTurns')
           var stream = await navigator.mediaDevices.getUserMedia({ audio: true })
           var audioCtx = new (window.AudioContext || window.webkitAudioContext)()
           var analyser = audioCtx.createAnalyser()
@@ -443,7 +478,8 @@
             body.append('audio', blob, 'voice.webm')
             body.append('visitorId', visitorId)
             body.append('visitorName', 'Website visitor')
-            statusEl.textContent = 'Thinking…'
+            if (lang) body.append('lang', lang)
+            statusEl.textContent = T('widgetThinking')
             fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/voice', { method: 'POST', body: body })
               .then(function (res) { return res.json() })
               .then(function (data) {
@@ -454,21 +490,21 @@
                   big.setMode('speak')
                   audio.onended = function () {
                     if (voiceOn) {
-                      statusEl.textContent = 'Listening…'
+                      statusEl.textContent = T('widgetListening')
                       big.setMode('listen')
                       try { recorder.start() } catch (e) {}
                     }
                   }
                   audio.play()
                 } else if (voiceOn) {
-                  statusEl.textContent = 'Listening…'
+                  statusEl.textContent = T('widgetListening')
                   try { recorder.start() } catch (e) {}
                 }
               })
               .catch(function () {
                 addBubble('ai', 'I could not hear that just now.')
                 if (voiceOn) {
-                  statusEl.textContent = 'Listening…'
+                  statusEl.textContent = T('widgetListening')
                   try { recorder.start() } catch (e) {}
                 }
               })
@@ -484,7 +520,7 @@
               silence = 0
               if (!speaking && recorder.state === 'inactive') {
                 speaking = true
-                statusEl.textContent = 'Listening…'
+                statusEl.textContent = T('widgetListening')
                 big.setMode('listen')
                 recorder.start()
               }
@@ -497,7 +533,7 @@
             }
           }, 80)
           session = { stream: stream, audioCtx: audioCtx, recorder: recorder }
-          statusEl.textContent = 'Listening…'
+          statusEl.textContent = T('widgetListening')
         }
 
         async function startVoice() {
@@ -507,7 +543,7 @@
           open = true
           tellParent()
           big.resize()
-          statusEl.textContent = 'Connecting voice…'
+          statusEl.textContent = T('widgetConnecting')
           big.setMode('listen')
           mini.setMode('listen')
           try {
@@ -516,7 +552,7 @@
             try {
               await connectFallback()
             } catch (fallbackError) {
-              statusEl.textContent = 'Microphone or voice is unavailable'
+              statusEl.textContent = T('widgetMicUnavailable')
               addBubble('ai', 'I could not start the voice agent. Check microphone permission and the OpenAI key.')
             }
           }
@@ -532,19 +568,20 @@
         })
 
         Promise.all([
-          fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/config').then(function (res) { return res.json() }),
+          fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/config' + (lang ? '?lang=' + encodeURIComponent(lang) : '')).then(function (res) { return res.json() }),
           fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/history?visitorId=' + encodeURIComponent(visitorId)).then(function (res) { return res.json() }),
         ])
           .then(function (results) {
             var config = results[0] || {}
             var history = results[1] || {}
+            applyLanguage(config)
             document.getElementById('title').textContent = config.businessName || 'AI receptionist'
             document.getElementById('mark').textContent = (config.businessName || 'AI').slice(0, 2).toUpperCase()
             ;(history.messages || []).forEach(function (msg) { addBubble(msg.from, msg.text) })
             if (!(history.messages || []).length && config.greeting) addBubble('ai', config.greeting)
           })
           .catch(function () {
-            addBubble('ai', 'Hello — how can I help you today?')
+            addBubble('ai', T('widgetHello'))
           })
 
         form.addEventListener('submit', function (event) {
@@ -557,11 +594,11 @@
           fetch(origin + '/api/widget/' + encodeURIComponent(token) + '/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ visitorId: visitorId, message: text, visitorName: 'Website visitor' }),
+            body: JSON.stringify({ visitorId: visitorId, message: text, visitorName: 'Website visitor', lang: lang || undefined }),
           })
             .then(function (res) { return res.json() })
             .then(function (data) {
-              addBubble('ai', data.reply || data.error || 'Thanks — we will get back to you.')
+              addBubble('ai', data.reply || data.error || T('thanks'))
             })
             .catch(function () {
               addBubble('ai', 'I could not send that just now. Please try again.')
