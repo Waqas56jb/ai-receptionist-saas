@@ -1,5 +1,7 @@
 import { API_BASE } from '../config/api'
 
+export const OFFLINE_MESSAGE = 'Cannot reach the server. Please check your connection and try again.'
+
 export { API_BASE }
 
 function readToken() {
@@ -16,16 +18,25 @@ export async function api(path, { method = 'GET', body } = {}) {
   const token = readToken()
   if (token) headers.Authorization = `Bearer ${token}`
   let res
-  try {
-    res = await fetch(`${API_BASE}${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-    })
-  } catch {
-    const error = new Error('API_OFFLINE')
-    error.code = 'API_OFFLINE'
-    throw error
+  // A failed fetch means the request never got a response (server restarting, mobile data
+  // dropping). GET is safe to repeat, so it retries before giving up.
+  const attempts = method === 'GET' ? 3 : 1
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      res = await fetch(`${API_BASE}${path}`, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+      })
+      break
+    } catch {
+      if (attempt >= attempts) {
+        const error = new Error(OFFLINE_MESSAGE)
+        error.code = 'API_OFFLINE'
+        throw error
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1200 * attempt))
+    }
   }
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {

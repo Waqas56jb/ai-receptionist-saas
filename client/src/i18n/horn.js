@@ -1743,3 +1743,11 @@ export const hornNames = {
     "Afar": "Canfari"
   }
 }
+
+// Connection error shown when the API cannot be reached (services/api.js OFFLINE_MESSAGE).
+const OFFLINE = 'Cannot reach the server. Please check your connection and try again.'
+hornNames.fr[OFFLINE] = 'Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.'
+hornNames.ar[OFFLINE] = 'تعذّر الوصول إلى الخادم. تحقّق من اتصالك وحاول مرة أخرى.'
+hornNames.so[OFFLINE] = 'Lama gaari karo server-ka. Fadlan hubi internet-kaaga oo mar kale isku day.'
+am[OFFLINE] = 'ወደ ሰርቨሩ መድረስ አልተቻለም። እባክዎ ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።'
+aa[OFFLINE] = 'Server-ih gaba hayna. Internet-ih ixxigaalih ilaali, qagitak yaabbe.'

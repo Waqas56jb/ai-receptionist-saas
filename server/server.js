@@ -24,6 +24,15 @@ const SESSION_ROOT =
   (process.env.RAILWAY_VOLUME_MOUNT_PATH
     ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'whatsapp-sessions')
     : path.join(__dirname, 'sessions'))
+// Keep the API serving when a background task (WhatsApp socket, a webhook, a timer) throws
+// outside a request. Without these, Node exits and every dashboard call fails until Railway restarts it.
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason?.stack || reason?.message || reason)
+})
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error?.stack || error)
+})
+
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
 
 try {
@@ -675,6 +684,16 @@ function extractPrintableText(buffer) {
   return chunks.join('\n').replace(/[ \t]{2,}/g, ' ').trim()
 }
 
+function withTimeout(promise, ms, message) {
+  let timer
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms)
+    }),
+  ]).finally(() => clearTimeout(timer))
+}
+
 async function extractUploadText(file) {
   const mime = file.mimetype || ''
   const name = file.originalname || 'upload'
@@ -717,7 +736,7 @@ async function extractUploadText(file) {
     const client = await openaiClient()
     if (!client) return `Image uploaded: ${name}`
     const b64 = file.buffer.toString('base64')
-    const vision = await client.chat.completions.create({
+    const vision = await withTimeout(client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -728,7 +747,7 @@ async function extractUploadText(file) {
           ],
         },
       ],
-    })
+    }), 60000, 'Image reading timed out')
     return vision.choices[0]?.message?.content || `Image uploaded: ${name}`
   }
   const fallback = extractPrintableText(file.buffer)
@@ -1549,7 +1568,11 @@ app.post('/api/knowledge/upload', auth('account'), upload.array('files', 8), asy
     const sector = cleanText(req.body?.sector, 80)
     const category = cleanText(req.body?.category, 60) || 'Documents'
     for (const file of files) {
-      const body = await extractUploadText(file)
+      // One unreadable file (e.g. a HEIC phone photo the vision model rejects) must not fail the whole upload.
+      const body = await extractUploadText(file).catch((error) => {
+        console.warn('Upload text extraction failed:', file.originalname, error.message)
+        return ''
+      })
       const kind = uploadKind(file)
       const extracted = String(body || '').trim()
       const row = {
