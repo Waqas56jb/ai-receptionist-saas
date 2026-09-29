@@ -76,7 +76,11 @@ function detectLanguage(text) {
 /** Delivery hint for the text-to-speech voice. */
 function speechInstructions(lang) {
   const code = lang && LANGUAGES[normalizeLanguage(lang, '')] ? normalizeLanguage(lang) : null
-  const target = code ? `${LANGUAGES[code].name} (${LANGUAGES[code].native})` : 'the same language as the text'
+  const target = code
+    ? `${LANGUAGES[code].name} (${LANGUAGES[code].native})`
+    : typeof lang === 'string' && /^[A-Za-z ]{3,30}$/.test(lang)
+      ? lang
+      : 'the same language as the text'
   return `Speak in ${target} with natural, native pronunciation. Warm, friendly and clear, like a helpful receptionist. Read numbers, prices and times the way a native speaker says them.`
 }
 

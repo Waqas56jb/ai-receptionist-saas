@@ -243,3 +243,39 @@ create index if not exists voice_calls_account_idx on voice_calls(account_id, cr
 alter table voice_calls enable row level security;
 revoke all on table voice_calls from anon, authenticated, public;
 grant all on table voice_calls to service_role;
+
+-- WhatsApp memory: idempotent inbound messages, voice transcription/audio, per-conversation profile + state.
+alter table messages add column if not exists wa_message_id text;
+alter table messages add column if not exists language text;
+alter table messages add column if not exists transcription text;
+alter table messages add column if not exists audio_ref jsonb;
+create unique index if not exists messages_account_wa_message_idx on messages(account_id, wa_message_id) where wa_message_id is not null;
+create index if not exists messages_conversation_created_idx on messages(conversation_id, created_at desc);
+alter table conversations add column if not exists profile jsonb default '{}';
+alter table conversations add column if not exists state jsonb default '{}';
+
+create table if not exists bookings (
+  id text primary key,
+  account_id text not null references accounts(id) on delete cascade,
+  conversation_id text references conversations(id) on delete set null,
+  customer text,
+  phone text,
+  service text,
+  date text,
+  time text,
+  guests integer default 1,
+  nights integer default 0,
+  value numeric default 0,
+  status text not null default 'Pending',
+  source text default 'manual',
+  notes text,
+  language text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists bookings_account_idx on bookings(account_id, date);
+
+alter table bookings enable row level security;
+revoke all on table bookings from anon, authenticated, public;
+grant all on table bookings to service_role;

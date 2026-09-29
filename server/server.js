@@ -15,6 +15,7 @@ const registerMailAuth = require('./mailAuth')
 const registerVoice = require('./voiceTwilio')
 const sectorKnowledge = require('./lib/sectorKnowledge')
 const i18n = require('./lib/languages')
+const convoMemory = require('./lib/conversationMemory')
 
 const PORT = Number(process.env.PORT || 4000)
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-change-me'
@@ -377,7 +378,7 @@ async function upsertConversation(accountId, { visitorKey, name, channel, lastMe
 }
 
 async function saveMessage(accountId, conversationId, direction, body, extra = {}) {
-  return dbInsert('messages', {
+  const row = {
     id: id('msg'),
     account_id: accountId,
     conversation_id: conversationId,
@@ -387,7 +388,47 @@ async function saveMessage(accountId, conversationId, direction, body, extra = {
     visitor_key: extra.visitorKey || null,
     body,
     created_at: now(),
-  })
+  }
+  const optional = {}
+  if (extra.waMessageId) optional.wa_message_id = extra.waMessageId
+  if (extra.language) optional.language = extra.language
+  if (extra.transcription) optional.transcription = extra.transcription
+  if (extra.audioRef) optional.audio_ref = extra.audioRef
+  if (!Object.keys(optional).length) return dbInsert('messages', row)
+  try {
+    return await dbInsert('messages', { ...row, ...optional })
+  } catch (error) {
+    if (!isMissingColumnError(error)) throw error
+    console.warn('messages: WhatsApp memory columns missing — run supabase/schema.sql.', error.message)
+    return dbInsert('messages', row)
+  }
+}
+
+function isDuplicateError(error) {
+  return error?.code === '23505'
+}
+
+function isMissingColumnError(error) {
+  return error?.code === 'PGRST204' || error?.code === '42703'
+}
+
+/** The latest messages of one conversation, oldest first. */
+async function recentMessages(accountId, conversationId, limit = convoMemory.HISTORY_LIMIT) {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('account_id', accountId)
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    if (error) throw error
+    return (data || []).reverse()
+  }
+  return (memory.messages || [])
+    .filter((row) => row.account_id === accountId && row.conversation_id === conversationId)
+    .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
+    .slice(-limit)
 }
 
 async function openaiClient() {
@@ -579,7 +620,7 @@ async function rememberLanguage(accountId, conversationId, text) {
   return lang
 }
 
-async function replyFromKnowledge(accountId, userText, { spoken = false, extra = '', language = null } = {}) {
+async function replyFromKnowledge(accountId, userText, { spoken = false, extra = '', language = null, history = [] } = {}) {
   const detected = i18n.detectLanguage(userText) || (language ? i18n.normalizeLanguage(language) : null)
   let fallbackLang = detected || 'en'
   try {
@@ -603,6 +644,7 @@ async function replyFromKnowledge(accountId, userText, { spoken = false, extra =
         messages: [
           { role: 'system', content: receptionistPrompt(name, context, spoken, { ...langSettings, detected }) },
           extra ? { role: 'system', content: extra } : null,
+          ...history,
           { role: 'user', content: userText },
         ].filter(Boolean),
       }),
@@ -932,54 +974,266 @@ async function handleIncoming(accountId, sock, msg) {
     inner.buttonsResponseMessage?.selectedDisplayText ||
     inner.listResponseMessage?.singleSelectReply?.selectedRowId ||
     ''
+  if (!text && !audio) return
 
-  let inbound = text
-  let type = 'text'
+  let audioBuffer = null
+  let audioRef = null
   if (audio) {
-    type = 'voice'
+    // Enough to re-download the original note from WhatsApp later.
+    audioRef = {
+      provider: 'whatsapp',
+      messageId: msg.key.id || null,
+      mimetype: audio.mimetype || null,
+      seconds: audio.seconds || null,
+      directPath: audio.directPath || null,
+      mediaKey: audio.mediaKey ? Buffer.from(audio.mediaKey).toString('base64') : null,
+    }
     try {
       const baileys = await loadBaileys()
-      const { downloadMediaMessage } = baileys
-      const buffer = await downloadMediaMessage(msg, 'buffer', {})
-      inbound = (await transcribeAudio(buffer, 'voice.ogg')) || '[voice note]'
-    } catch {
-      inbound = '[voice note]'
+      audioBuffer = await baileys.downloadMediaMessage(msg, 'buffer', {})
+    } catch (error) {
+      console.warn('WhatsApp voice note download failed', error.message)
     }
   }
-  if (!inbound) return
 
-  const name = msg.pushName || from
-  let conversation = await upsertConversation(accountId, {
-    visitorKey: from,
-    name,
-    channel: 'whatsapp',
-    lastMessage: inbound,
+  const result = await handleWhatsAppTurn(
+    accountId,
+    { from, name: msg.pushName || from, text, isVoice: Boolean(audio), audio: audioBuffer, audioRef, waMessageId: msg.key.id || null },
+    (payload) => sendWhatsAppReply(sock, msg, payload),
+  )
+  if (result.status !== 'duplicate') await upsertConnection(accountId, { last_seen: now() })
+}
+
+const waInFlight = new Set()
+
+function phoneFromJid(jid) {
+  const value = String(jid || '')
+  return value.endsWith('@s.whatsapp.net') ? `+${value.split('@')[0]}` : null
+}
+
+async function extractConversationMemory({ clock, profile, state, history, latest, latestType, bookings, language }) {
+  const client = await openaiClient()
+  if (!client) return null
+  // Somali, Amharic and Afar need the stronger model to read dates and intents reliably.
+  const lowResource = language && i18n.LANGUAGES[i18n.normalizeLanguage(language, '')]?.lowResource
+  const completion = await withTimeout(
+    client.chat.completions.create({
+      model: lowResource ? i18n.chatModelFor(language) : process.env.OPENAI_MEMORY_MODEL || 'gpt-4.1-mini',
+      temperature: 0,
+      response_format: { type: 'json_object' },
+      messages: convoMemory.extractionMessages({ clock, profile, state, history, latest, latestType, bookings }),
+    }),
+    20000,
+    'Memory extraction timed out',
+  )
+  return convoMemory.mergeExtraction(completion.choices[0]?.message?.content, profile, state)
+}
+
+/**
+ * Pending booking requests from the chat. The AI never confirms: staff (or a future
+ * calendar check) moves a booking to Confirmed. Returns the conversation's bookings and a
+ * factual result line for the reply model.
+ */
+async function applyBookingAction(accountId, conversation, mem, { customer, phone, language }) {
+  const list = () => dbSelect('bookings', { account_id: accountId, conversation_id: conversation.id })
+  let bookings = await list().catch(() => [])
+  const newest = (rows) => rows.slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0]
+  const pending = newest(bookings.filter((row) => row.status === 'Pending'))
+  const confirmed = newest(bookings.filter((row) => row.status === 'Confirmed'))
+  const wanted = mem.state.booking || {}
+  let actionResult = ''
+  try {
+    const sameSlot = bookings.find((row) => row.status !== 'Cancelled' && row.date === wanted.date && row.time === wanted.time)
+    if ((mem.action === 'request' || mem.action === 'modify') && mem.ready && sameSlot) {
+      // Already requested (or confirmed by staff) for this slot — nothing to change.
+      actionResult =
+        sameSlot.status === 'Confirmed'
+          ? `The booking on ${sameSlot.date} at ${sameSlot.time} is CONFIRMED by the team.`
+          : `The booking request for ${sameSlot.date} at ${sameSlot.time} was already received and is PENDING the team's confirmation. It is NOT confirmed yet.`
+      return { bookings, actionResult }
+    }
+    if ((mem.action === 'request' || mem.action === 'modify') && mem.ready) {
+      const fields = { service: wanted.service || 'Appointment', date: wanted.date, time: wanted.time, guests: wanted.guests || 1 }
+      if (pending) {
+        const same = pending.date === fields.date && pending.time === fields.time && (pending.service || '') === fields.service
+        if (!same) await dbUpdate('bookings', { id: pending.id, account_id: accountId }, { ...fields, customer, updated_at: now() })
+      } else {
+        await dbInsert('bookings', {
+          id: id('bk'),
+          account_id: accountId,
+          conversation_id: conversation.id,
+          customer,
+          phone,
+          ...fields,
+          status: 'Pending',
+          source: 'whatsapp',
+          notes: confirmed
+            ? `Change requested on WhatsApp for the confirmed booking on ${confirmed.date} ${confirmed.time}.`
+            : 'Requested on WhatsApp — waiting for staff confirmation.',
+          language,
+          created_at: now(),
+          updated_at: now(),
+        })
+      }
+      actionResult = `The booking request (${fields.service}, ${fields.date} at ${fields.time}) has ALREADY been saved as PENDING (do not ask whether to proceed). Tell the customer the request has been received and the team will confirm it. It is NOT confirmed and availability has NOT been checked.`
+    } else if (mem.action === 'cancel') {
+      if (pending) {
+        await dbUpdate('bookings', { id: pending.id, account_id: accountId }, { status: 'Cancelled', updated_at: now() })
+        actionResult = `The pending booking request for ${pending.date} at ${pending.time} has been cancelled.`
+      } else if (confirmed) {
+        await dbUpdate('bookings', { id: confirmed.id, account_id: accountId }, {
+          notes: `${confirmed.notes ? `${confirmed.notes}\n` : ''}Customer asked on WhatsApp to cancel this booking.`,
+          updated_at: now(),
+        })
+        actionResult = `The customer wants to cancel the CONFIRMED booking on ${confirmed.date} at ${confirmed.time}. It has NOT been cancelled yet — tell them the team has been asked and will confirm the cancellation.`
+      } else {
+        actionResult = 'There is no booking for this customer to cancel.'
+      }
+    } else {
+      return { bookings, actionResult }
+    }
+  } catch (error) {
+    console.warn('Booking action failed', error.message)
+    return {
+      bookings,
+      actionResult: 'Saving the booking request FAILED. Do not say it was received or booked; tell the customer the team will contact them to arrange it.',
+    }
+  }
+  bookings = await list().catch(() => bookings)
+  return { bookings, actionResult }
+}
+
+/**
+ * One inbound WhatsApp message (text or voice): dedupe, transcribe, persist, then — unless a
+ * human has taken over — reply in the customer's language using the thread, the stored
+ * profile/state and the business clock. `send` delivers a Baileys payload.
+ */
+async function handleWhatsAppTurn(accountId, input, send) {
+  const { from, name, waMessageId } = input
+  const claim = waMessageId ? `${accountId}:${waMessageId}` : null
+  if (claim) {
+    if (waInFlight.has(claim)) return { status: 'duplicate' }
+    waInFlight.add(claim)
+    setTimeout(() => waInFlight.delete(claim), 10 * 60 * 1000).unref?.()
+    const seen = await dbSelect('messages', { account_id: accountId, wa_message_id: waMessageId }).catch(() => [])
+    if (seen.length) return { status: 'duplicate' }
+  }
+
+  const type = input.isVoice ? 'voice' : 'text'
+  let transcription = null
+  if (input.isVoice && input.audio) {
+    try {
+      transcription = (await transcribeAudio(input.audio, 'voice.ogg')) || null
+    } catch (error) {
+      console.warn('WhatsApp voice transcription failed', error.message)
+    }
+  }
+  const inbound = input.isVoice ? transcription || '[voice note]' : String(input.text || '').trim()
+  if (!inbound) return { status: 'empty' }
+
+  const conversation = await upsertConversation(accountId, { visitorKey: from, name, channel: 'whatsapp', lastMessage: inbound })
+  const detected = i18n.detectLanguage(inbound)
+  let inboundRow
+  try {
+    inboundRow = await saveMessage(accountId, conversation.id, 'in', inbound, {
+      type,
+      channel: 'whatsapp',
+      visitorKey: from,
+      waMessageId,
+      transcription,
+      language: detected,
+      audioRef: input.audioRef,
+    })
+  } catch (error) {
+    if (isDuplicateError(error)) return { status: 'duplicate' }
+    throw error
+  }
+  await rememberLanguage(accountId, conversation.id, inbound)
+
+  // Human mode: the team owns this conversation, the AI stays silent.
+  if ((conversation.handled_by || 'ai') === 'human') return { status: 'human' }
+
+  const [rows, accounts] = await Promise.all([
+    recentMessages(accountId, conversation.id, convoMemory.HISTORY_LIMIT + 1).catch(() => []),
+    dbSelect('accounts', { id: accountId }).catch(() => []),
+  ])
+  const history = convoMemory.historyToChat(rows.filter((row) => row.id !== inboundRow?.id))
+  const clock = convoMemory.businessClock(accounts[0]?.timezone)
+  const profile = convoMemory.parseJson(conversation.profile)
+  const prevState = convoMemory.parseJson(conversation.state)
+  const existingBookings = await dbSelect('bookings', { account_id: accountId, conversation_id: conversation.id }).catch(() => [])
+
+  let mem = null
+  try {
+    mem = await extractConversationMemory({
+      clock,
+      profile,
+      state: prevState,
+      history,
+      latest: inbound,
+      latestType: type,
+      bookings: existingBookings,
+      language: detected || conversation.language,
+    })
+  } catch (error) {
+    console.warn('Conversation memory extraction failed', error.message)
+  }
+  if (!mem) mem = { profile, state: prevState, action: 'none', ready: false, handoff: i18n.wantsHumanAny(inbound), language: null }
+
+  const extractedCode = mem.language ? i18n.normalizeLanguage(mem.language, '') : ''
+  const unlistedLanguage = Boolean(mem.language && !extractedCode)
+  const replyLanguage = detected || extractedCode || (unlistedLanguage ? null : conversation.language || null)
+  const phone = phoneFromJid(from)
+  const customer = mem.profile.name || conversation.wa_name || name || phone || 'WhatsApp customer'
+
+  let bookings = existingBookings
+  let actionResult = ''
+  const convoPatch = { profile: mem.profile, state: { ...mem.state, updated_at: now() } }
+  if (extractedCode && !detected) convoPatch.language = extractedCode
+  if (mem.handoff) {
+    convoPatch.handled_by = 'human'
+    convoPatch.unread = true
+    convoPatch.notes = [
+      ...parseNotes(conversation.notes),
+      { id: id('n'), author: 'AI receptionist', at: now(), text: 'Customer asked for a person. AI replies are paused until the team hands the conversation back to AI.' },
+    ]
+  } else {
+    ;({ bookings, actionResult } = await applyBookingAction(accountId, conversation, mem, { customer, phone, language: replyLanguage || mem.language }))
+  }
+  await dbUpdate('conversations', { id: conversation.id, account_id: accountId }, convoPatch).catch(async (error) => {
+    console.warn('Conversation memory not saved', error.message)
+    if (mem.handoff) await dbUpdate('conversations', { id: conversation.id, account_id: accountId }, { handled_by: 'human', unread: true }).catch(() => {})
   })
 
-  await saveMessage(accountId, conversation.id, 'in', inbound, { type, channel: 'whatsapp', visitorKey: from })
-  const language = (await rememberLanguage(accountId, conversation.id, inbound)) || conversation.language || null
-  const voiceNote =
+  const guidance = [
+    convoMemory.memoryBlock({ clock, profile: mem.profile, state: mem.state, phone, bookings, actionResult, handoff: mem.handoff }),
     type === 'voice'
       ? 'The customer sent a WhatsApp voice note and your reply will be sent back as a voice note. Reply in the exact language the customer spoke. Use short, natural spoken sentences: no markdown, lists, emojis or links.'
-      : ''
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+  const reply = await replyFromKnowledge(accountId, inbound, { language: replyLanguage, history, extra: guidance })
 
-  const reply = await replyFromKnowledge(accountId, inbound, { language, extra: voiceNote })
-  await saveMessage(accountId, conversation.id, 'out', reply, { type: type === 'voice' ? 'voice' : 'text', handled_as: 'ai', channel: 'whatsapp', visitorKey: from })
-  await dbUpdate('conversations', { id: conversation.id, account_id: accountId }, { last_message: reply, last_at: now() })
-  await upsertConnection(accountId, { last_seen: now() })
-
+  let spoken = null
   if (type === 'voice') {
     try {
-      const spoken = await speakReply(reply, 'opus', language)
-      if (spoken) {
-        await sendWhatsAppReply(sock, msg, { audio: spoken, ptt: true, mimetype: 'audio/ogg; codecs=opus' })
-        return
-      }
+      spoken = await speakReply(reply, 'opus', replyLanguage || mem.language)
     } catch (error) {
       console.warn('WhatsApp voice reply failed, sending text', error.message)
     }
   }
-  await sendWhatsAppReply(sock, msg, { text: reply })
+  await saveMessage(accountId, conversation.id, 'out', reply, {
+    type: spoken ? 'voice' : 'text',
+    handled_as: 'ai',
+    channel: 'whatsapp',
+    visitorKey: from,
+    language: replyLanguage || extractedCode || null,
+    audioRef: spoken ? { provider: 'openai-tts', model: process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts', format: 'opus', bytes: spoken.length } : null,
+  })
+  await dbUpdate('conversations', { id: conversation.id, account_id: accountId }, { last_message: reply, last_at: now() })
+  await send(spoken ? { audio: spoken, ptt: true, mimetype: 'audio/ogg; codecs=opus' } : { text: reply })
+  return { status: mem.handoff ? 'handoff' : 'replied', reply, voice: Boolean(spoken), memory: mem, bookings, transcription }
 }
 
 async function startWhatsApp(accountId, { forceQr = false } = {}) {
@@ -1716,8 +1970,108 @@ app.post('/api/conversations/:id/reply', auth('account'), async (req, res) => {
       handled_by: 'human',
       unread: false,
     })
+    // WhatsApp threads: deliver the team's reply to the customer through the linked number.
+    let delivered = null
+    const target = String(existing.wa_from || '')
+    if ((existing.channel || 'whatsapp') === 'whatsapp' && target.includes('@')) {
+      const sock = waRuntime.get(req.actor.id)?.sock
+      delivered = false
+      if (sock) {
+        try {
+          await sock.sendMessage(target, { text })
+          delivered = true
+        } catch (error) {
+          console.warn('Dashboard reply not delivered to WhatsApp', error.message)
+        }
+      }
+    }
     const rows = await conversationsForAccount(req.actor.id)
-    res.json(rows.find((row) => row.id === existing.id))
+    res.json({ ...rows.find((row) => row.id === existing.id), delivered })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+const BOOKING_STATUSES = ['Confirmed', 'Pending', 'Completed', 'Cancelled']
+
+function mapBooking(row) {
+  return {
+    id: row.id,
+    customer: row.customer || '',
+    phone: row.phone || '',
+    service: row.service || '',
+    date: row.date || '',
+    time: row.time || '',
+    guests: Number(row.guests || 1),
+    nights: Number(row.nights || 0),
+    value: Number(row.value || 0),
+    status: row.status || 'Pending',
+    source: row.source || 'manual',
+    notes: row.notes || '',
+    language: row.language || null,
+    conversationId: row.conversation_id || null,
+    createdAt: row.created_at,
+  }
+}
+
+async function bookingsForAccount(accountId) {
+  const rows = await dbSelect('bookings', { account_id: accountId })
+  return rows.map(mapBooking).sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+}
+
+function bookingPatch(body = {}) {
+  const patch = {}
+  for (const key of ['customer', 'phone', 'service', 'notes']) if (body[key] !== undefined) patch[key] = cleanText(body[key], key === 'notes' ? 2000 : 160)
+  if (body.date !== undefined) patch.date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date)) ? String(body.date) : null
+  if (body.time !== undefined) patch.time = /^\d{2}:\d{2}$/.test(String(body.time)) ? String(body.time) : null
+  for (const key of ['guests', 'nights', 'value']) if (body[key] !== undefined) patch[key] = Math.max(0, Number(body[key]) || 0)
+  if (body.status !== undefined && BOOKING_STATUSES.includes(body.status)) patch.status = body.status
+  return patch
+}
+
+app.get('/api/bookings', auth('account'), async (req, res) => {
+  try {
+    res.json(await bookingsForAccount(req.actor.id))
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/bookings', auth('account'), async (req, res) => {
+  try {
+    const patch = bookingPatch(req.body)
+    if (!patch.customer) return res.status(400).json({ error: 'Customer is required.' })
+    await dbInsert('bookings', {
+      id: id('bk'),
+      account_id: req.actor.id,
+      status: 'Pending',
+      source: cleanText(req.body.source, 40) || 'manual',
+      created_at: now(),
+      ...patch,
+      updated_at: now(),
+    })
+    res.json(await bookingsForAccount(req.actor.id))
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.patch('/api/bookings/:id', auth('account'), async (req, res) => {
+  try {
+    const existing = (await dbSelect('bookings', { id: req.params.id, account_id: req.actor.id }))[0]
+    if (!existing) return res.status(404).json({ error: 'Booking not found.' })
+    const patch = bookingPatch(req.body)
+    if (Object.keys(patch).length) await dbUpdate('bookings', { id: existing.id, account_id: req.actor.id }, { ...patch, updated_at: now() })
+    res.json(await bookingsForAccount(req.actor.id))
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.delete('/api/bookings/:id', auth('account'), async (req, res) => {
+  try {
+    await dbDelete('bookings', { id: req.params.id, account_id: req.actor.id })
+    res.json(await bookingsForAccount(req.actor.id))
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -2581,3 +2935,5 @@ if (!ON_VERCEL) {
 }
 
 module.exports = app
+// Used by the offline multi-turn tests (no WhatsApp socket, memory database).
+module.exports.internals = { handleWhatsAppTurn, dbInsert, dbSelect, dbUpdate }

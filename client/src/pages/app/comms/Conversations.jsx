@@ -244,10 +244,17 @@ export default function Conversations() {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-2 border-b border-slate-200/80 bg-slate-50/60 px-4 py-2.5 sm:px-5">
-                <Button as="button" variant="outline" size="xs" onClick={() => patch({ handledBy: 'human' }, 'You have taken over this conversation.')}>
-                  <UserCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                  Human takeover
-                </Button>
+                {selected.handledBy === 'human' ? (
+                  <Button as="button" variant="outline" size="xs" onClick={() => patch({ handledBy: 'ai' }, 'The AI receptionist is replying again.')}>
+                    <Bot className="h-3.5 w-3.5" aria-hidden="true" />
+                    Hand back to AI
+                  </Button>
+                ) : (
+                  <Button as="button" variant="outline" size="xs" onClick={() => patch({ handledBy: 'human' }, 'You have taken over this conversation.')}>
+                    <UserCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                    Human takeover
+                  </Button>
+                )}
                 <Button as="button" variant="outline" size="xs" onClick={() => patch({ lead: 'Qualified' }, 'Marked as a qualified lead.')}>
                   <Target className="h-3.5 w-3.5" aria-hidden="true" />
                   Mark as lead

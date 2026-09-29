@@ -1751,3 +1751,17 @@ hornNames.ar[OFFLINE] = 'تعذّر الوصول إلى الخادم. تحقّق
 hornNames.so[OFFLINE] = 'Lama gaari karo server-ka. Fadlan hubi internet-kaaga oo mar kale isku day.'
 am[OFFLINE] = 'ወደ ሰርቨሩ መድረስ አልተቻለም። እባክዎ ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።'
 aa[OFFLINE] = 'Server-ih gaba hayna. Internet-ih ixxigaalih ilaali, qagitak yaabbe.'
+
+// Conversation hand-back (Conversations page).
+const HAND_BACK = 'Hand back to AI'
+const HANDED_BACK = 'The AI receptionist is replying again.'
+hornNames.fr[HAND_BACK] = 'Rendre à l’IA'
+hornNames.fr[HANDED_BACK] = 'La réceptionniste IA répond à nouveau.'
+hornNames.ar[HAND_BACK] = 'إعادة المحادثة إلى الذكاء الاصطناعي'
+hornNames.ar[HANDED_BACK] = 'موظفة الاستقبال الذكية ترد من جديد.'
+hornNames.so[HAND_BACK] = 'Dib ugu celi AI'
+hornNames.so[HANDED_BACK] = 'Soo-dhoweeyaha AI ayaa mar kale jawaabaya.'
+am[HAND_BACK] = 'ለAI መልስ'
+am[HANDED_BACK] = 'የAI እንግዳ ተቀባዩ እንደገና እየመለሰ ነው።'
+aa[HAND_BACK] = 'AI-l gacsi'
+aa[HANDED_BACK] = 'AI marih-geyyeena qagitak gaba haa.'

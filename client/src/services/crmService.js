@@ -1,5 +1,6 @@
 import { request, makeId } from './mockClient'
 import { store, crm } from './store'
+import { api, live } from './api'
 
 export const crmService = {
   listContacts: () => request(() => store.contacts),
@@ -54,25 +55,26 @@ export const crmService = {
       return store.leads
     }),
 
-  listBookings: () => request(() => store.bookings),
+  // Bookings live on the server so the WhatsApp AI's pending requests show up here.
+  listBookings: async () => {
+    store.bookings = await live('/bookings', {}, () => store.bookings)
+    return store.bookings
+  },
 
-  createBooking: (booking) =>
-    request(() => {
-      store.bookings = [{ id: makeId('bk'), status: 'Pending', source: 'web', notes: '', ...booking }, ...store.bookings]
-      return store.bookings
-    }),
+  createBooking: async (booking) => {
+    store.bookings = await api('/bookings', { method: 'POST', body: { source: 'manual', ...booking } })
+    return store.bookings
+  },
 
-  updateBooking: (id, patch) =>
-    request(() => {
-      store.bookings = store.bookings.map((b) => (b.id === id ? { ...b, ...patch } : b))
-      return store.bookings
-    }),
+  updateBooking: async (id, patch) => {
+    store.bookings = await api(`/bookings/${id}`, { method: 'PATCH', body: patch })
+    return store.bookings
+  },
 
-  deleteBooking: (id) =>
-    request(() => {
-      store.bookings = store.bookings.filter((b) => b.id !== id)
-      return store.bookings
-    }),
+  deleteBooking: async (id) => {
+    store.bookings = await api(`/bookings/${id}`, { method: 'DELETE' })
+    return store.bookings
+  },
 
   getReferenceData: () =>
     request({ leadStatuses: crm.leadStatuses, bookingStatuses: crm.bookingStatuses }),

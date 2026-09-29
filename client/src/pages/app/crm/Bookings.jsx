@@ -18,11 +18,11 @@ import businessService from '../../../services/businessService'
 import { bookingStatuses } from '../../../data/mock/crm'
 import { formatCurrency, formatDate } from '../../../lib/format'
 
-const TODAY = '2026-08-15'
+const TODAY = new Date().toLocaleDateString('en-CA')
 
 const statusTone = { Confirmed: 'success', Pending: 'warning', Completed: 'neutral', Cancelled: 'danger' }
 
-const emptyBooking = { customer: '', service: '', date: TODAY, time: '15:00', guests: 1, nights: 1, status: 'Pending', source: 'web', value: 0, notes: '' }
+const emptyBooking = { customer: '', service: '', date: TODAY, time: '15:00', guests: 1, nights: 1, status: 'Pending', source: 'manual', value: 0, notes: '' }
 
 export default function Bookings() {
   const toast = useToast()
