@@ -736,23 +736,81 @@ function withTimeout(promise, ms, message) {
   ]).finally(() => clearTimeout(timer))
 }
 
+/** pdf-parse in a worker thread with a time and memory limit, so one bad PDF cannot freeze the API. */
+function parsePdfIsolated(buffer, timeoutMs = 30000) {
+  return new Promise((resolve) => {
+    let settled = false
+    const done = (result) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      worker?.terminate().catch(() => {})
+      resolve(result)
+    }
+    let worker
+    const timer = setTimeout(() => done({ error: 'PDF parsing timed out' }), timeoutMs)
+    try {
+      const { Worker } = require('worker_threads')
+      worker = new Worker(path.join(__dirname, 'lib', 'pdfWorker.js'), {
+        workerData: { buffer: new Uint8Array(buffer) },
+        resourceLimits: { maxOldGenerationSizeMb: 384 },
+      })
+    } catch (error) {
+      done({ error: `PDF worker unavailable: ${error.message}` })
+      return
+    }
+    worker.once('message', done)
+    worker.once('error', (error) => done({ error: error.message }))
+    worker.once('exit', (code) => done({ error: `PDF worker exited (${code})` }))
+  })
+}
+
+/** Reads a PDF (text and page images) with the OpenAI model — for scanned or designed documents. */
+async function readPdfWithModel(buffer, name) {
+  const client = await openaiClient()
+  if (!client || buffer.length > 30 * 1024 * 1024) return ''
+  const completion = await withTimeout(
+    client.chat.completions.create({
+      model: process.env.OPENAI_PDF_MODEL || 'gpt-4.1-mini',
+      temperature: 0,
+      max_tokens: 12000,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'file', file: { filename: name || 'document.pdf', file_data: `data:application/pdf;base64,${buffer.toString('base64')}` } },
+            {
+              type: 'text',
+              text: 'Extract all useful business information from this document for a receptionist knowledge base: services, prices, hours, locations, contacts, policies, team, FAQs and any other facts. Keep the original language. Plain text only, no commentary.',
+            },
+          ],
+        },
+      ],
+    }),
+    120000,
+    'PDF reading timed out',
+  )
+  return String(completion.choices[0]?.message?.content || '').trim()
+}
+
 async function extractUploadText(file) {
   const mime = file.mimetype || ''
   const name = file.originalname || 'upload'
   const lower = name.toLowerCase()
   if (mime === 'application/pdf' || lower.endsWith('.pdf')) {
-    try {
-      let pdf
-      try {
-        pdf = require('pdf-parse/lib/pdf-parse.js')
-      } catch {
-        pdf = require('pdf-parse')
-      }
-      const parsed = await pdf(file.buffer)
-      return String(parsed.text || '').trim()
-    } catch {
-      return ''
+    const parsed = await parsePdfIsolated(file.buffer)
+    const text = String(parsed.text || '').trim()
+    // Designed (Canva) or scanned PDFs carry their words as images, and some PDFs stall the
+    // parser — let the model read those pages instead.
+    const thin = text.length < Math.max(200, (parsed.pages || 1) * 60)
+    if (parsed.error || thin) {
+      const read = await readPdfWithModel(file.buffer, name).catch((error) => {
+        console.warn('PDF model read failed:', name, error.message)
+        return ''
+      })
+      if (read.length > text.length) return read
     }
+    return text
   }
   if (
     mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
@@ -1505,6 +1563,7 @@ function ensureStarted() {
 function healthPayload() {
   return {
     ok: true,
+    uptime: Math.round(process.uptime()),
     supabase: Boolean(supabase),
     openai: Boolean(process.env.OPENAI_API_KEY),
     mailer: Boolean(process.env.MAIL_USER && process.env.MAIL_PASS),
@@ -2953,4 +3012,4 @@ if (!ON_VERCEL) {
 
 module.exports = app
 // Used by the offline multi-turn tests (no WhatsApp socket, memory database).
-module.exports.internals = { handleWhatsAppTurn, dbInsert, dbSelect, dbUpdate }
+module.exports.internals = { handleWhatsAppTurn, dbInsert, dbSelect, dbUpdate, extractUploadText, parsePdfIsolated }
