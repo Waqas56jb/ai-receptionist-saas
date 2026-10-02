@@ -108,6 +108,12 @@ function twilioClient(creds = envCreds()) {
   return null
 }
 
+function toWsUrl(httpUrl) {
+  return String(httpUrl || '')
+    .replace(/^https:/i, 'wss:')
+    .replace(/^http:/i, 'ws:')
+}
+
 function webhookUrls(base) {
   const root = String(base || '').replace(/\/$/, '')
   return {
@@ -117,6 +123,7 @@ function webhookUrls(base) {
     recording: `${root}/api/twilio/voice/recording`,
     outbound: `${root}/api/twilio/voice/outbound`,
     voicemail: `${root}/api/twilio/voice/voicemail`,
+    stream: `${toWsUrl(root)}/api/twilio/voice/stream`,
   }
 }
 
@@ -168,16 +175,15 @@ async function provisionNumber(creds, urls) {
   }
 }
 
-async function placeCall(creds, { to, url, statusCallback, record = false, recordingStatusCallback }) {
+async function placeCall(creds, { to, url, twiml: inlineTwiml, statusCallback, record = false, recordingStatusCallback }) {
   const client = twilioClient(creds)
   if (!client) throw new Error('Twilio is not configured.')
   const from = creds.phone
   const dest = e164(to)
   if (!from || !dest) throw new Error('From and to numbers are required in E.164 format.')
-  return client.calls.create({
+  const payload = {
     to: dest,
     from,
-    url,
     method: 'POST',
     statusCallback,
     statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
@@ -185,7 +191,10 @@ async function placeCall(creds, { to, url, statusCallback, record = false, recor
     record,
     recordingStatusCallback,
     recordingStatusCallbackMethod: 'POST',
-  })
+  }
+  if (inlineTwiml) payload.twiml = inlineTwiml
+  else payload.url = url
+  return client.calls.create(payload)
 }
 
 function validateSignature(req, authToken, publicUrl) {
@@ -213,6 +222,7 @@ module.exports = {
   twilioReady,
   twilioClient,
   webhookUrls,
+  toWsUrl,
   credentialRows,
   provisionNumber,
   placeCall,

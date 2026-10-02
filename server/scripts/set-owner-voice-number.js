@@ -27,7 +27,13 @@ async function main() {
     const { data: rows } = await supabase.from('account_settings').select('account_id, voice').eq('account_id', account.id)
     const current = rows?.[0]?.voice || {}
     const businessNumber = account.email === 'abdiqadirxassano@gmail.com' ? BUSINESS : current.businessNumber || OWNER
-    const voice = { ...current, businessNumber, callerId: OWNER, enabled: true }
+    const voice = {
+      ...current,
+      businessNumber,
+      callerId: OWNER,
+      twilioNumber: process.env.TWILIO_PHONE_NUMBER || current.twilioNumber || '',
+      enabled: true,
+    }
     if (rows?.[0]) {
       const { error } = await supabase
         .from('account_settings')

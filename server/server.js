@@ -2951,7 +2951,7 @@ async function buildKpis(accountId) {
   }
 }
 
-registerVoice(app, {
+const voiceApi = registerVoice(app, {
   auth,
   dbSelect,
   dbInsert,
@@ -2968,6 +2968,9 @@ registerVoice(app, {
   publicBase,
   now,
   id,
+  knowledgeContext,
+  receptionistPrompt,
+  aiLanguageSettings,
 })
 
 registerMailAuth({
@@ -2994,7 +2997,10 @@ app.use((error, _req, res, _next) => {
 })
 
 if (!ON_VERCEL) {
-  app.listen(PORT, '0.0.0.0', async () => {
+  const http = require('http')
+  const server = http.createServer(app)
+  voiceApi.attachStream(server)
+  server.listen(PORT, '0.0.0.0', async () => {
     console.log(`AI receptionist API on http://0.0.0.0:${PORT}`)
     console.log(`Supabase: ${supabase ? 'connected' : 'memory fallback — add credentials to server/.env'}`)
     console.log(`WhatsApp sessions: ${SESSION_ROOT}`)

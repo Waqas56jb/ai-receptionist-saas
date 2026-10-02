@@ -1,4 +1,5 @@
 const twilioVoice = require('./lib/twilioVoice')
+const twilioRealtime = require('./lib/twilioRealtime')
 const i18n = require('./lib/languages')
 
 const OWNER_NUMBER = process.env.TWILIO_OWNER_NUMBER || '+923107443144'
@@ -6,7 +7,7 @@ const OWNER_NUMBER = process.env.TWILIO_OWNER_NUMBER || '+923107443144'
 const defaultVoice = {
   enabled: true,
   businessNumber: OWNER_NUMBER,
-  twilioNumber: '',
+  twilioNumber: process.env.TWILIO_PHONE_NUMBER || '',
   callerId: OWNER_NUMBER,
   greeting: 'Hello, thank you for calling. How can I help you today?',
   goodbye: 'Thank you for calling. Goodbye.',
@@ -44,6 +45,9 @@ function registerVoice(app, deps) {
     publicBase,
     now,
     id,
+    knowledgeContext,
+    receptionistPrompt,
+    aiLanguageSettings,
   } = deps
 
   function sendTwiml(res, body) {
@@ -253,6 +257,19 @@ function registerVoice(app, deps) {
       }
 
       startRecording(account.id, req.body.CallSid, voice).catch(() => {})
+      if (twilioRealtime.canUseRealtime()) {
+        return sendTwiml(
+          res,
+          twilioRealtime.connectTwiml({
+            streamUrl: hooks.stream,
+            accountId: account.id,
+            from,
+            to: called,
+            callSid: req.body.CallSid,
+            direction: String(req.body.Direction || 'inbound').includes('outbound') ? 'outbound' : 'inbound',
+          }),
+        )
+      }
       const greeting =
         req.body.Direction === 'outbound-api'
           ? await say('outboundGreeting', voice, voice.greeting)
@@ -453,7 +470,9 @@ function registerVoice(app, deps) {
           status: hooks.status,
           recording: hooks.recording,
           outbound: hooks.outbound,
+          stream: hooks.stream,
         },
+        realtime: twilioRealtime.canUseRealtime(),
         missing: [
           !creds.accountSid ? 'TWILIO_ACCOUNT_SID' : null,
           !creds.authToken && !(creds.apiKey && creds.apiSecret) ? 'TWILIO_AUTH_TOKEN' : null,
@@ -618,7 +637,66 @@ function registerVoice(app, deps) {
     }
   })
 
-  return { defaultVoice, voiceSettings, findAccountForNumber, urls }
+  function attachStream(httpServer) {
+    return twilioRealtime.attachRealtime(httpServer, {
+      async buildInstructions(meta) {
+        const accountId = meta.accountId || (await findAccountForNumber(meta.to))?.id
+        if (!accountId) return 'You are a live phone receptionist. Speak in 1-3 short sentences. No markdown.'
+        const [voice, accounts, context, langSettings] = await Promise.all([
+          voiceSettings(accountId),
+          dbSelect('accounts', { id: accountId }).catch(() => []),
+          knowledgeContext ? knowledgeContext(accountId) : Promise.resolve(''),
+          aiLanguageSettings ? aiLanguageSettings(accountId) : Promise.resolve({ defaultLanguage: 'en' }),
+        ])
+        const name = accounts[0]?.business_name || accounts[0]?.name || 'this business'
+        const prompt = receptionistPrompt
+          ? receptionistPrompt(name, context, true, langSettings)
+          : `You are the live phone receptionist for ${name}.`
+        return [
+          prompt,
+          voice.voiceInstructions ? `Owner voice notes: ${voice.voiceInstructions}` : '',
+          voice.emergencyInstructions ? `Emergency instructions: ${voice.emergencyInstructions}` : '',
+          'If the caller asks for a human, agent, or operator, say you will transfer them now.',
+          'If they say goodbye, thank them and end the conversation.',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      },
+      async logTurn(meta, text, direction) {
+        const accountId = meta.accountId || (await findAccountForNumber(meta.to))?.id
+        if (!accountId || !text) return
+        const from = meta.from || meta.to
+        if (direction === 'in') await logTurn(accountId, from, from, text, '')
+        else await logTurn(accountId, from, from, '', text)
+      },
+      async transferCall(meta) {
+        const accountId = meta.accountId || (await findAccountForNumber(meta.to))?.id
+        if (!accountId || !meta.callSid) return
+        const voice = await voiceSettings(accountId)
+        const dest = twilioVoice.e164(voice.businessNumber || voice.callerId)
+        const creds = twilioVoice.resolveCreds(voice)
+        const client = twilioVoice.twilioClient(creds)
+        if (!client || !dest || !voice.humanTransfer) return
+        await upsertCall(accountId, { twilio_sid: meta.callSid, transferred: true, outcome: 'Transferred', ai_handled: true })
+        await client.calls(meta.callSid).update({
+          twiml: twilioVoice.twiml(
+            `<Say>Please hold while I connect you.</Say><Dial callerId="${twilioVoice.xml(voice.callerId || creds.phone)}">${twilioVoice.xml(dest)}</Dial>`,
+          ),
+        })
+      },
+      async hangupCall(meta) {
+        if (!meta.callSid) return
+        const accountId = meta.accountId || (await findAccountForNumber(meta.to))?.id
+        const voice = accountId ? await voiceSettings(accountId) : defaultVoice
+        const creds = twilioVoice.resolveCreds(voice)
+        const client = twilioVoice.twilioClient(creds)
+        if (!client) return
+        await client.calls(meta.callSid).update({ status: 'completed' }).catch(() => {})
+      },
+    })
+  }
+
+  return { defaultVoice, voiceSettings, findAccountForNumber, urls, attachStream }
 }
 
 function mapCallStatus(status, outcome) {
