@@ -17,8 +17,9 @@ export const widgetService = {
   get: async () => {
     try {
       return await api('/widget')
-    } catch {
-      return fallbackWidget()
+    } catch (error) {
+      if (error.code === 'API_OFFLINE') return fallbackWidget()
+      throw error
     }
   },
 

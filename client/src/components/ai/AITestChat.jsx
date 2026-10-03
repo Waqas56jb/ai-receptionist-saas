@@ -40,6 +40,16 @@ export default function AITestChat({ channel = 'voice', className = '' }) {
     try {
       const reply = await aiService.sendTestMessage({ text: value, channel })
       setMessages((prev) => [...prev, reply])
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err${Date.now()}`,
+          from: 'ai',
+          at: new Date().toISOString(),
+          text: error.message || 'The AI receptionist could not answer just now. Try again.',
+        },
+      ])
     } finally {
       setThinking(false)
     }

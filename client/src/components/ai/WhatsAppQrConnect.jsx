@@ -68,7 +68,7 @@ export default function WhatsAppQrConnect() {
     api('/whatsapp/status')
       .then((status) => {
         apply(status)
-        if (!status.connected) start(true)
+        if (!status.connected) start(false)
       })
       .catch(() => setState((prev) => ({ ...prev, status: 'offline' })))
 
@@ -137,7 +137,13 @@ export default function WhatsAppQrConnect() {
                 ) : (
                   <div className="text-center text-muted">
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary-400" aria-hidden="true" />
-                    <p className="mt-2 text-[0.78rem]">{state.status === 'offline' ? 'Server offline' : 'Preparing QR…'}</p>
+                    <p className="mt-2 text-[0.78rem]">
+                      {state.status === 'offline'
+                        ? 'Server offline'
+                        : state.status === 'reconnecting'
+                          ? 'Reconnecting the saved WhatsApp session…'
+                          : 'Preparing QR…'}
+                    </p>
                   </div>
                 )}
               </div>

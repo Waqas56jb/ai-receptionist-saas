@@ -886,6 +886,57 @@ function sessionDir(accountId) {
   return path.join(SESSION_ROOT, accountId)
 }
 
+function isIgnoredWaJid(jid) {
+  const value = String(jid || '')
+  return (
+    !value ||
+    value.endsWith('@g.us') ||
+    value.endsWith('@newsletter') ||
+    value.endsWith('@broadcast') ||
+    value === 'status@broadcast'
+  )
+}
+
+function isWaLive(runtime) {
+  return Boolean(runtime?.sock && runtime.last?.status === 'connected')
+}
+
+function readSessionFiles(accountId) {
+  const dir = sessionDir(accountId)
+  if (!fs.existsSync(dir)) return null
+  const files = {}
+  for (const name of fs.readdirSync(dir)) {
+    if (!name.endsWith('.json')) continue
+    try {
+      files[name] = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8'))
+    } catch {
+      /* skip unreadable auth files */
+    }
+  }
+  return Object.keys(files).length ? files : null
+}
+
+function writeSessionFiles(accountId, files) {
+  if (!files || typeof files !== 'object') return false
+  const dir = sessionDir(accountId)
+  fs.mkdirSync(dir, { recursive: true })
+  let wrote = false
+  for (const [name, value] of Object.entries(files)) {
+    if (!name.endsWith('.json') || value == null) continue
+    fs.writeFileSync(path.join(dir, name), JSON.stringify(value))
+    wrote = true
+  }
+  return wrote
+}
+
+async function persistWhatsAppSession(accountId) {
+  const files = readSessionFiles(accountId)
+  if (!files) return
+  await upsertConnection(accountId, { session: files, last_seen: now() }).catch((error) => {
+    console.warn('WhatsApp session persist skipped', accountId, error.message)
+  })
+}
+
 function emitWa(accountId, payload) {
   const runtime = waRuntime.get(accountId)
   if (!runtime) return
@@ -1005,7 +1056,7 @@ async function sendWhatsAppReply(sock, msg, payload) {
   const targets = [msg.key.remoteJid, msg.key.remoteJidAlt, msg.key.participant, msg.key.participantAlt].filter(Boolean)
   let lastError
   for (const jid of [...new Set(targets)]) {
-    if (jid.endsWith('@g.us') || jid === 'status@broadcast') continue
+    if (isIgnoredWaJid(jid)) continue
     try {
       await sock.sendMessage(jid, payload)
       return jid
@@ -1021,7 +1072,7 @@ async function handleIncoming(accountId, sock, msg) {
   const inner = unwrapWaMessage(msg.message)
   if (!inner || msg.key.fromMe) return
   const from = msg.key.remoteJid
-  if (!from || from.endsWith('@g.us') || from === 'status@broadcast') return
+  if (isIgnoredWaJid(from)) return
 
   const audio = inner.audioMessage || inner.pttMessage
   const text =
@@ -1290,7 +1341,18 @@ async function handleWhatsAppTurn(accountId, input, send) {
     audioRef: spoken ? { provider: 'openai-tts', model: process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts', format: 'opus', bytes: spoken.length } : null,
   })
   await dbUpdate('conversations', { id: conversation.id, account_id: accountId }, { last_message: reply, last_at: now() })
-  await send(spoken ? { audio: spoken, ptt: true, mimetype: 'audio/ogg; codecs=opus' } : { text: reply })
+  try {
+    await send(spoken ? { audio: spoken, ptt: true, mimetype: 'audio/ogg; codecs=opus' } : { text: reply })
+  } catch (error) {
+    console.error('WhatsApp deliver failed', accountId, error.message)
+    if (spoken) {
+      try {
+        await send({ text: reply })
+      } catch (fallbackError) {
+        console.error('WhatsApp text fallback failed', accountId, fallbackError.message)
+      }
+    }
+  }
   return { status: mem.handoff ? 'handoff' : 'replied', reply, voice: Boolean(spoken), memory: mem, bookings, transcription }
 }
 
@@ -1316,6 +1378,10 @@ async function startWhatsApp(accountId, { forceQr = false } = {}) {
       } catch {
         /* ignore */
       }
+      await upsertConnection(accountId, { session: null, status: 'qr', phone: null }).catch(() => {})
+    } else if (!fs.existsSync(path.join(dir, 'creds.json'))) {
+      const stored = await getConnection(accountId).catch(() => null)
+      if (stored?.session) writeSessionFiles(accountId, stored.session)
     }
     fs.mkdirSync(dir, { recursive: true })
     const { state, saveCreds } = await baileys.useMultiFileAuthState(dir)
@@ -1339,7 +1405,10 @@ async function startWhatsApp(accountId, { forceQr = false } = {}) {
     runtime.last = { ...runtime.last, status: 'starting', qr: forceQr ? null : runtime.last?.qr || null }
     waRuntime.set(accountId, runtime)
 
-    sock.ev.on('creds.update', saveCreds)
+    sock.ev.on('creds.update', async () => {
+      await saveCreds()
+      persistWhatsAppSession(accountId).catch(() => {})
+    })
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update
       if (qr) {
@@ -1353,6 +1422,7 @@ async function startWhatsApp(accountId, { forceQr = false } = {}) {
       }
       if (connection === 'open') {
         const phone = sock.user?.id?.split(':')[0] || sock.user?.id
+        persistWhatsAppSession(accountId).catch(() => {})
         await upsertConnection(accountId, {
           status: 'connected',
           phone,
@@ -1399,16 +1469,26 @@ async function startWhatsApp(accountId, { forceQr = false } = {}) {
 }
 
 async function restoreSessions() {
-  if (!fs.existsSync(SESSION_ROOT)) return
-  const dirs = fs.readdirSync(SESSION_ROOT, { withFileTypes: true }).filter((entry) => entry.isDirectory())
-  for (const dir of dirs) {
-    const creds = path.join(SESSION_ROOT, dir.name, 'creds.json')
-    if (!fs.existsSync(creds)) continue
+  const ids = new Set()
+  if (fs.existsSync(SESSION_ROOT)) {
+    for (const entry of fs.readdirSync(SESSION_ROOT, { withFileTypes: true })) {
+      if (entry.isDirectory() && fs.existsSync(path.join(SESSION_ROOT, entry.name, 'creds.json'))) ids.add(entry.name)
+    }
+  }
+  try {
+    const rows = await dbSelect('whatsapp_connections').catch(() => [])
+    for (const row of rows || []) {
+      if (row.status === 'connected' || row.session) ids.add(row.account_id)
+    }
+  } catch (error) {
+    console.warn('WhatsApp restore list failed:', error.message)
+  }
+  for (const accountId of ids) {
     try {
-      await startWhatsApp(dir.name)
-      console.log('Restored WhatsApp session', dir.name)
+      await startWhatsApp(accountId)
+      console.log('Restored WhatsApp session', accountId)
     } catch (error) {
-      console.error('Could not restore WhatsApp session', dir.name, error.message)
+      console.error('Could not restore WhatsApp session', accountId, error.message)
     }
   }
 }
@@ -1498,12 +1578,26 @@ app.use(express.json({ limit: '8mb' }))
 
 let bootPromise = null
 async function ensureVoiceTables() {
-  const url = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL
-  if (!url) return
+  const urls = [...new Set([process.env.DATABASE_URL, process.env.DATABASE_DIRECT_URL].filter(Boolean))]
+  if (!urls.length) return
   const { Client } = require('pg')
-  const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } })
-  try {
-    await client.connect()
+  let lastError
+  for (const url of urls) {
+    const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } })
+    try {
+      await client.connect()
+      await applyVoiceTables(client)
+      await client.end().catch(() => {})
+      return
+    } catch (error) {
+      lastError = error
+      await client.end().catch(() => {})
+    }
+  }
+  throw lastError || new Error('No database URL')
+}
+
+async function applyVoiceTables(client) {
     await client.query(`alter table account_settings add column if not exists voice jsonb default '{}'`)
     await client.query(`
       create table if not exists voice_calls (
@@ -1530,9 +1624,7 @@ async function ensureVoiceTables() {
     await client.query(`alter table voice_calls enable row level security`)
     await client.query(`revoke all on table voice_calls from anon, authenticated, public`)
     await client.query(`grant all on table voice_calls to service_role`)
-  } finally {
-    await client.end().catch(() => {})
-  }
+    await client.query(`alter table whatsapp_connections add column if not exists session jsonb`)
 }
 
 async function syncPlatformTwilio() {
@@ -1573,6 +1665,7 @@ function healthPayload() {
         (process.env.TWILIO_AUTH_TOKEN || process.env.TWILIO_TOKEN || (process.env.TWILIO_API_KEY && process.env.TWILIO_API_SECRET)) &&
         (process.env.TWILIO_PHONE_NUMBER || process.env.TWILIO_FROM),
     ),
+    whatsapp: [...waRuntime.values()].filter((runtime) => isWaLive(runtime)).length,
     time: now(),
   }
 }
@@ -1715,10 +1808,15 @@ app.post('/api/admin/auth/login', async (req, res) => {
 app.get('/api/whatsapp/status', auth('account'), async (req, res) => {
   try {
     const connection = await getConnection(req.actor.id)
-    const runtime = waRuntime.get(req.actor.id)
+    let runtime = waRuntime.get(req.actor.id)
+    if ((connection.status === 'connected' || connection.session) && !isWaLive(runtime) && !waStarting.has(req.actor.id)) {
+      startWhatsApp(req.actor.id).catch((error) => console.warn('WhatsApp restore failed', req.actor.id, error.message))
+      runtime = waRuntime.get(req.actor.id)
+    }
+    const live = isWaLive(runtime)
     res.json({
-      connected: connection.status === 'connected' || runtime?.last?.status === 'connected',
-      status: runtime?.last?.status || connection.status || 'disconnected',
+      connected: live,
+      status: live ? 'connected' : runtime?.last?.status || (connection.session || connection.status === 'connected' ? 'reconnecting' : connection.status || 'disconnected'),
       phone: runtime?.last?.phone || connection.phone || null,
       qr: runtime?.last?.qr || null,
       pairingCode: runtime?.last?.pairingCode || null,
@@ -1731,7 +1829,7 @@ app.get('/api/whatsapp/status', auth('account'), async (req, res) => {
 app.post('/api/whatsapp/qr', auth('account'), async (req, res) => {
   try {
     const connection = await getConnection(req.actor.id)
-    if (connection.status === 'connected' && waRuntime.get(req.actor.id)?.sock && !req.body?.force) {
+    if (isWaLive(waRuntime.get(req.actor.id)) && !req.body?.force) {
       return res.json({ connected: true, status: 'connected', phone: connection.phone, qr: null })
     }
     const runtime = await startWhatsApp(req.actor.id, { forceQr: Boolean(req.body?.force) })
@@ -1763,7 +1861,7 @@ app.post('/api/whatsapp/pair', auth('account'), async (req, res) => {
       return res.status(400).json({ error: 'Enter the WhatsApp number with country code, digits only.' })
     }
     const connection = await getConnection(req.actor.id)
-    if (connection.status === 'connected' && waRuntime.get(req.actor.id)?.sock) {
+    if (isWaLive(waRuntime.get(req.actor.id))) {
       return res.json({ connected: true, status: 'connected', phone: connection.phone, qr: null })
     }
     const runtime = await startWhatsApp(req.actor.id, { forceQr: true })
@@ -1818,7 +1916,7 @@ app.post('/api/whatsapp/disconnect', auth('account'), async (req, res) => {
     }
     waRuntime.delete(req.actor.id)
     fs.rmSync(sessionDir(req.actor.id), { recursive: true, force: true })
-    await upsertConnection(req.actor.id, { status: 'disconnected', phone: null, push_name: null })
+    await upsertConnection(req.actor.id, { status: 'disconnected', phone: null, push_name: null, session: null })
     res.json({ connected: false, status: 'disconnected' })
   } catch (error) {
     res.status(500).json({ error: error.message })
@@ -2039,9 +2137,13 @@ app.post('/api/conversations/:id/reply', auth('account'), async (req, res) => {
     // WhatsApp threads: deliver the team's reply to the customer through the linked number.
     let delivered = null
     const target = String(existing.wa_from || '')
-    if ((existing.channel || 'whatsapp') === 'whatsapp' && target.includes('@')) {
-      const sock = waRuntime.get(req.actor.id)?.sock
+    if ((existing.channel || 'whatsapp') === 'whatsapp' && target.includes('@') && !isIgnoredWaJid(target)) {
       delivered = false
+      if (!isWaLive(waRuntime.get(req.actor.id))) {
+        await startWhatsApp(req.actor.id).catch(() => {})
+        await waitForWa(req.actor.id, (item) => isWaLive(item), 8000)
+      }
+      const sock = waRuntime.get(req.actor.id)?.sock
       if (sock) {
         try {
           await sock.sendMessage(target, { text })

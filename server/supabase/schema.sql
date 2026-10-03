@@ -33,7 +33,8 @@ create table if not exists whatsapp_connections (
   phone text,
   push_name text,
   connected_at timestamptz,
-  last_seen timestamptz
+  last_seen timestamptz,
+  session jsonb
 );
 
 create table if not exists knowledge_items (
@@ -253,6 +254,7 @@ create unique index if not exists messages_account_wa_message_idx on messages(ac
 create index if not exists messages_conversation_created_idx on messages(conversation_id, created_at desc);
 alter table conversations add column if not exists profile jsonb default '{}';
 alter table conversations add column if not exists state jsonb default '{}';
+alter table whatsapp_connections add column if not exists session jsonb;
 
 create table if not exists bookings (
   id text primary key,
